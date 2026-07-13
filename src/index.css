@@ -1,0 +1,88 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc; /* Tailwind slate-50 background for clean gray look */
+  color: #1e293b; /* slate-800 */
+}
+
+/* Custom scrollbars for a highly polished feel */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+/* Sidebar Menu Hover Fill Effect */
+.menu-hover-fill button {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.menu-hover-fill button::before {
+  position: absolute;
+  content: "";
+  top: 0;
+  left: 0;
+  width: 0.25rem;
+  height: 100%;
+  background: transparent;
+  transition: 0.6s;
+}
+
+.menu-hover-fill button:hover::before {
+  background: var(--active-color);
+}
+
+.menu-link {
+  color: transparent;
+  background-clip: text;
+  -webkit-background-clip: text;
+  background-size: 0% 100%;
+  background-repeat: no-repeat;
+  transition: background-size 0.45s 0.04s, color 0.3s ease-in-out;
+  background-image: linear-gradient(var(--active-color) 0 100%);
+  position: relative;
+  width: 100%;
+}
+
+.menu-link::before {
+  content: attr(data-text);
+  position: absolute;
+  z-index: -1;
+  color: #94a3b8; /* slate-400 */
+  left: 0;
+  top: 0;
+  transition: color 0.3s ease-in-out;
+}
+
+.menu-hover-fill button.border-blue-500 .menu-link,
+.menu-hover-fill button.border-violet-500 .menu-link,
+.menu-hover-fill button.border-emerald-500 .menu-link {
+  color: white;
+  background-image: none;
+}
+
+.menu-hover-fill button.border-blue-500 .menu-link::before,
+.menu-hover-fill button.border-violet-500 .menu-link::before,
+.menu-hover-fill button.border-emerald-500 .menu-link::before {
+  color: white;
+}
+
+.menu-hover-fill button:hover .menu-link {
+  background-size: 100% 100%;
+}

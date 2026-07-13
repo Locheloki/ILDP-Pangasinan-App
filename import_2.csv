@@ -1,0 +1,583 @@
+Employee_ID,First_Name,Middle_Initial,Last_Name,Office,Position,Learning_Needs,Basis_Learning,Proposed_Action,Target_Schedule
+2281,Synthia,S,Corpuz,Pangasinan Provincial Jail,Admin Aide/Utility,Attention to Details,Succession Planning,Lecture,1st Quarter of 2025
+2281,Synthia,S,Corpuz,Pangasinan Provincial Jail,Admin Aide/Utility,Cleaning Tools Operation,Succession Planning,Lecture,1st Quarter of 2025
+2281,Synthia,S,Corpuz,Pangasinan Provincial Jail,Admin Aide/Utility,Housekeeping,Succession Planning,Lecture,1st Quarter of 2025
+2281,Synthia,S,Corpuz,Pangasinan Provincial Jail,Admin Aide/Utility,Supplies Management,Succession Planning,Lecture,1st Quarter of 2025
+2281,Synthia,S,Corpuz,Pangasinan Provincial Jail,Admin Aide/Utility,Waste Management,Succession Planning,Lecture,1st Quarter of 2025
+2282,John Rhey,M,Esguerra,Pangasinan Provincial Jail,Admin Aide/Utility,Attention to Details,Succession Planning,Lecture,1st Quarter of 2025
+2282,John Rhey,M,Esguerra,Pangasinan Provincial Jail,Admin Aide/Utility,Cleaning Tools Operation,Succession Planning,Lecture,1st Quarter of 2025
+2282,John Rhey,M,Esguerra,Pangasinan Provincial Jail,Admin Aide/Utility,Housekeeping,Succession Planning,Lecture,1st Quarter of 2025
+2282,John Rhey,M,Esguerra,Pangasinan Provincial Jail,Admin Aide/Utility,Supplies Management,Succession Planning,Lecture,1st Quarter of 2025
+2282,John Rhey,M,Esguerra,Pangasinan Provincial Jail,Admin Aide/Utility,Waste Management,Succession Planning,Lecture,1st Quarter of 2025
+2283,Sheena,M,Gilledo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+2283,Sheena,M,Gilledo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+2283,Sheena,M,Gilledo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+2283,Sheena,M,Gilledo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+2283,Sheena,M,Gilledo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+2284,John Rey,O,Soriano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+2284,John Rey,O,Soriano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+2284,John Rey,O,Soriano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+2284,John Rey,O,Soriano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+2284,John Rey,O,Soriano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+2285,Roda,V,Javier,General Services Office,Admin Aide/Office Staff,Learning Facilitation,Advanced Knowledge,Training,2nd Quarter of 2024
+2285,Roda,V,Javier,General Services Office,Admin Aide/Office Staff,Planning Organizing and Delivering,Advanced Knowledge,Training,2nd Quarter of 2024
+2286,Shelanie,C,Lomanog,General Services Office,Admin Aide/Office Staff,Learning Facilitation,Advanced Knowledge,Training,2nd Quarter of 2024
+2286,Shelanie,C,Lomanog,General Services Office,Admin Aide/Office Staff,Planning Organizing and Delivering,Advanced Knowledge,Training,2nd Quarter of 2024
+2287,Rosary Anne,A,Parayno,General Services Office,Admin Aide/Office Staff,Learning Facilitation,Advanced Knowledge,Training,2nd Quarter of 2024
+2287,Rosary Anne,A,Parayno,General Services Office,Admin Aide/Office Staff,Planning Organizing and Delivering,Advanced Knowledge,Training,2nd Quarter of 2024
+2288,Reycel,L,Bravo,General Services Office,Admin Aide/Office Staff,Learning Facilitation,Advanced Knowledge,Training,2nd Quarter of 2024
+2288,Reycel,L,Bravo,General Services Office,Admin Aide/Office Staff,Planning Organizing and Delivering,Advanced Knowledge,Training,2nd Quarter of 2024
+2289,Merill Louise,D,Cruz,General Services Office,Admin Aide/Office Staff,Learning Facilitation,Advanced Knowledge,Training,2nd Quarter of 2024
+2289,Merill Louise,D,Cruz,General Services Office,Admin Aide/Office Staff,Planning Organizing and Delivering,Advanced Knowledge,Training,2nd Quarter of 2024
+2290,Krisalyn,S,Pamo,General Services Office,Admin Aide/Office Staff,Learning Facilitation,Advanced Knowledge,Training,2nd Quarter of 2024
+2290,Krisalyn,S,Pamo,General Services Office,Admin Aide/Office Staff,Planning Organizing and Delivering,Advanced Knowledge,Training,2nd Quarter of 2024
+2291,Jerome,S,Parras,General Services Office,Admin Aide/Office Staff,Learning Facilitation,Advanced Knowledge,Training,2nd Quarter of 2024
+2291,Jerome,S,Parras,General Services Office,Admin Aide/Office Staff,Planning Organizing and Delivering,Advanced Knowledge,Training,2nd Quarter of 2024
+2292,Lilibeth,S,Canilang,General Services Office,Admin Aide/Utility,Housekeeping Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2292,Lilibeth,S,Canilang,General Services Office,Admin Aide/Utility,Waste Management Skills,Advanced Knowledge,Training,4th Quarter of 2024
+2293,Alma Cristina,R,Abaoag,Provincial Social Welfare and Development Office,Social Welfare Assistant,Facilitation Skills,Intermediate Knowledge,Training,3rd Quarter of 2026
+2293,Alma Cristina,R,Abaoag,Provincial Social Welfare and Development Office,Social Welfare Assistant,Inspection and Monitoring of Procurements,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2293,Alma Cristina,R,Abaoag,Provincial Social Welfare and Development Office,Social Welfare Assistant,Managing Office Supplies and Resources,Intermediate Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2293,Alma Cristina,R,Abaoag,Provincial Social Welfare and Development Office,Social Welfare Assistant,Operating Computer Programs and Systems,Intermediate Knowledge,Training,4th Quarter of 2026
+2293,Alma Cristina,R,Abaoag,Provincial Social Welfare and Development Office,Social Welfare Assistant,Program and Project Management,Intermediate Knowledge,Training,3rd Quarter of 2026
+2293,Alma Cristina,R,Abaoag,Provincial Social Welfare and Development Office,Social Welfare Assistant,Records Management,Intermediate Knowledge,Training,4th Quarter of 2026
+2293,Alma Cristina,R,Abaoag,Provincial Social Welfare and Development Office,Social Welfare Assistant,Written Communication Skills,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2294,Jocelyn,M,Arenas,Provincial Social Welfare and Development Office,Administrative Aide III,Cleaning Tools Operation,Basic Knowledge,Coaching and Mentoring,2nd Quarter of 2027
+2294,Jocelyn,M,Arenas,Provincial Social Welfare and Development Office,Administrative Aide III,Housekeeping,Intermediate Knowledge,Training,3rd Quarter of 2026
+2294,Jocelyn,M,Arenas,Provincial Social Welfare and Development Office,Administrative Aide III,Supplies Management,Intermediate Knowledge,Coaching and Mentoring,2nd Quarter of 2027
+2295,Elisa,C,Basilio,Provincial Social Welfare and Development Office,Administrative Aide III,Communication and Interpersonal Skills,Additional Knowledge,Training,4th Quarter of 2027
+2295,Elisa,C,Basilio,Provincial Social Welfare and Development Office,Administrative Aide III,Operating Computer Skills,Additional Knowledge,Training,4th Quarter of 2027
+2295,Elisa,C,Basilio,Provincial Social Welfare and Development Office,Administrative Aide III,Record and Supply Management Skills,Additional Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2295,Elisa,C,Basilio,Provincial Social Welfare and Development Office,Administrative Aide III,Upgraded Skills in Teaching,Additional Knowledge,Training,4th Quarter of 2027
+2295,Elisa,C,Basilio,Provincial Social Welfare and Development Office,Administrative Aide III,Written Communication Skills,Additional Knowledge,Training,4th Quarter of 2027
+2296,Florence,N,Berba,Provincial Social Welfare and Development Office,Youth Development Officer IV,"Monitoring and Evaluation, Documentation on Data Gathering",Advanced Knowledge,Training,3rd Quarter of 2026
+2296,Florence,N,Berba,Provincial Social Welfare and Development Office,Youth Development Officer IV,Networking,Advanced Knowledge,Training,3rd Quarter of 2026
+2296,Florence,N,Berba,Provincial Social Welfare and Development Office,Youth Development Officer IV,Planning,Advanced Knowledge,Training,3rd Quarter of 2026
+2296,Florence,N,Berba,Provincial Social Welfare and Development Office,Youth Development Officer IV,Provision of Training and Advocacy Activities,Advanced Knowledge,Training,3rd Quarter of 2026
+2297,Marycon Lian,T,Bernardo,Provincial Social Welfare and Development Office,Social Welfare Officer III,Advocacy Campaign Management,Advanced Knowledge,Training,4th Quarter of 2027
+2297,Marycon Lian,T,Bernardo,Provincial Social Welfare and Development Office,Social Welfare Officer III,Case Management Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2297,Marycon Lian,T,Bernardo,Provincial Social Welfare and Development Office,Social Welfare Officer III,Planning,Advanced Knowledge,Training,4th Quarter of 2027
+2297,Marycon Lian,T,Bernardo,Provincial Social Welfare and Development Office,Social Welfare Officer III,Program and Project Management,Advanced Knowledge,Training,4th Quarter of 2027
+2297,Marycon Lian,T,Bernardo,Provincial Social Welfare and Development Office,Social Welfare Officer III,Written Communication Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2298,Leilani,F,Bolivar,Provincial Social Welfare and Development Office,Social Welfare Officer III,Coaching and Feedbacking Skills,Capability Enrichment,Training,4th Quarter of 2026
+2298,Leilani,F,Bolivar,Provincial Social Welfare and Development Office,Social Welfare Officer III,Conflict Management,Capability Enrichment,Training,4th Quarter of 2027
+2298,Leilani,F,Bolivar,Provincial Social Welfare and Development Office,Social Welfare Officer III,Creating an Environment for Learning and Growth,Capability Enrichment,Training,1st Quarter of 2027
+2298,Leilani,F,Bolivar,Provincial Social Welfare and Development Office,Social Welfare Officer III,Creating an Environmrnt for Learning and Growth,Capability Enrichment,Training,2nd Quarter of 2027
+2298,Leilani,F,Bolivar,Provincial Social Welfare and Development Office,Social Welfare Officer III,Delegation Skills,Capability Enrichment,Training,4th Quarter of 2024
+2298,Leilani,F,Bolivar,Provincial Social Welfare and Development Office,Social Welfare Officer III,Facilitating Change and Innovation,Capability Enrichment,Training,4th Quarter of 2025
+2298,Leilani,F,Bolivar,Provincial Social Welfare wins and Development Office,Social Welfare Officer III,Planning and Organizing,Capability Enrichment,Training,2nd Quarter of 2024
+2298,Leilani,F,Bolivar,Provincial Social Welfare and Development Office,Social Welfare Officer III,Problem Solving and Decision-Making,Capability Enrichment,Training,2nd Quarter of 2026
+2299,Judith,V,Cabillo,Provincial Social Welfare and Development Office,Disability Affairs Officer III,Advocacy Campaign Management,Advanced Knowledge,Training,4th Quarter of 2027
+2299,Judith,V,Cabillo,Provincial Social Welfare and Development Office,Disability Affairs Officer III,Competency Development and Enhancement,Advanced Knowledge,Training,4th Quarter of 2027
+2299,Judith,V,Cabillo,Provincial Social Welfare and Development Office,Disability Affairs Officer III,Facilitation Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2299,Judith,V,Cabillo,Provincial Social Welfare and Development Office,Disability Affairs Officer III,Operating Computer Programs and Systems,Intermediate Knowledge,Training,4th Quarter of 2027
+2299,Judith,V,Cabillo,Provincial Social Welfare and Development Office,Disability Affairs Officer III,Program and Project Management,Advanced Knowledge,Training,4th Quarter of 2027
+2299,Judith,V,Cabillo,Provincial Social Welfare and Development Office,Disability Affairs Officer III,Record and Supply Management Skills,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2299,Judith,V,Cabillo,Provincial Social Welfare and Development Office,Disability Affairs Officer III,Written Communication Skills/Public Communication Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2300,Carla,T,Cacatian,Provincial Social Welfare and Development Office,Social Welfare Assistant,Communication and Interpersonal Skills,Additional Knowledge,Training,4th Quarter of 2027
+2300,Carla,T,Cacatian,Provincial Social Welfare and Development Office,Social Welfare Assistant,Computer Application Skills,Additional Knowledge,Training,4th Quarter of 2027
+2300,Carla,T,Cacatian,Provincial Social Welfare and Development Office,Social Welfare Assistant,Planning,Additional Knowledge,Training,4th Quarter of 2027
+2300,Carla,T,Cacatian,Provincial Social Welfare and Development Office,Social Welfare Assistant,Program and Project Management Skills,Additional Knowledge,Training,4th Quarter of 2027
+2300,Carla,T,Cacatian,Provincial Social Welfare and Development Office,Social Welfare Assistant,Written Communication Skills,Additional Knowledge,Training,4th Quarter of 2027
+2301,Evelyn,C,Dismaya,Provincial Social Welfare and Development Office,Social Welfare Officer III,Advocacy Campaign Management,Advanced Knowledge,Training,1st Quarter of 2025
+2301,Evelyn,C,Dismaya,Provincial Social Welfare and Development Office,Social Welfare Officer III,Case Management Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2301,Evelyn,C,Dismaya,Provincial Social Welfare and Development Office,Social Welfare Officer III,Communication and Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2024
+2301,Evelyn,C,Dismaya,Provincial Social Welfare and Development Office,Social Welfare Officer III,Program and Project Management,Advanced Knowledge,Training,1st Quarter of 2025
+2301,Evelyn,C,Dismaya,Provincial Social Welfare and Development Office,Social Welfare Officer III,Written Communication Skills on Case Management,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2024
+2302,Tito,B,"Estrada, Jr.",Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Attention to Details,Basic Knowledge,Training,4th Quarter of 2026
+2302,Tito,B,"Estrada, Jr.",Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Communication Skills,Basic Knowledge,Job Immersion/Rotation,4th Quarter of 2026
+2302,Tito,B,"Estrada, Jr.",Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Driving Skills,Intermediate Knowledge,Training,3rd Quarter of 2026
+2302,Tito,B,"Estrada, Jr.",Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Knowledge on Traffic Rules and Regulations,Basic Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2302,Tito,B,"Estrada, Jr.",Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Vehicle Repair and Maintenance,Basic Knowledge,Training,3rd Quarter of 2026
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Community Organizing,Basic Knowledge,Coaching and Mentoring/Training,4th Quarter of 2025
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Developing Institutional Capabilities,Basic Knowledge,Coaching and Mentoring/Training,4th Quarter of 2026
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Group Facilitation,Advanced Knowledge,Coaching and Mentoring/Training,4th Quarter of 2025
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Process Management,Intermediate Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2025
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Program Monitoring and Evaluation,Basic Knowledge,Coaching and Mentoring/Training,4th Quarter of 2026
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Project Management,Basic Knowledge,Coaching and Mentoring/Training,4th Quarter of 2026
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Report Writing,Intermediate Knowledge,Coaching and Mentoring/Training,4th Quarter of 2026
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Social Media Management,Intermediate Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2025
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Training Design and Methodologies,Basic Knowledge,Coaching and Mentoring/Training,4th Quarter of 2026
+2303,Rhea Jude,A,Ferrer,Provincial Social Welfare and Development Office,Youth Development Officer I,Use of Monitoring and Evaluation Tools and Design and Mechanism Development,Basic Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2304,Girlie,G,Fronda,Provincial Social Welfare and Development Office,Admin Aide III/Houseparent,Attention to Details,Basic Knowledge,Training,3rd Quarter of 2026
+2304,Girlie,G,Fronda,Provincial Social Welfare and Development Office,Admin Aide III/Houseparent,Cleaning Tools Operation,Basic Knowledge,Coaching and Mentoring,2nd Quarter of 2027
+2304,Girlie,G,Fronda,Provincial Social Welfare and Development Office,Admin Aide III/Houseparent,Housekeeping,Intermediate Knowledge,Training,3rd Quarter of 2026
+2305,Jennifer,V,Garcia,Provincial Social Welfare and Development Office,Disability Affairs Officer IV,Personal Effectiveness,Intermediate Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2305,Jennifer,V,Garcia,Provincial Social Welfare and Development Office,Disability Affairs Officer IV,Project Management,Intermediate Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2305,Jennifer,V,Garcia,Provincial Social Welfare and Development Office,Disability Affairs Officer IV,Supervisory Skills,Intermediate Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2306,Jose Vincent,M,Malubag,Provincial Social Welfare and Development Office,Admin Aide IV, Written Communication Skills/Public Communication Skills,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2026
+2306,Jose Vincent,M,Malubag,Provincial Social Welfare and Development Office,Admin Aide IV,Advocacy Campaign Management,Advanced Knowledge,Training,4th Quarter of 2027
+2306,Jose Vincent,M,Malubag,Provincial Social Welfare and Development Office,Admin Aide IV,Building Maintenance,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2306,Jose Vincent,M,Malubag,Provincial Social Welfare and Development Office,Admin Aide IV,Management of Information System,Advanced Knowledge,Training,4th Quarter of 2027
+2306,Jose Vincent,M,Malubag,Provincial Social Welfare and Development Office,Admin Aide IV,Written Communication Skills/Public Communication Skills,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2307,Reina,R,Manipor,Provincial Social Welfare and Development Office,Day Care Worker I,Communication and Interpersonal Skills,Additional Knowledge,Training,4th Quarter of 2027
+2307,Reina,R,Manipor,Provincial Social Welfare and Development Office,Day Care Worker I,Operating Computer Skills,Additional Knowledge,Training,4th Quarter of 2027
+2307,Reina,R,Manipor,Provincial Social Welfare and Development Office,Day Care Worker I,Record and Supply Management Skills,Additional Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2307,Reina,R,Manipor,Provincial Social Welfare and Development Office,Day Care Worker I,Upgraded Skills in Teaching,Additional Knowledge,Training,4th Quarter of 2027
+2307,Reina,R,Manipor,Provincial Social Welfare and Development Office,Day Care Worker I,Written Communication Skills,Additional Knowledge,Training,4th Quarter of 2027
+2308,Jovelyn,C,Nazarita,Provincial Social Welfare and Development Office,Youth Development Officer I,Facilitation Skills,Intermediate Knowledge,Training,3rd Quarter of 2026
+2308,Jovelyn,C,Nazarita,Provincial Social Welfare and Development Office,Youth Development Officer I,Operating Computer Programs and Systems,Intermediate Knowledge,Training,4th Quarter of 2026
+2308,Jovelyn,C,Nazarita,Provincial Social Welfare and Development Office,Youth Development Officer I,Processing of Application Requirements,Intermediate Knowledge,Coaching and Mentoring,2nd Quarter of 2027
+2308,Jovelyn,C,Nazarita,Provincial Social Welfare and Development Office,Youth Development Officer I,Program Monitoring and Evaluation,Advanced Knowledge,Training,2nd Quarter of 2026
+2308,Jovelyn,C,Nazarita,Provincial Social Welfare and Development Office,Youth Development Officer I,Program and Project Management,Intermediate Knowledge,Training,3rd Quarter of 2026
+2308,Jovelyn,C,Nazarita,Provincial Social Welfare and Development Office,Youth Development Officer I,Records Management,Intermediate Knowledge,Training,4th Quarter of 2026
+2308,Jovelyn,C,Nazarita,Provincial Social Welfare and Development Office,Youth Development Officer I,Written Communication Skills,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2309,Maureen Joy,B,Nelmida,Provincial Social Welfare and Development Office,Project Evaluation Officer II,Facilitating Change and Innovation,Self-Assessment and Office Appraisal,Coaching and Mentoring/Training,3rd Quarter of 2025
+2309,Maureen Joy,B,Nelmida,Provincial Social Welfare and Development Office,Project Evaluation Officer II,Office Management and Secretariat Services,Self-Assessment and Office Appraisal,Coaching and Mentoring/Training,1st Quarter of 2026
+2309,Maureen Joy,B,Nelmida,Provincial Social Welfare and Development Office,Project Evaluation Officer II,Personal Effectiveness,Self-Assessment and Office Appraisal,Coaching and Mentoring/Training,2nd Quarter of 2024
+2309,Maureen Joy,B,Nelmida,Provincial Social Welfare and Development Office,Project Evaluation Officer II,Planning and Organizing,Self-Assessment and Office Appraisal,Coaching and Mentoring/Training,4th Quarter of 2024
+2309,Maureen Joy,B,Nelmida,Provincial Social Welfare and Development Office,Project Evaluation Officer II,Program and Project Management,Self-Assessment and Office Appraisal,Coaching and Mentoring/Training,3rd Quarter of 2024
+2309,Maureen Joy,B,Nelmida,Provincial Social Welfare and Development Office,Project Evaluation Officer II,Project Management,Self-Assessment and Office Appraisal,Coaching and Mentoring/Training,4th Quarter of 2024
+2309,Maureen Joy,B,Nelmida,Provincial Social Welfare and Development Office,Project Evaluation Officer II,Written Communication Skills,Self-Assessment and Office Appraisal,Coaching and Mentoring/Training,2nd Quarter of 2025
+2310,Ninia,F,Nicolas,Provincial Social Welfare and Development Office,Admin Assistant II,Developing Effective IEC Materials,Intermediate Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2024
+2310,Ninia,F,Nicolas,Provincial Social Welfare and Development Office,Admin Assistant II,Effective Writing and Communication Skills,Intermediate Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2024
+2310,Ninia,F,Nicolas,Provincial Social Welfare and Development Office,Admin Assistant II,Information Security and Management,Basic Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2024
+2310,Ninia,F,Nicolas,Provincial Social Welfare and Development Office,Admin Assistant II,Social Media Marketing and Advocacy Strategy,Intermediate Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2024
+2311,Romulo,M,Perez,Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Attention to Details,Basic Knowledge,Training,4th Quarter of 2026
+2311,Romulo,M,Perez,Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Communication Skills,Basic Knowledge,Job Immersion/Rotation,4th Quarter of 2026
+2311,Romulo,M,Perez,Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Driving Skills,Intermediate Knowledge,Training,3rd Quarter of 2026
+2311,Romulo,M,Perez,Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Knowledge on Traffic Rules and Regulations,Basic Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2311,Romulo,M,Perez,Provincial Social Welfare and Development Office,Administrative Aide III/Driver,Vehicle Repair and Maintenance,Basic Knowledge,Training,3rd Quarter of 2026
+2312,Amalia,P,Petrona,Provincial Social Welfare and Development Office,Administrative Aide III,Liaising Communications and Official Documents,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2312,Amalia,P,Petrona,Provincial Social Welfare and Development Office,Administrative Aide III,Operating Computer Programs and Systems,Intermediate Knowledge,Training,4th Quarter of 2026
+2312,Amalia,P,Petrona,Provincial Social Welfare and Development Office,Administrative Aide III,Processing Office Funds and Expenditures,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2313,Aroin,M,Salvador,Provincial Social Welfare and Development Office,Youth Development Officer II,Advocacy Campaign Management,Advanced Knowledge,Training,4th Quarter of 2027
+2313,Aroin,M,Salvador,Provincial Social Welfare and Development Office,Youth Development Officer II,Interpersonal Skill on Case Management,Advanced Knowledge,Training,4th Quarter of 2027
+2313,Aroin,M,Salvador,Provincial Social Welfare and Development Office,Youth Development Officer II,Operating Computer Programs and Systems,Intermediate Knowledge,Training,4th Quarter of 2027
+2313,Aroin,M,Salvador,Provincial Social Welfare and Development Office,Youth Development Officer II,Record and Supply Management Skills,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2313,Aroin,M,Salvador,Provincial Social Welfare and Development Office,Youth Development Officer II,Written Communication Skills/Public Communication Skills,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2314,Deanamy,C,Tablada,Provincial Social Welfare and Development Office,Manpower Development Assistant,"Monitoring and Evaluation, Documentation on Data Gathering",Intermediate Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2026
+2314,Deanamy,C,Tablada,Provincial Social Welfare and Development Office,Manpower Development Assistant,Networking,Intermediate Knowledge,Training,3rd Quarter of 2026
+2314,Deanamy,C,Tablada,Provincial Social Welfare and Development Office,Manpower Development Assistant,Provision of Training and Advocacy Activities,Intermediate Knowledge,Training,3rd Quarter of 2026
+2314,Deanamy,C,Tablada,Provincial Social Welfare and Development Office,Manpower Development Assistant,Records Management,Intermediate Knowledge,Training,3rd Quarter of 2026
+2314,Deanamy,C,Tablada,Provincial Social Welfare and Development Office,Manpower Development Assistant,Report Writing,Intermediate Knowledge,Training,3rd Quarter of 2026
+2314,Deanamy,C,Tablada,Provincial Social Welfare and Development Office,Manpower Development Assistant,Verbal and Written Communication,Intermediate Knowledge,Training,3rd Quarter of 2026
+2315,Merry Joy,C,Victorio,Provincial Social Welfare and Development Office,Statistician Aide,Facilitation Skills,Intermediate Knowledge,Training,3rd Quarter of 2026
+2315,Merry Joy,C,Victorio,Provincial Social Welfare and Development Office,Statistician Aide,Managing Communications,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2315,Merry Joy,C,Victorio,Provincial Social Welfare and Development Office,Statistician Aide,Operating Computer Programs and Systems,Intermediate Knowledge,Training,4th Quarter of 2026
+2315,Merry Joy,C,Victorio,Provincial Social Welfare and Development Office,Statistician Aide,Program and Project Management,Intermediate Knowledge,Training,3rd Quarter of 2026
+2315,Merry Joy,C,Victorio,Provincial Social Welfare and Development Office,Statistician Aide,Records Management,Intermediate Knowledge,Training,4th Quarter of 2026
+2315,Merry Joy,C,Victorio,Provincial Social Welfare and Development Office,Statistician Aide,Written Communication Skills,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2316,Faerie Angelique,,Vinluan,Provincial Social Welfare and Development Office,Social Welfare Officer II,Advocacy Campaign Management,Advanced Knowledge,Training,2nd Quarter of 2025
+2316,Faerie Angelique,,Vinluan,Provincial Social Welfare and Development Office,Social Welfare Officer II,Cash Management Skills,Advanced Knowledge,Training,4th Quarter of 2024
+2316,Faerie Angelique,,Vinluan,Provincial Social Welfare and Development Office,Social Welfare Officer II,Communication and Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2316,Faerie Angelique,,Vinluan,Provincial Social Welfare and Development Office,Social Welfare Officer II,Program and Project Management,Advanced Knowledge,Training,3rd Quarter of 2025
+2316,Faerie Angelique,,Vinluan,Provincial Social Welfare and Development Office,Social Welfare Officer II,Written Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2317,Jason,E,Arcelona,Provincial Social Welfare and Development Office,Administrative Aide,Liaising Communications and Official Documents,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2317,Jason,E,Arcelona,Provincial Social Welfare and Development Office,Administrative Aide,Operating Computer Programs and Systems,Basic Knowledge,Training,4th Quarter of 2026
+2317,Jason,E,Arcelona,Provincial Social Welfare and Development Office,Administrative Aide,Operation and Troubleshooting of Reproductive Machines,Basic Knowledge,Training,4th Quarter of 2025
+2317,Jason,E,Arcelona,Provincial Social Welfare and Development Office,Administrative Aide,Processing Office Funds and Expenditures,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2318,Nikon,S,Atuel,Provincial Social Welfare and Development Office,Administrative Aide/Driver,Attention to Details,Basic Knowledge,Training,4th Quarter of 2026
+2318,Nikon,S,Atuel,Provincial Social Welfare and Development Office,Administrative Aide/Driver,Driving Skills,Basic Knowledge,Training,3rd Quarter of 2026
+2318,Nikon,S,Atuel,Provincial Social Welfare and Development Office,Administrative Aide/Driver,Knowledge on Traffic Rules and Regulations,Basic Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2318,Nikon,S,Atuel,Provincial Social Welfare and Development Office,Administrative Aide/Driver,Vehicle Repair and Maintenance,Basic Knowledge,Training,3rd Quarter of 2026
+2319,Marcelo,A,"Bolasoc, Jr.",Provincial Social Welfare and Development Office,Administrative Aide,Attention to Details,Basic Knowledge,Training,3rd Quarter of 2026
+2319,Marcelo,A,"Bolasoc, Jr.",Provincial Social Welfare and Development Office,Administrative Aide,Cleaning Tools Operation,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2319,Marcelo,A,"Bolasoc, Jr.",Provincial Social Welfare and Development Office,Administrative Aide,Housekeeping,Basic Knowledge,Training,3rd Quarter of 2026
+2319,Marcelo,A,"Bolasoc, Jr.",Provincial Social Welfare and Development Office,Administrative Aide,Supplies Management,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2320,Rogielyn,S,Camacho,Provincial Social Welfare and Development Office,Administrative Aide,Managing Communications,Intermediate Knowledge,Coaching and Mentoring,1st Quarter of 2027
+2320,Rogielyn,S,Camacho,Provincial Social Welfare and Development Office,Administrative Aide,Operating Computer Programs and Systems,Basic Knowledge,Training,4th Quarter of 2026
+2320,Rogielyn,S,Camacho,Provincial Social Welfare and Development Office,Administrative Aide,Operation and Troubleshooting of Production Machines,Basic Knowledge,Training,4th Quarter of 2026
+2320,Rogielyn,S,Camacho,Provincial Social Welfare and Development Office,Administrative Aide,Written Communication Skills,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2321,Johannie,T,Casaclang,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk, Written Communication Skills/Public Communication Skills,Advanced Knowledge,Shadowing,4th Quarter of 2027
+2321,Johannie,T,Casaclang,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Interpersonal Skill on Case Management,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2321,Johannie,T,Casaclang,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Nursing Care Skills/House Parent Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2321,Johannie,T,Casaclang,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Operating Computer Programs and Systems,Advanced Knowledge,Training,4th Quarter of 2027
+2321,Johannie,T,Casaclang,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Record and Supply Management Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2322,Clifford,S,De Guzman,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Advocacy Campaign Management,Intermediate Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2322,Clifford,S,De Guzman,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Case Management Skills,Advanced Knowledge,Coaching and Mentoring/Training,4th Quarter of 2027
+2322,Clifford,S,De Guzman,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Computer Knowledge and Skills,Advanced Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2025
+2322,Clifford,S,De Guzman,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Delivering Excellent Results,Intermediate Knowledge,Training,4th Quarter of 2027
+2322,Clifford,S,De Guzman,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Personal Effectiveness,Intermediate Knowledge,Training,4th Quarter of 2027
+2322,Clifford,S,De Guzman,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Report Writing and Presentation Skills,Intermediate Knowledge,Coaching and Mentoring/Training,4th Quarter of 2027
+2323,Emelina,G,Fernandez,Provincial Social Welfare and Development Office,Administrative Aide,Managing Communications,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2323,Emelina,G,Fernandez,Provincial Social Welfare and Development Office,Administrative Aide,Operating Computer Programs and Systems,Basic Knowledge,Training,4th Quarter of 2026
+2323,Emelina,G,Fernandez,Provincial Social Welfare and Development Office,Administrative Aide,Processing Office Funds and Expenditures,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2323,Emelina,G,Fernandez,Provincial Social Welfare and Development Office,Administrative Aide,Written Communication Skills,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2324,John Reynan,I,Fernandez,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Cash Management Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2324,John Reynan,I,Fernandez,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Interpersonal Skill on Case Management,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2324,John Reynan,I,Fernandez,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Operating Computer Programs and Systems,Advanced Knowledge,Training,4th Quarter of 2027
+2324,John Reynan,I,Fernandez,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Program and Project Management,Advanced Knowledge,Training,4th Quarter of 2027
+2324,John Reynan,I,Fernandez,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Record and Supply Management Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2324,John Reynan,I,Fernandez,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Written Communication Skills/Public Communication Skills,Advanced Knowledge,Shadowing,4th Quarter of 2027
+2325,Joann,A,Garcia,Provincial Social Welfare and Development Office,Administrative Aide,Attention to Details,Basic Knowledge,Training,3rd Quarter of 2026
+2325,Joann,A,Garcia,Provincial Social Welfare and Development Office,Administrative Aide,Cleaning Tools Operation,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2325,Joann,A,Garcia,Provincial Social Welfare and Development Office,Administrative Aide,Housekeeping,Basic Knowledge,Training,3rd Quarter of 2026
+2325,Joann,A,Garcia,Provincial Social Welfare and Development Office,Administrative Aide,Supplies Management,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2326,Mary Antonette,M,Gil,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Managing Communications,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2326,Mary Antonette,M,Gil,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Operating Computer Programs and Systems,Advanced Knowledge,Training,4th Quarter of 2027
+2326,Mary Antonette,M,Gil,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Record and Supply Management Skills,Advanced Knowledge,Training,4th Quarter of 2027
+2326,Mary Antonette,M,Gil,Provincial Social Welfare and Development Office,Admin Aide/Office Clerk,Written Communication Skills/Public Communication Skills,Advanced Knowledge,Shadowing,4th Quarter of 2027
+2327,Christian Marc,N,Laure,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Advocacy Campaign Management,Intermediate Knowledge,Training,3rd Quarter of 2026
+2327,Christian Marc,N,Laure,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Case Management Skills,Intermediate Knowledge,Training,3rd Quarter of 2026
+2327,Christian Marc,N,Laure,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,"Monitoring and Evaluation, Documentation on Data Gathering",Intermediate Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2026
+2327,Christian Marc,N,Laure,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Program and Project Management,Intermediate Knowledge,Training,3rd Quarter of 2026
+2327,Christian Marc,N,Laure,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Records Management,Intermediate Knowledge,Training,3rd Quarter of 2026
+2327,Christian Marc,N,Laure,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Written Communication Skills/Public Communication Skills,Intermediate Knowledge,Coaching and Mentoring,3rd Quarter of 2026
+2328,Sherwin,B,Mayuga,Provincial Social Welfare and Development Office,Admin Aide/Psychometrician,Case Management Skills,Advanced Knowledge,Training,4th Quarter of 2024
+2328,Sherwin,B,Mayuga,Provincial Social Welfare and Development Office,Admin Aide/Psychometrician,Communication and Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2328,Sherwin,B,Mayuga,Provincial Social Welfare and Development Office,Admin Aide/Psychometrician,Program and Project Management,Advanced Knowledge,Training,3rd Quarter of 2025
+2328,Sherwin,B,Mayuga,Provincial Social Welfare and Development Office,Admin Aide/Psychometrician,Written Communication Skills on Case Management,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2024
+2329,Jean Venus,V,Olarte,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Case Management Skills,Advanced Knowledge,Training,4th Quarter of 2024
+2329,Jean Venus,V,Olarte,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Communication and Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2329,Jean Venus,V,Olarte,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Program and Project Management,Advanced Knowledge,Training,3rd Quarter of 2025
+2329,Jean Venus,V,Olarte,Provincial Social Welfare and Development Office,Admin Aide/Social Worker,Written Communication Skills on Case Management,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2024
+2330,Marvin,M,Perez,Provincial Social Welfare and Development Office,Admin Aide/Nurse,Case Management Skills,Basic Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2024
+2331,Genevev,M,Salazar,Provincial Social Welfare and Development Office,Administrative Aide,Advanced Computer Literacy,Basic Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2024
+2331,Genevev,M,Salazar,Provincial Social Welfare and Development Office,Administrative Aide,Effective Writing and Communication Skills,Basic Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2024
+2331,Genevev,M,Salazar,Provincial Social Welfare and Development Office,Administrative Aide,Records Management,Basic Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2024
+2332,Oliver,C,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Managing Communications,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2332,Oliver,C,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Operating Computer Programs and Systems,Intermediate Knowledge,Training,4th Quarter of 2026
+2332,Oliver,C,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Records Management,Intermediate Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2332,Oliver,C,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Written Communication Skills,Basic Knowledge,Coaching and Mentoring,3rd Quarter of 2027
+2333,Milva,P,Ycoy,Provincial Social Welfare and Development Office,Admin Aide/Houseparent,Attention to Details,Basic Knowledge,Training,3rd Quarter of 2026
+2333,Milva,P,Ycoy,Provincial Social Welfare and Development Office,Admin Aide/Houseparent,Cleaning Tools Operation,Basic Knowledge,Coaching and Mentoring,2nd Quarter of 2027
+2333,Milva,P,Ycoy,Provincial Social Welfare and Development Office,Admin Aide/Houseparent,Housekeeping,Intermediate Knowledge,Training,3rd Quarter of 2026
+2334,Ricalyn,A,Dalisay,Provincial Social Welfare and Development Office,Administrative Aide/Office Staff,Communication and Interpersonal Skills,Additional Knowledge,Training,4th Quarter of 2027
+2334,Ricalyn,A,Dalisay,Provincial Social Welfare and Development Office,Administrative Aide/Office Staff,Operating Computer Skills,Additional Knowledge,Training,4th Quarter of 2027
+2334,Ricalyn,A,Dalisay,Provincial Social Welfare and Development Office,Administrative Aide/Office Staff,Planning Skills in Teaching,Additional Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2334,Ricalyn,A,Dalisay,Provincial Social Welfare and Development Office,Administrative Aide/Office Staff,Upgraded Skills in Teaching,Additional Knowledge,Training,4th Quarter of 2027
+2335,Roel,S,Dela Cruz,Provincial Social Welfare and Development Office,Administrative Aide,Attention to Details,Basic Knowledge,Training,4th Quarter of 2026
+2335,Roel,S,Dela Cruz,Provincial Social Welfare and Development Office,Administrative Aide,Driving Skills,Basic Knowledge,Training,3rd Quarter of 2026
+2335,Roel,S,Dela Cruz,Provincial Social Welfare and Development Office,Administrative Aide,Housekeeping,Basic Knowledge,Training,3rd Quarter of 2026
+2335,Roel,S,Dela Cruz,Provincial Social Welfare and Development Office,Administrative Aide,Knowledge on Traffic Rules and Regulations,Basic Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2335,Roel,S,Dela Cruz,Provincial Social Welfare and Development Office,Administrative Aide,Vehicle Repair and Maintenance,Basic Knowledge,Training,3rd Quarter of 2026
+2336,Arnold,T,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Advanced Computer Literacy,Basic Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2024
+2336,Arnold,T,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Effective Communication Skills,Basic Knowledge,Coaching and Mentoring/Training,2nd Quarter of 2024
+2336,Arnold,T,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Effective Written Communication Skill,Basic Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2336,Arnold,T,Sison,Provincial Social Welfare and Development Office,Administrative Aide,Records Management,Basic Knowledge,Coaching and Mentoring/Training,3rd Quarter of 2024
+2337,Ma. Kian Camille,O,Vinluan,Provincial Social Welfare and Development Office,Administrative Aide/CCDC Teacher,Communication and Interpersonal Skills,Additional Knowledge,Training,4th Quarter of 2027
+2337,Ma. Kian Camille,O,Vinluan,Provincial Social Welfare and Development Office,Administrative Aide/CCDC Teacher,Operating Computer Skills,Additional Knowledge,Training,4th Quarter of 2027
+2337,Ma. Kian Camille,O,Vinluan,Provincial Social Welfare and Development Office,Administrative Aide/CCDC Teacher,Planning Skills in Teaching,Additional Knowledge,Coaching and Mentoring,4th Quarter of 2027
+2337,Ma. Kian Camille,O,Vinluan,Provincial Social Welfare and Development Office,Administrative Aide/CCDC Teacher,Upgraded Skills in Teaching,Additional Knowledge,Training,4th Quarter of 2027
+2338,Jonathan,L,Castro,Management Information Services Office,Administrative Officer III,Coaching and Feedbacking Skills,Additional Knowledge,Coaching and Mentoring,4th Quarter of 2024
+2338,Jonathan,L,Castro,Management Information Services Office,Administrative Officer III,Inspection and Monitoring of Procurements,Additional Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2339,Jayson,M,Aquino,Management Information Services Office,Administrative Assistant I,Internet Efficiency,Additional Knowledge,Training,1st Quarter of 2025
+2339,Jayson,M,Aquino,Management Information Services Office,Administrative Assistant I,Operating Computer Programs and Systems,Additional Knowledge,Training,4th Quarter of 2024
+2340,Sylvester,M,Guzon,Management Information Services Office,Administrative Assistant III,Internet Efficiency,Additional Knowledge,Training,1st Quarter of 2025
+2341,Oliver,V,Navarro,Management Information Services Office,Data Entry Machine Operator II,Internet Efficiency,Additional Knowledge,Training,1st Quarter of 2025
+2341,Oliver,V,Navarro,Management Information Services Office,Data Entry Machine Operator II,Operating Computer Programs and Systems,Additional Knowledge,Training,4th Quarter of 2024
+2342,Allan,M,Posadas,Management Information Services Office,Computer Programmer III,Systems Development,Additional Knowledge,Training,1st Quarter of 2025
+2343,Rolando,C,"Dizon, Jr.",Management Information Services Office,Administrative Aide/Technician,Internet Efficiency,Advanced Knowledge,Training,1st Quarter of 2025
+2343,Rolando,C,"Dizon, Jr.",Management Information Services Office,Administrative Aide/Technician,Operating Computer Programs and Systems,Advanced Knowledge,Training,4th Quarter of 2024
+2344,Corbeluz,S,Ferrer,Management Information Services Office,Admin Aide/Casual,Administrative Skills,Additional Knowledge,Coaching and Mentoring,4th Quarter of 2024
+2344,Corbeluz,S,Ferrer,Management Information Services Office,Admin Aide/Casual,Communication and Interpersonal Skills,Additional Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2345,Mark,L,Fernandez,Provincial Social Welfare and Development Office,Admin Aide/Computer Programmer,Systems Development,Advanced Knowledge,Training,1st Quarter of 2025
+2346,Karen Ler,C,Maramba,Management Information Services Office,Admin Aide/Casual,Communication and Interpersonal Skills,Basic Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2346,Karen Ler,C,Maramba,Management Information Services Office,Admin Aide/Casual,Records Management,Basic Knowledge,Training,4th Quarter of 2024
+2347,Bjorn,Y,Pinto,Management Information Services Office,Administrative Aide,Computer Knowledge and Skills,Advanced Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2347,Bjorn,Y,Pinto,Management Information Services Office,Administrative Aide,Management Innovation,Advanced Knowledge,Coaching and Mentoring/Training,1st Quarter of 2025
+2348,Jessabel,D,Valeza,Management Information Services Office,Admin Aide/Casual,Communication and Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2348,Jessabel,D,Valeza,Management Information Services Office,Admin Aide/Casual,Records Management,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2024
+2349,Marites,F,Bernardo,Management Information Services Office,Administrative Aide,Administrative Skills,Additional Knowledge,Coaching and Mentoring,4th Quarter of 2024
+2349,Marites,F,Bernardo,Management Information Services Office,Administrative Aide,Communication and Interpersonal Skills,Additional Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2350,Christian Mark,D,Espiritu,Management Information Services Office,Administrative Aide,Computer Knowledge and Skills,Advanced Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2350,Christian Mark,D,Espiritu,Management Information Services Office,Administrative Aide,Management Innovation,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2351,Ivan Wynn,M,Garcia,Management Information Services Office,Administrative Aide,Computer Knowledge and Skills,Advanced Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2351,Ivan Wynn,M,Garcia,Management Information Services Office,Administrative Aide,Management Innovation,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2352,Jeremie,F,Laguna,Management Information Services Office,Administrative Aide,Computer Knowledge and Skills,Advanced Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2352,Jeremie,F,Laguna,Management Information Services Office,Administrative Aide,Management Innovation,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2353,Gabriel Cedrick,C,Luacan,Management Information Services Office,Admin Aide/Computer Programmer,Systems Development,Advanced Knowledge,Training,1st Quarter of 2025
+2354,Arjel,M,Makiling,Management Information Services Office,Administrative Aide,Computer Knowledge and Skills,Advanced Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2354,Arjel,M,Makiling,Management Information Services Office,Administrative Aide,Management Innovation,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2355,John Heron,F,Mangilog,Management Information Services Office,Admin Aide/Computer Programmer,Systems Development,Advanced Knowledge,Training,1st Quarter of 2025
+2356,Zephaniah,DG,Sanico,Management Information Services Office,Administrative Aide,Computer Knowledge and Skills,Additional Knowledge,Coaching and Mentoring/Training,4th Quarter of 2024
+2356,Zephaniah,DG,Sanico,Management Information Services Office,Administrative Aide,Management Innovation,Additional Knowledge,Coaching and Mentoring,3rd Quarter of 2025
+2357,Movin Joseph,A,Singson,Management Information Services Office,Admin Aide/Computer Programmer,Systems Development,Additional Knowledge,Coaching and Mentoring/Training,1st Quarter of 2025
+2358,Ma. Richelle,M,Raguindan,Public Employment Services Office,PESO Department Head,Analytical Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2358,Ma. Richelle,M,Raguindan,Public Employment Services Office,PESO Department Head,Coordination Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2358,Ma. Richelle,M,Raguindan,Public Employment Services Office,PESO Department Head,Organizational Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2358,Ma. Richelle,M,Raguindan,Public Employment Services Office,PESO Department Head,Program and Project Management Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2359,Josephine,L,Bonifacio,Public Employment Services Office,Admin Officer V,Communication Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2359,Josephine,L,Bonifacio,Public Employment Services Office,Admin Officer V,Implementation Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2359,Josephine,L,Bonifacio,Public Employment Services Office,Admin Officer V,Managing Office Supplies and Resources,Advanced Knowledge,Training,1st Quarter of 2025
+2359,Josephine,L,Bonifacio,Public Employment Services Office,Admin Officer V,Managing Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2359,Josephine,L,Bonifacio,Public Employment Services Office,Admin Officer V,Monitoring Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2359,Josephine,L,Bonifacio,Public Employment Services Office,Admin Officer V,Report Writing and Presentation Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2360,Joan Paulyn,M,Patron,Public Employment Services Office,Labor and Employment Officer II,Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2360,Joan Paulyn,M,Patron,Public Employment Services Office,Labor and Employment Officer II,Coordination Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2360,Joan Paulyn,M,Patron,Public Employment Services Office,Labor and Employment Officer II,Operating Computer Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2360,Joan Paulyn,M,Patron,Public Employment Services Office,Labor and Employment Officer II,Records Management,Advanced Knowledge,Training,2nd Quarter of 2025
+2360,Joan Paulyn,M,Patron,Public Employment Services Office,Labor and Employment Officer II,Report Writing and Presentation Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2361,Vivian,T,Cruz,Public Employment Services Office,Admin Aide II,Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2361,Vivian,T,Cruz,Public Employment Services Office,Admin Aide II,Liaising Communications and Official Documents,Advanced Knowledge,Training,3rd Quarter of 2025
+2361,Vivian,T,Cruz,Public Employment Services Office,Admin Aide II,Managing Office Supplies and Resources,Advanced Knowledge,Training,2nd Quarter of 2025
+2361,Vivian,T,Cruz,Public Employment Services Office,Admin Aide II,Processing Office Funds and Expenditures,Advanced Knowledge,Training,1st Quarter of 2025
+2361,Vivian,T,Cruz,Public Employment Services Office,Admin Aide II,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2362,Peddy,C,Sanchez,Public Employment Services Office,Admin Aide I,Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2362,Peddy,C,Sanchez,Public Employment Services Office,Admin Aide I,Liaising Communications and Official Documents,Advanced Knowledge,Training,3rd Quarter of 2025
+2362,Peddy,C,Sanchez,Public Employment Services Office,Admin Aide I,Managing Office Supplies and Resources,Advanced Knowledge,Training,2nd Quarter of 2025
+2362,Peddy,C,Sanchez,Public Employment Services Office,Admin Aide I,Processing Office Funds and Expenditures,Advanced Knowledge,Training,1st Quarter of 2025
+2362,Peddy,C,Sanchez,Public Employment Services Office,Admin Aide I,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2363,Leilani,P,Manangan,Public Employment Services Office,Admin Aide I,Managing Client Request,Advanced Knowledge,Training,4th Quarter of 2025
+2363,Leilani,P,Manangan,Public Employment Services Office,Admin Aide I,Managing Communications,Advanced Knowledge,Training,2nd Quarter of 2025
+2363,Leilani,P,Manangan,Public Employment Services Office,Admin Aide I,Operating Computer Programs and Systems,Advanced Knowledge,Training,1st Quarter of 2025
+2363,Leilani,P,Manangan,Public Employment Services Office,Admin Aide I,Written Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2364,Ryan,T,Vicente,Public Employment Services Office,Admin Aide I/IT Staff,Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2364,Ryan,T,Vicente,Public Employment Services Office,Admin Aide I/IT Staff,Operating Computer Programs and Systems,Advanced Knowledge,Training,1st Quarter of 2025
+2364,Ryan,T,Vicente,Public Employment Services Office,Admin Aide I/IT Staff,Operation and Troubleshooting of Production Machines,Advanced Knowledge,Training,2nd Quarter of 2025
+2365,Rolando,L,Villanueva,Public Employment Services Office,Admin Aide/Office Staff,Communication Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2365,Rolando,L,Villanueva,Public Employment Services Office,Admin Aide/Office Staff,Coordination Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2365,Rolando,L,Villanueva,Public Employment Services Office,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2365,Rolando,L,Villanueva,Public Employment Services Office,Admin Aide/Office Staff,Records Management,Advanced Knowledge,Training,3rd Quarter of 2025
+2365,Rolando,L,Villanueva,Public Employment Services Office,Admin Aide/Office Staff,Report Writing and Presentation Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2366,Neriza,C,Cruz,Public Employment Services Office,Admin Aide/Office Clerk,Managing Client Request,Advanced Knowledge,Training,1st Quarter of 2025
+2366,Neriza,C,Cruz,Public Employment Services Office,Admin Aide/Office Clerk,Managing Communications,Advanced Knowledge,Training,3rd Quarter of 2025
+2366,Neriza,C,Cruz,Public Employment Services Office,Admin Aide/Office Clerk,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2366,Neriza,C,Cruz,Public Employment Services Office,Admin Aide/Office Clerk,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2366,Neriza,C,Cruz,Public Employment Services Office,Admin Aide/Office Clerk,Written Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2367,Gabriel Vincent,N,Cruz,Public Employment Services Office,Admin Aide/Office Staff,Managing Client Request,Advanced Knowledge,Training,1st Quarter of 2025
+2367,Gabriel Vincent,N,Cruz,Public Employment Services Office,Admin Aide/Office Staff,Managing Communications,Advanced Knowledge,Training,3rd Quarter of 2025
+2367,Gabriel Vincent,N,Cruz,Public Employment Services Office,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2367,Gabriel Vincent,N,Cruz,Public Employment Services Office,Admin Aide/Office Staff,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2367,Gabriel Vincent,N,Cruz,Public Employment Services Office,Admin Aide/Office Staff,Written Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2368,Ofelia,B,Anteneo,Public Employment Services Office,Admin Aide I,Attention to Details,Advanced Knowledge,Training,4th Quarter of 2025
+2368,Ofelia,B,Anteneo,Public Employment Services Office,Admin Aide I,Cleaning Tools Operation,Advanced Knowledge,Training,2nd Quarter of 2025
+2368,Ofelia,B,Anteneo,Public Employment Services Office,Admin Aide I,Housekeeping Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2368,Ofelia,B,Anteneo,Public Employment Services Office,Admin Aide I,Supplies Management,Advanced Knowledge,Training,4th Quarter of 2025
+2368,Ofelia,B,Anteneo,Public Employment Services Office,Admin Aide I,Waste Management Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2369,Reynald,M,Ulanday,Public Employment Services Office,Admin Aide/Messenger,Attention to Details,Advanced Knowledge,Training,2nd Quarter of 2025
+2369,Reynald,M,Ulanday,Public Employment Services Office,Admin Aide/Messenger,Cleaning Tools Operation,Advanced Knowledge,Training,3rd Quarter of 2025
+2369,Reynald,M,Ulanday,Public Employment Services Office,Admin Aide/Messenger,Housekeeping Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2369,Reynald,M,Ulanday,Public Employment Services Office,Admin Aide/Messenger,Liaising Communications and Official Documents,Advanced Knowledge,Training,1st Quarter of 2025
+2369,Reynald,M,Ulanday,Public Employment Services Office,Admin Aide/Messenger,Supplies Management,Advanced Knowledge,Training,1st Quarter of 2025
+2369,Reynald,M,Ulanday,Public Employment Services Office,Admin Aide/Messenger,Waste Management Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2370,Jay,T,Soriano,Public Employment Services Office,Admin Aide/Driver,Attention to Details,Advanced Knowledge,Training,4th Quarter of 2025
+2370,Jay,T,Soriano,Public Employment Services Office,Admin Aide/Driver,Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2370,Jay,T,Soriano,Public Employment Services Office,Admin Aide/Driver,Driving Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2370,Jay,T,Soriano,Public Employment Services Office,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations ,Advanced Knowledge,Training,2nd Quarter of 2025
+2370,Jay,T,Soriano,Public Employment Services Office,Admin Aide/Driver,Vehicle Repair and Maintenance,Advanced Knowledge,Training,3rd Quarter of 2025
+2371,Freddie,V,Vallarit,Public Employment Services Office,Admin Aide/Driver,Attention to Details,Advanced Knowledge,Training,4th Quarter of 2025
+2371,Freddie,V,Vallarit,Public Employment Services Office,Admin Aide/Driver,Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2371,Freddie,V,Vallarit,Public Employment Services Office,Admin Aide/Driver,Driving Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2371,Freddie,V,Vallarit,Public Employment Services Office,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Advanced Knowledge,Training,2nd Quarter of 2025
+2371,Freddie,V,Vallarit,Public Employment Services Office,Admin Aide/Driver,Vehicle Repair and Maintenance,Advanced Knowledge,Training,3rd Quarter of 2025
+2372,Meshach,A,Paulo,Public Employment Services Office,Admin Aide/Driver,Attention to Details,Advanced Knowledge,Training,4th Quarter of 2025
+2372,Meshach,A,Paulo,Public Employment Services Office,Admin Aide/Driver,Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2372,Meshach,A,Paulo,Public Employment Services Office,Admin Aide/Driver,Driving Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2372,Meshach,A,Paulo,Public Employment Services Office,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Advanced Knowledge,Training,2nd Quarter of 2025
+2372,Meshach,A,Paulo,Public Employment Services Office,Admin Aide/Driver,Vehicle Repair and Maintenance,Advanced Knowledge,Training,3rd Quarter of 2025
+2373,Aurelio,J,Pedeglorio,Public Employment Services Office,Admin Aide/Driver,Attention to Details,Advanced Knowledge,Training,4th Quarter of 2025
+2373,Aurelio,J,Pedeglorio,Public Employment Services Office,Admin Aide/Driver,Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2373,Aurelio,J,Pedeglorio,Public Employment Services Office,Admin Aide/Driver,Driving Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2373,Aurelio,J,Pedeglorio,Public Employment Services Office,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Advanced Knowledge,Training,2nd Quarter of 2025
+2373,Aurelio,J,Pedeglorio,Public Employment Services Office,Admin Aide/Driver,Vehicle Repair and Maintenance,Advanced Knowledge,Training,3rd Quarter of 2025
+2374,Orlando,G,Decena,Public Employment Services Office,Admin Aide/Driver,Attention to Details,Advanced Knowledge,Training,4th Quarter of 2025
+2374,Orlando,G,Decena,Public Employment Services Office,Admin Aide/Driver,Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2374,Orlando,G,Decena,Public Employment Services Office,Admin Aide/Driver,Driving Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2374,Orlando,G,Decena,Public Employment Services Office,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Advanced Knowledge,Training,2nd Quarter of 2025
+2374,Orlando,G,Decena,Public Employment Services Office,Admin Aide/Driver,Vehicle Repair and Maintenance,Advanced Knowledge,Training,3rd Quarter of 2025
+2375,Wilfreda,A,Vicente,Public Employment Services Office,Labor and Employment Officer III,Communication Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2375,Wilfreda,A,Vicente,Public Employment Services Office,Labor and Employment Officer III,Coordination Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2375,Wilfreda,A,Vicente,Public Employment Services Office,Labor and Employment Officer III,Interviewing Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2375,Wilfreda,A,Vicente,Public Employment Services Office,Labor and Employment Officer III,Monitoring Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2376,Rachel,S,Jose,Public Employment Services Office,Labor and Employment Officer III,Coordination Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2376,Rachel,S,Jose,Public Employment Services Office,Labor and Employment Officer III,Data Gathering Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2376,Rachel,S,Jose,Public Employment Services Office,Labor and Employment Officer III,Project Implementation,Advanced Knowledge,Training,4th Quarter of 2025
+2376,Rachel,S,Jose,Public Employment Services Office,Labor and Employment Officer III,Training Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2377,Melchor Geeby,B,De Leon,Public Employment Services Office,Labor and Employment Assistant ,Communication Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2377,Melchor Geeby,B,De Leon,Public Employment Services Office,Labor and Employment Assistant ,Coordination Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2377,Melchor Geeby,B,De Leon,Public Employment Services Office,Labor and Employment Assistant ,Interviewing Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2377,Melchor Geeby,B,De Leon,Public Employment Services Office,Labor and Employment Assistant ,Monitoring Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2378,Gildo,A,Baniqued,Public Employment Services Office,Admin Aide III,Communication Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2378,Gildo,A,Baniqued,Public Employment Services Office,Admin Aide III,Coordination Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2378,Gildo,A,Baniqued,Public Employment Services Office,Admin Aide III,Interviewing Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2378,Gildo,A,Baniqued,Public Employment Services Office,Admin Aide III,Monitoring Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2379,Junior,S,Cabacungan,Public Employment Services Office,Admin Aide,Cleaning Tools Operation,Advanced Knowledge,Training,4th Quarter of 2025
+2379,Junior,S,Cabacungan,Public Employment Services Office,Admin Aide,Communication and Interpersonal Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2379,Junior,S,Cabacungan,Public Employment Services Office,Admin Aide,Service Delivery,Advanced Knowledge,Training,1st Quarter of 2025
+2380,Roselromulo,P,Carrera,Public Employment Services Office,Admin Aide,Cleaning Tools Operation,Advanced Knowledge,Training,4th Quarter of 2025
+2380,Roselromulo,P,Carrera,Public Employment Services Office,Admin Aide,Communication and Interpersonal Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2380,Roselromulo,P,Carrera,Public Employment Services Office,Admin Aide,Managing Client Request,Advanced Knowledge,Training,1st Quarter of 2025
+2380,Roselromulo,P,Carrera,Public Employment Services Office,Admin Aide,Service Delivery,Advanced Knowledge,Training,2nd Quarter of 2025
+2381,Ma. Thea Divine,S,Sison,Public Employment Services Office,Admin Aide/Training Assistant,Managing Client Request,Advanced Knowledge,Training,1st Quarter of 2025
+2381,Ma. Thea Divine,S,Sison,Public Employment Services Office,Admin Aide/Training Assistant,Managing Communications,Advanced Knowledge,Training,3rd Quarter of 2025
+2381,Ma. Thea Divine,S,Sison,Public Employment Services Office,Admin Aide/Training Assistant,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2381,Ma. Thea Divine,S,Sison,Public Employment Services Office,Admin Aide/Training Assistant,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2381,Ma. Thea Divine,S,Sison,Public Employment Services Office,Admin Aide/Training Assistant,Written Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2382,Carl Stephen,O,Ochoco,Public Employment Services Office,Admin Aide,Managing Client Request,Advanced Knowledge,Training,1st Quarter of 2025
+2382,Carl Stephen,O,Ochoco,Public Employment Services Office,Admin Aide,Managing Communications,Advanced Knowledge,Training,3rd Quarter of 2025
+2382,Carl Stephen,O,Ochoco,Public Employment Services Office,Admin Aide,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2382,Carl Stephen,O,Ochoco,Public Employment Services Office,Admin Aide,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2382,Carl Stephen,O,Ochoco,Public Employment Services Office,Admin Aide,Written Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2383,Julius,E,Pasiliao,Public Employment Services Office,Admin Aide,Managing Communications and Client Request,Advanced Knowledge,Training,3rd Quarter of 2025
+2383,Julius,E,Pasiliao,Public Employment Services Office,Admin Aide,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2383,Julius,E,Pasiliao,Public Employment Services Office,Admin Aide,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2383,Julius,E,Pasiliao,Public Employment Services Office,Admin Aide,Written Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2384,Angelo,U,Mislang,Public Employment Services Office,Admin Officer IV,Decision Making and Problem Solving Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2384,Angelo,U,Mislang,Public Employment Services Office,Admin Officer IV,Effective Communication and Listening Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2384,Angelo,U,Mislang,Public Employment Services Office,Admin Officer IV,Effective Written Communication Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2384,Angelo,U,Mislang,Public Employment Services Office,Admin Officer IV,"Organizational, Management and Supervising Skills",Advanced Knowledge,Training,1st Quarter of 2025
+2384,Angelo,U,Mislang,Public Employment Services Office,Admin Officer IV,Records Management,Advanced Knowledge,Training,1st Quarter of 2025
+2384,Angelo,U,Mislang,Public Employment Services Office,Admin Officer IV,Strategic Planning Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2385,Virmhel Khristine,C,Vialu,Public Employment Services Office,Labor and Employment Assistant ,Managing Communications and Client Request,Advanced Knowledge,Training,4th Quarter of 2025
+2385,Virmhel Khristine,C,Vialu,Public Employment Services Office,Labor and Employment Assistant ,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2385,Virmhel Khristine,C,Vialu,Public Employment Services Office,Labor and Employment Assistant ,Preparation Report,Advanced Knowledge,Training,1st Quarter of 2025
+2385,Virmhel Khristine,C,Vialu,Public Employment Services Office,Labor and Employment Assistant ,Written Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2386,Rosemarie,A,Davis,Public Employment Services Office,Admin Aide/Office Staff,Managing Communications and Client Request,Advanced Knowledge,Training,3rd Quarter of 2025
+2386,Rosemarie,A,Davis,Public Employment Services Office,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2386,Rosemarie,A,Davis,Public Employment Services Office,Admin Aide/Office Staff,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2386,Rosemarie,A,Davis,Public Employment Services Office,Admin Aide/Office Staff,Written Communication Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2387,Christopher,L,Dioquino,Public Employment Services Office,Labor and Employment Officer I,Communication Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2387,Christopher,L,Dioquino,Public Employment Services Office,Labor and Employment Officer I,Coordination Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2387,Christopher,L,Dioquino,Public Employment Services Office,Labor and Employment Officer I,Interviewing Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2387,Christopher,L,Dioquino,Public Employment Services Office,Labor and Employment Officer I,Monitoring Skills,Advanced Knowledge,Training,4th Quarter of 2025
+2388,Marlita,M,Ignacio,Public Employment Services Office,Admin Aide I,Managing Communications and Client Request,Advanced Knowledge,Training,3rd Quarter of 2025
+2388,Marlita,M,Ignacio,Public Employment Services Office,Admin Aide I,Operating Computer Programs and Systems,Advanced Knowledge,Training,2nd Quarter of 2025
+2388,Marlita,M,Ignacio,Public Employment Services Office,Admin Aide I,Records Management,Advanced Knowledge,Training,4th Quarter of 2025
+2388,Marlita,M,Ignacio,Public Employment Services Office,Admin Aide I,Written Communication Skills,Advanced Knowledge,Training,1st Quarter of 2025
+2389,Milagros,P,Baltazar,Provincial Agriculture Office (Sta. Barbara),Senior Agriculturist,Extension Delivery Services,Requirement for the Position,Training,3rd Quarter of 2024
+2389,Milagros,P,Baltazar,Provincial Agriculture Office (Sta. Barbara),Senior Agriculturist,Program Monitoring and Evaluation,Advanced Knowledge,Training,2nd Quarter of 2025
+2389,Milagros,P,Baltazar,Provincial Agriculture Office (Sta. Barbara),Senior Agriculturist,Seedling Production and Maintenance,Advanced Knowledge,Training,1st Quarter of 2024
+2390,Rodel,B,Alan,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Extension Delivery Services,Advanced Knowledge,Training,4th Quarter of 2024
+2390,Rodel,B,Alan,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Seedling Production and Maintenance,Advanced Knowledge,Training,2nd Quarter of 2025
+2391,Fe,R,Agas,Provincial Agriculture Office (Sta. Barbara),Market Specialist,Extension Delivery Services,Advanced Knowledge,Training,2nd Quarter of 2025
+2391,Fe,R,Agas,Provincial Agriculture Office (Sta. Barbara),Market Specialist,Seedling Production and Maintenance,Advanced Knowledge,Training,4th Quarter of 2024
+2392,Rosalie,N,Peralta,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Extension Delivery Services,Advanced Knowledge,Training,2nd Quarter of 2025
+2392,Rosalie,N,Peralta,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Facilitation Skills,Advanced Knowledge,Training,4th Quarter of 2024
+2392,Rosalie,N,Peralta,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Seedling Production and Maintenance,Advanced Knowledge,Training,4th Quarter of 2024
+2393,Orlindo,H,Edolmo,Provincial Agriculture Office (Sta. Barbara),Aquaculturist I,Fisheries Extension Methodology,Skills Enhancement,Coaching and Mentoring,2nd Quarter of 2025
+2393,Orlindo,H,Edolmo,Provincial Agriculture Office (Sta. Barbara),Aquaculturist I,Managing Aquaculture Technology,Advanced Knowledge,Training,2nd Quarter of 2024
+2393,Orlindo,H,Edolmo,Provincial Agriculture Office (Sta. Barbara),Aquaculturist I,Technical Skills on Aquaculture Processing ,Advanced Knowledge,Training,2nd Quarter of 2024
+2394,Marlito,E,Fernandez,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Extension Delivery Services,Advanced Knowledge,Training,4th Quarter of 2024
+2394,Marlito,E,Fernandez,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Plant/Trees Care Maintenance,Advanced Knowledge,Training,2nd Quarter of 2024
+2394,Marlito,E,Fernandez,Provincial Agriculture Office (Sta. Barbara),Agriculturist I,Seedling Production and Maintenance,Advanced Knowledge,Workshop./Seminar,2nd Quarter of 2025
+2395,Raul,M,Bautista,Provincial Agriculture Office (Sta. Barbara),Agricultural Technologist,Extension Delivery Services,Advanced Knowledge,Training,2nd Quarter of 2025
+2395,Raul,M,Bautista,Provincial Agriculture Office (Sta. Barbara),Agricultural Technologist,Plant Nursery Operation and Maintenance,Advanced Knowledge,Training,4th Quarter of 2024
+2395,Raul,M,Bautista,Provincial Agriculture Office (Sta. Barbara),Agricultural Technologist,Seedling Production and Maintenance,Advanced Knowledge,Training,1st Quarter of 2024
+2396,Mark,DG,Lopez,Provincial Agriculture Office (Sta. Barbara),Agricultural Technologist,Extension Delivery Services,Advanced Knowledge,Training,4th Quarter of 2024
+2396,Mark,DG,Lopez,Provincial Agriculture Office (Sta. Barbara),Agricultural Technologist,Seedling Production and Maintenance,Advanced Knowledge,Workshop./Seminar,2nd Quarter of 2025
+2397,Manuel,U,Taluban,Provincial Agriculture Office (Sta. Barbara),Farm Supervisor,Plant/Trees Care Maintenance,Advanced Knowledge,Workshop./Seminar,2nd Quarter of 2024
+2397,Manuel,U,Taluban,Provincial Agriculture Office (Sta. Barbara),Farm Supervisor,Seedling Production and Maintenance,Advanced Knowledge,Workshop./Seminar,1st Quarter of 2024
+2398,Jupiter,C,Lalas,Provincial Agriculture Office (Sta. Barbara),Heavy Equipment Operator,Farm Equipment Repair and Maintenance,Advanced Knowledge,Training,2nd Quarter of 2025
+2398,Jupiter,C,Lalas,Provincial Agriculture Office (Sta. Barbara),Heavy Equipment Operator,Plant/Trees Care Maintenance,Advanced Knowledge,Training,2nd Quarter of 2024
+2398,Jupiter,C,Lalas,Provincial Agriculture Office (Sta. Barbara),Heavy Equipment Operator,Troubleshooting Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2399,Adolfo,E,Quirante,Provincial Agriculture Office (Sta. Barbara),Farm Foreman,Maintenance of Fishery Tools and other Materials,Advanced Knowledge,Training,4th Quarter of 2024
+2400,Miguel,C,"Francisco, III",Provincial Agriculture Office (Sta. Barbara),Farm Worker II,Plant/Trees Care Maintenance,Advanced Knowledge,Training,2nd Quarter of 2024
+2400,Miguel,C,"Francisco, III",Provincial Agriculture Office (Sta. Barbara),Farm Worker II,Seedling Production and Maintenance,Advanced Knowledge,Training,1st Quarter of 2024
+2401,Mark Hector,A,Jimenez,Provincial Agriculture Office (Sta. Barbara),Farm Worker II,Plant/Trees Care Maintenance,Advanced Knowledge,Training,2nd Quarter of 2025
+2401,Mark Hector,A,Jimenez,Provincial Agriculture Office (Sta. Barbara),Farm Worker II,Seedling Production and Maintenance,Advanced Knowledge,Workshop./Seminar,1st Quarter of 2024
+2402,Marvin,A,Yabut,Provincial Agriculture Office (Sta. Barbara),Farm Worker II,Plant/Trees Care Maintenance,Advanced Knowledge,Training,2nd Quarter of 2024
+2402,Marvin,A,Yabut,Provincial Agriculture Office (Sta. Barbara),Farm Worker II,Seedling Production and Maintenance,Advanced Knowledge,Training,1st Quarter of 2024
+2403,Julius,R,Guarin,Provincial Agriculture Office (Sta. Barbara),Farm Worker I,Plant/Trees Care Maintenance,Advanced Knowledge,Training,2nd Quarter of 2024
+2403,Julius,R,Guarin,Provincial Agriculture Office (Sta. Barbara),Farm Worker I,Seedling Production and Maintenance,Advanced Knowledge,Training,1st Quarter of 2024
+2404,Leonarda,L,Ortiz,Provincial Agriculture Office (Sta. Barbara),Admin Aide II,Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2024
+2404,Leonarda,L,Ortiz,Provincial Agriculture Office (Sta. Barbara),Admin Aide II,Processing Office Funds and Expenditures,Advanced Knowledge,Coaching and Mentoring,4th Quarter of 2024
+2404,Leonarda,L,Ortiz,Provincial Agriculture Office (Sta. Barbara),Admin Aide II,Records Management,Advanced Knowledge,Training,3rd Quarter of 2026
+2405,Efren,F,De Vera,Provincial Agriculture Office (Sta. Barbara),Fisheries Technologist,Managing Aquaculture Technology,Advanced Knowledge,Training,2nd Quarter of 2024
+2405,Efren,F,De Vera,Provincial Agriculture Office (Sta. Barbara),Fisheries Technologist,Technical Skills on Aquaculture Processing ,Advanced Knowledge,Training,4th Quarter of 2025
+2406,Eugenio,E,Padillo,Provincial Agriculture Office (Sta. Barbara),Admin Aide/Driver,Communication Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2406,Eugenio,E,Padillo,Provincial Agriculture Office (Sta. Barbara),Admin Aide/Driver,Driving Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2406,Eugenio,E,Padillo,Provincial Agriculture Office (Sta. Barbara),Admin Aide/Driver,Vehicle Repair and Maintenance,Advanced Knowledge,Training,4th Quarter of 2024
+2407,Ramy,P,Sison,Provincial Agriculture Office,Supervising Administrative Officer,Data Gathering Skills,Advanced Knowledge,Training,3rd Quarter of 2025
+2407,Ramy,P,Sison,Provincial Agriculture Office,Supervising Administrative Officer,Feasibility Study and Business Plan Preparation,Advanced Knowledge,Training,1st Quarter of 2025
+2407,Ramy,P,Sison,Provincial Agriculture Office,Supervising Administrative Officer,Fiscal Management and Budgeting,Advanced Knowledge,Training,2nd Quarter of 2025
+2407,Ramy,P,Sison,Provincial Agriculture Office,Supervising Administrative Officer,Operations and Business Plan Preparation,Advanced Knowledge,Training,4th Quarter of 2025
+2408,Rachelle Anne,D,Nicolas,Provincial Agriculture Office,Market Specialist I,Data Analysis Skills,Competency Gap,Training,1st Quarter of 2025
+2408,Rachelle Anne,D,Nicolas,Provincial Agriculture Office,Market Specialist I,Digital Marketing Skills,Competency Gap,Training,2nd Quarter of 2024
+2408,Rachelle Anne,D,Nicolas,Provincial Agriculture Office,Market Specialist I,Entrepreneurial Development,Competency Gap,Training,3rd Quarter of 2024
+2408,Rachelle Anne,D,Nicolas,Provincial Agriculture Office,Market Specialist I,Program and Project Management,Advanced Knowledge,Training,3rd Quarter of 2024
+2409,Lewelyn,R,Piol,Provincial Agriculture Office,Cooperative Development Specialist II,Cooperative Management Skills,Competency Gap,Training,1st Quarter of 2024
+2409,Lewelyn,R,Piol,Provincial Agriculture Office,Cooperative Development Specialist II,Entrepreneurial Development,Competency Gap,Training,2nd Quarter of 2024
+2409,Lewelyn,R,Piol,Provincial Agriculture Office,Cooperative Development Specialist II,Leadership Skills,Competency Gap,Training,1st Quarter of 2024
+2409,Lewelyn,R,Piol,Provincial Agriculture Office,Cooperative Development Specialist II,Program and Project Management Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2409,Lewelyn,R,Piol,Provincial Agriculture Office,Cooperative Development Specialist II,Supervisory Skills,Competency Gap,Training,2nd Quarter of 2024
+2410,Barnette,M,Carranza,Provincial Agriculture Office,Market Specialist I,Data Analysis Skills,Competency Gap,Training,1st Quarter of 2024
+2410,Barnette,M,Carranza,Provincial Agriculture Office,Market Specialist I,Digital Marketing Skills,Competency Gap,Training,2nd Quarter of 2024
+2410,Barnette,M,Carranza,Provincial Agriculture Office,Market Specialist I,Entrepreneurial Development,Competency Gap,Training,1st Quarter of 2024
+2410,Barnette,M,Carranza,Provincial Agriculture Office,Market Specialist I,Leadership Skills,Competency Gap,Training,1st Quarter of 2025
+2410,Barnette,M,Carranza,Provincial Agriculture Office,Market Specialist I,Program and Project Management Skills,,Training,3rd Quarter of 2024
+2411,Dominga,A,Fawayan,Provincial Agriculture Office,Home Management Specialist II,Entrepreneurial Development,Competency Gap,Training,1st Quarter of 2025
+2411,Dominga,A,Fawayan,Provincial Agriculture Office,Home Management Specialist II,Leadership Skills,Competency Gap,Training,2nd Quarter of 2024
+2411,Dominga,A,Fawayan,Provincial Agriculture Office,Home Management Specialist II,Product Development,Competency Gap,Training,1st Quarter of 2024
+2411,Dominga,A,Fawayan,Provincial Agriculture Office,Home Management Specialist II,Program and Project Management,Advanced Knowledge,Training,3rd Quarter of 2024
+2411,Dominga,A,Fawayan,Provincial Agriculture Office,Home Management Specialist II,Supervisory Skills,Competency Gap,Training,2nd Quarter of 2025
+2412,Dahlia,F,Domantay,Provincial Agriculture Office,Home Management Specialist I,Communication Skills,Competency Gap,Training,2nd Quarter of 2025
+2412,Dahlia,F,Domantay,Provincial Agriculture Office,Home Management Specialist I,Entrepreneurial Development,Competency Gap,Training,1st Quarter of 2025
+2412,Dahlia,F,Domantay,Provincial Agriculture Office,Home Management Specialist I,Leadership Skills,Competency Gap,Training,2nd Quarter of 2024
+2412,Dahlia,F,Domantay,Provincial Agriculture Office,Home Management Specialist I,Product Development,Competency Gap,Training,1st Quarter of 2024
+2412,Dahlia,F,Domantay,Provincial Agriculture Office,Home Management Specialist I,Program and Project Management Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2413,Vilma,P,Bustamante,Provincial Agriculture Office,Home Management Specialist I,Communication Skills,Competency Gap,Training,2nd Quarter of 2025
+2413,Vilma,P,Bustamante,Provincial Agriculture Office,Home Management Specialist I,Entrepreneurial Development,Competency Gap,Training,1st Quarter of 2025
+2413,Vilma,P,Bustamante,Provincial Agriculture Office,Home Management Specialist I,Leadership Skills,Competency Gap,Training,2nd Quarter of 2024
+2413,Vilma,P,Bustamante,Provincial Agriculture Office,Home Management Specialist I,Product Development,Competency Gap,Training,1st Quarter of 2024
+2413,Vilma,P,Bustamante,Provincial Agriculture Office,Home Management Specialist I,Program and Project Management Skills,Advanced Knowledge,Training,3rd Quarter of 2024
+2414,Nicanor,S,Rovillos,Provincial Agriculture Office,Agriculturist II,Feasibility Study and Business Plan Preparation,Advanced Knowledge,Training,4th Quarter of 2025
+2414,Nicanor,S,Rovillos,Provincial Agriculture Office,Agriculturist II,Modern Dairy Technologies Skills,Advanced Knowledge,Training,4th Quarter of 2024
+2414,Nicanor,S,Rovillos,Provincial Agriculture Office,Agriculturist II,Project Monitoring-Linkaging and Networking,Advanced Knowledge,Training,1st Quarter of 2026
+2414,Nicanor,S,Rovillos,Provincial Agriculture Office,Agriculturist II,Supervisory Skills,Advanced Knowledge,Training,4th Quarter of 2026
+2415,Sheryl,T,Dumaguin,Provincial Agriculture Office,Admin Aide/Office Staff,Housekeeping,Advanced Knowledge,Training,2nd Quarter of 2025
+2415,Sheryl,T,Dumaguin,Provincial Agriculture Office,Admin Aide/Office Staff,Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2415,Sheryl,T,Dumaguin,Provincial Agriculture Office,Admin Aide/Office Staff,Records Management,Advanced Knowledge,Training,3rd Quarter of 2024
+2416,Agnes,D,Callorina,Provincial Agriculture Office,Admin Aide/Office Staff,Housekeeping Skills,Advanced Knowledge,Training,1st Quarter of 2024
+2416,Agnes,D,Callorina,Provincial Agriculture Office,Admin Aide/Office Staff,Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2024
+2416,Agnes,D,Callorina,Provincial Agriculture Office,Admin Aide/Office Staff,Records Management,Advanced Knowledge,Training,1st Quarter of 2025
+2416,Agnes,D,Callorina,Provincial Agriculture Office,Admin Aide/Office Staff,Time Management Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2417,Patrick Erwin,M,Carino,Provincial Agriculture Office,Admin Aide/Office Clerk,Attention to Details,Advanced Knowledge,Training,1st Quarter of 2024
+2417,Patrick Erwin,M,Carino,Provincial Agriculture Office,Admin Aide/Office Clerk,Communication Skills,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2025
+2417,Patrick Erwin,M,Carino,Provincial Agriculture Office,Admin Aide/Office Clerk,Housekeeping Skills,Advanced Knowledge,Training,1st Quarter of 2026
+2417,Patrick Erwin,M,Carino,Provincial Agriculture Office,Admin Aide/Office Clerk,Interpersonal Skills,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2024
+2417,Patrick Erwin,M,Carino,Provincial Agriculture Office,Admin Aide/Office Clerk,Records Management,Advanced Knowledge,Training,3rd Quarter of 2024
+2417,Patrick Erwin,M,Carino,Provincial Agriculture Office,Admin Aide/Office Clerk,Time Management Skills,Advanced Knowledge,Training,2nd Quarter of 2025
+2417,Patrick Erwin,M,Carino,Provincial Agriculture Office,Admin Aide/Office Clerk,Updating and Maintaining Records and System,Advanced Knowledge,Training,2nd Quarter of 2025
+2418,Jenny,B,Moreno,Provincial Agriculture Office,Admin Aide/Farm Worker,Cleaning Tools Operation,Advanced Knowledge,Training,2nd Quarter of 2025
+2418,Jenny,B,Moreno,Provincial Agriculture Office,Admin Aide/Farm Worker,Housekeeping Skills,Advanced Knowledge,Training,1st Quarter of 2024
+2418,Jenny,B,Moreno,Provincial Agriculture Office,Admin Aide/Farm Worker,Managing Office Supplies and Resources,Advanced Knowledge,Training,2nd Quarter of 2024
+2418,Jenny,B,Moreno,Provincial Agriculture Office,Admin Aide/Farm Worker,Waste Management Skills,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2025
+2419,Leticia,V,Pontoy,Provincial Agriculture Office,Senior Agriculturist,Program Monitoring and Evaluation,Competency Gap,Training,1st Quarter of 2026
+2420,Christopher,A,Milano,Provincial Agriculture Office,Admin Aide/Driver,Attention to Details,Competency Gap,Coaching and Mentoring,4th Quarter of 2024
+2420,Christopher,A,Milano,Provincial Agriculture Office,Admin Aide/Driver,Driving Skills,Competency Gap,Training,1st Quarter of 2025
+2420,Christopher,A,Milano,Provincial Agriculture Office,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Competency Gap,Training,4th Quarter of 2025
+2420,Christopher,A,Milano,Provincial Agriculture Office,Admin Aide/Driver,Vehicle Repair and Maintenance,Competency Gap,Training,1st Quarter of 2025
+2421,Andy,D,Rusillon,Provincial Agriculture Office,Admin Aide/Farm Worker,Cleaning Tools Operation,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2421,Andy,D,Rusillon,Provincial Agriculture Office,Admin Aide/Farm Worker,Housekeeping Skills,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2421,Andy,D,Rusillon,Provincial Agriculture Office,Admin Aide/Farm Worker,Plant/Trees Care Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2421,Andy,D,Rusillon,Provincial Agriculture Office,Admin Aide/Farm Worker,Seedling Production and Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2422,Digna,G,Losala,Provincial Agriculture Office,Home Management Specialist I,Communication Skills,Competency Gap,Training,1st Quarter of 2025
+2422,Digna,G,Losala,Provincial Agriculture Office,Home Management Specialist I,Interpersonal Skills,Competency Gap,Training,1st Quarter of 2025
+2422,Digna,G,Losala,Provincial Agriculture Office,Home Management Specialist I,Managing Client Feedback,Competency Gap,Training,1st Quarter of 2025
+2422,Digna,G,Losala,Provincial Agriculture Office,Home Management Specialist I,Waste Management Skills,Competency Gap,Training,1st Quarter of 2025
+2423,Rolando,M,Valiente,Provincial Agriculture Office,Farm Foreman,Cleaning Tools Operation,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2423,Rolando,M,Valiente,Provincial Agriculture Office,Farm Foreman,Housekeeping Skills,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2423,Rolando,M,Valiente,Provincial Agriculture Office,Farm Foreman,Plant/Trees Care Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2423,Rolando,M,Valiente,Provincial Agriculture Office,Farm Foreman,Seedling Production and Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2424,Agustin,R,Sibayan,Provincial Agriculture Office,Farm Foreman,Cleaning Tools Operation,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2424,Agustin,R,Sibayan,Provincial Agriculture Office,Farm Foreman,Housekeeping Skills,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2424,Agustin,R,Sibayan,Provincial Agriculture Office,Farm Foreman,Plant/Trees Care Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2424,Agustin,R,Sibayan,Provincial Agriculture Office,Farm Foreman,Seedling Production and Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2425,Ronald,W,Juliano,Provincial Agriculture Office,Farm Worker I,Cleaning Tools Operation,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2425,Ronald,W,Juliano,Provincial Agriculture Office,Farm Worker I,Housekeeping Skills,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2425,Ronald,W,Juliano,Provincial Agriculture Office,Farm Worker I,Plant/Trees Care Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2425,Ronald,W,Juliano,Provincial Agriculture Office,Farm Worker I,Seedling Production and Maintenance,Competency Gap,Coaching and Mentoring,1st Quarter of 2025
+2426,Raymund,C,Cacayurin,Provincial Agriculture Office,Aquaculturist II,Managing Aquaculture Technology,Competency Gap,Training,4th Quarter of 2024
+2426,Raymund,C,Cacayurin,Provincial Agriculture Office,Aquaculturist II,Project Monitoring-Linkaging and Networking,Competency Gap,Training,4th Quarter of 2024
+2426,Raymund,C,Cacayurin,Provincial Agriculture Office,Aquaculturist II,Technical Skills on Aquaculture Processing ,Competency Gap,Training,4th Quarter of 2025
+2427,Samson,N,Cabe,Provincial Agriculture Office,Agriculturist I,Extension Delivery Services,Competency Gap,Training,4th Quarter of 2024
+2427,Samson,N,Cabe,Provincial Agriculture Office,Agriculturist I,Project Monitoring-Linkaging and Networking,Competency Gap,Training,4th Quarter of 2024
+2427,Samson,N,Cabe,Provincial Agriculture Office,Agriculturist I,Technical Skills on Aquaculture Processing ,Competency Gap,Training,4th Quarter of 2025
+2428,Lorenzo,M,Leal,Provincial Agriculture Office,Agriculturist II,Extension Delivery Services,Competency Gap,Training,4th Quarter of 2024
+2428,Lorenzo,M,Leal,Provincial Agriculture Office,Agriculturist II,Project Monitoring-Linkaging and Networking,Competency Gap,Training,4th Quarter of 2024
+2429,Elpidio,A,Ignacio,Provincial Agriculture Office,Agricultural Technologist,Extension Delivery Services,Competency Gap,Training,4th Quarter of 2024
+2429,Elpidio,A,Ignacio,Provincial Agriculture Office,Agricultural Technologist,Project Monitoring-Linkaging and Networking,Competency Gap,Training,4th Quarter of 2024
+2430,Roselyn,N,Gonzales,Provincial Agriculture Office,Admin Aide/Agriculturist,Extension Delivery Services,Competency Gap,Training,4th Quarter of 2025
+2430,Roselyn,N,Gonzales,Provincial Agriculture Office,Admin Aide/Agriculturist,Records Management,Competency Gap,Training,1st Quarter of 2025
+2431,Efrel John,B,Alejo,Provincial Agriculture Office,Admin Aide/Agriculturist,Extension Delivery Services,Competency Gap,Training,4th Quarter of 2025
+2431,Efrel John,B,Alejo,Provincial Agriculture Office,Admin Aide/Agriculturist,Records Management,Competency Gap,Training,1st Quarter of 2025
+2432,Yvan Lee,M,Lopez,Provincial Agriculture Office,Admin Aide/Aquaculturist,Records Management,Competency Gap,Training,1st Quarter of 2025
+2432,Yvan Lee,M,Lopez,Provincial Agriculture Office,Admin Aide/Aquaculturist,Technical Skills on Aquaculture Processing ,Competency Gap,Training,4th Quarter of 2025
+2433,Renante,T,Esperanzate,Provincial Agriculture Office,Farm Worker II,Records Management,Competency Gap,Training,1st Quarter of 2025
+2433,Renante,T,Esperanzate,Provincial Agriculture Office,Farm Worker II,Technical Skills on Aquaculture Processing ,Competency Gap,Training,4th Quarter of 2025
+2434,Cornelia,N,Delos Santos,Provincial Agriculture Office (Dasol),Agricultural Center Chief II,Project Monitoring-Linkaging and Networking,Advanced Knowledge,Training,4th Quarter of 2026
+2435,Ronna,P,Frianeza,Provincial Agriculture Office (Dasol),Agriculturist II,Extension Delivery Services,Competency Gap,Training,2nd Quarter of 2025
+2436,Rolan,D,Martinez,Provincial Agriculture Office (Dasol),Agriculturist II,Extension Delivery Services,Competency Gap,Training,2nd Quarter of 2025
+2437,Michael Nino,T,Rocas,Provincial Agriculture Office (Dasol),Agricultural Technologist,Extension Delivery Services,Competency Gap,Training,2nd Quarter of 2025
+2438,Marjorie,L,Ednacot,Provincial Agriculture Office (Dasol),Aquaculturist I,Managing Aquaculture Demo Project,Competency Gap,Training,2nd Quarter of 2025
+2438,Marjorie,L,Ednacot,Provincial Agriculture Office (Dasol),Aquaculturist I,Mangrove Seedling Production,Competency Gap,Training,1st Quarter of 2025
+2438,Marjorie,L,Ednacot,Provincial Agriculture Office (Dasol),Aquaculturist I,Project Monitoring-Linkaging and Networking,Competency Gap,Training,4th Quarter of 2026
+2438,Marjorie,L,Ednacot,Provincial Agriculture Office (Dasol),Aquaculturist I,Technical Skills on Aquaculture Processing ,Competency Gap,Training,2nd Quarter of 2026
+2439,Ricky,DG,Manaois,Provincial Agriculture Office (Dasol),Aquaculturist I,Managing Aquaculture Demo Project,Advanced Knowledge,Training,2nd Quarter of 2025
+2439,Ricky,DG,Manaois,Provincial Agriculture Office (Dasol),Aquaculturist I,Mangrove Seedling Production,Competency Gap,Training,1st Quarter of 2025
+2439,Ricky,DG,Manaois,Provincial Agriculture Office (Dasol),Aquaculturist I,Project Monitoring-Linkaging and Networking,Advanced Knowledge,Training,4th Quarter of 2025
+2439,Ricky,DG,Manaois,Provincial Agriculture Office (Dasol),Aquaculturist I,Technical Skills on Aquaculture Processing ,Advanced Knowledge,Training,2nd Quarter of 2026
+2440,Federico,G,"De Guzman, Jr.",Provincial Agriculture Office (Dasol),Admin Aide I,Plant/Trees Care Maintenance,Competency Gap,Training,4th Quarter of 2025
+2440,Federico,G,"De Guzman, Jr.",Provincial Agriculture Office (Dasol),Admin Aide I,Seedling Production and Maintenance,Competency Gap,Training,2nd Quarter of 2025

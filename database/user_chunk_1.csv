@@ -1,0 +1,490 @@
+Employee_ID,First_Name,Middle_Initial,Last_Name,Office,Position,Learning_Needs,Basis_Learning,Proposed_Action,Target_Schedule
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Attention to Details,Advanced Knowledge,PJICE,3rd Quarter of 2026
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,1st Quarter of 2026
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Managing Client Request,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2024
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Monitoring of Inmates,Advanced Knowledge,PJICE,4th Quarter of 2026
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Report Writing,Advanced Knowledge,PJICE,1st Quarter of 2025
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Report Writing,Advanced Knowledge,PJICE,2nd Quarter of 2026
+1,Vincent,SC,Arcelona,Pangasinan Provincial Jail,Prison Guard III,Written Communication Skills,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+2,Antonio,DR.,Santos,Pangasinan Provincial Jail,Admin Assistant III,Inspection and Monitoring of Procurements,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2025
+2,Antonio,DR.,Santos,Pangasinan Provincial Jail,Admin Assistant III,Monitoring of Procurements,Advanced Knowledge,Lecture,2nd Quarter of 2025
+2,Antonio,DR.,Santos,Pangasinan Provincial Jail,Admin Assistant III,Processing Office Funds and Expenditures,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2025
+2,Antonio,DR.,Santos,Pangasinan Provincial Jail,Admin Assistant III,Processing Office Funds and Expenditures,Advanced Knowledge,Lecture,1st Quarter of 2024
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Attention to Details,Advanced Knowledge,PJICE,3rd Quarter of 2026
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,1st Quarter of 2026
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Monitoring of Inmates,Advanced Knowledge,PJICE,4th Quarter of 2026
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+3,Reynante,C,Cabic,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Lecture/PJICE,2nd Quarter of 2026
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,3rd Quarter of 2026
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,3rd Quarter of 2025
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,1st Quarter of 2026
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,4th Quarter of 2026
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+4,Ariel,S,Caldito,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,PJICE,2nd Quarter of 2026
+5,Randy,S,Cruz,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+5,Randy,S,Cruz,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+5,Randy,S,Cruz,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+5,Randy,S,Cruz,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+5,Randy,S,Cruz,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+5,Randy,S,Cruz,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+6,Jeleasar,A,De Guzman,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+6,Jeleasar,A,De Guzman,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+7,Alvin Arnel,C,De Pedro,Pangasinan Provincial Jail,Prison Guard II,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+7,Alvin Arnel,C,De Pedro,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+7,Alvin Arnel,C,De Pedro,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+7,Alvin Arnel,C,De Pedro,Pangasinan Provincial Jail,Prison Guard II,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+7,Alvin Arnel,C,De Pedro,Pangasinan Provincial Jail,Prison Guard II,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+7,Alvin Arnel,C,De Pedro,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+8,Jojo,R,Diaz,Pangasinan Provincial Jail,Security Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+8,Jojo,R,Diaz,Pangasinan Provincial Jail,Security Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+8,Jojo,R,Diaz,Pangasinan Provincial Jail,Security Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+8,Jojo,R,Diaz,Pangasinan Provincial Jail,Security Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+8,Jojo,R,Diaz,Pangasinan Provincial Jail,Security Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+8,Jojo,R,Diaz,Pangasinan Provincial Jail,Security Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+9,Goldwyn Allan,C,Fernandez,Pangasinan Provincial Jail,Prison Guard II,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+9,Goldwyn Allan,C,Fernandez,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+9,Goldwyn Allan,C,Fernandez,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+9,Goldwyn Allan,C,Fernandez,Pangasinan Provincial Jail,Prison Guard II,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+9,Goldwyn Allan,C,Fernandez,Pangasinan Provincial Jail,Prison Guard II,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+9,Goldwyn Allan,C,Fernandez,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+10,Onofre,A,"Fernandez, Jr.",Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+10,Onofre,A,"Fernandez, Jr.",Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+10,Onofre,A,"Fernandez, Jr.",Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+10,Onofre,A,"Fernandez, Jr.",Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+10,Onofre,A,"Fernandez, Jr.",Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,Demonstration,1st Quarter of 2025
+10,Onofre,A,"Fernandez, Jr.",Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+10,Onofre,A,"Fernandez, Jr.",Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,PJICE,1st Quarter of 2025
+11,Pepito,V,Francisco,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+11,Pepito,V,Francisco,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+11,Pepito,V,Francisco,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+11,Pepito,V,Francisco,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+11,Pepito,V,Francisco,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+11,Pepito,V,Francisco,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+12,Ferdinand,P,Frias,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+12,Ferdinand,P,Frias,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+13,Juan Victor,P,Gutierrez,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+13,Juan Victor,P,Gutierrez,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+13,Juan Victor,P,Gutierrez,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+13,Juan Victor,P,Gutierrez,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+13,Juan Victor,P,Gutierrez,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+13,Juan Victor,P,Gutierrez,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+14,Marcial,Z,Lavarias,Pangasinan Provincial Jail,Security Guard I,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+14,Marcial,Z,Lavarias,Pangasinan Provincial Jail,Security Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+14,Marcial,Z,Lavarias,Pangasinan Provincial Jail,Security Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+14,Marcial,Z,Lavarias,Pangasinan Provincial Jail,Security Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+14,Marcial,Z,Lavarias,Pangasinan Provincial Jail,Security Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+14,Marcial,Z,Lavarias,Pangasinan Provincial Jail,Security Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+14,Marcial,Z,Lavarias,Pangasinan Provincial Jail,Security Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+15,Marcelo,R,Lopez,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+15,Marcelo,R,Lopez,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+15,Marcelo,R,Lopez,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+15,Marcelo,R,Lopez,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+15,Marcelo,R,Lopez,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+15,Marcelo,R,Lopez,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+16,Anacleto,M,Manuel,Pangasinan Provincial Jail,Admin Aide I,Attention to Details,Succession Planning,Lecture,1st Quarter of 2025
+16,Anacleto,M,Manuel,Pangasinan Provincial Jail,Admin Aide I,Clearing Tools Operation,Succession Planning,Lecture,1st Quarter of 2025
+16,Anacleto,M,Manuel,Pangasinan Provincial Jail,Admin Aide I,Housekeeping,Succession Planning,Lecture,1st Quarter of 2025
+16,Anacleto,M,Manuel,Pangasinan Provincial Jail,Admin Aide I,Supplies Management,Advanced Knowledge,Lecture,3rd Quarter of 2024
+16,Anacleto,M,Manuel,Pangasinan Provincial Jail,Admin Aide I,Supplies Management,Succession Planning,Lecture,1st Quarter of 2025
+16,Anacleto,M,Manuel,Pangasinan Provincial Jail,Admin Aide I,Waste Management,Advanced Knowledge,Lecture,2nd Quarter of 2025
+16,Anacleto,M,Manuel,Pangasinan Provincial Jail,Admin Aide I,Waste Management,Succession Planning,Lecture,1st Quarter of 2025
+17,Joy,M,Mondero,Pangasinan Provincial Jail,Prison Guard II,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+17,Joy,M,Mondero,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+17,Joy,M,Mondero,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+17,Joy,M,Mondero,Pangasinan Provincial Jail,Prison Guard II,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+17,Joy,M,Mondero,Pangasinan Provincial Jail,Prison Guard II,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+17,Joy,M,Mondero,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+18,Joey,G,Padilla,Pangasinan Provincial Jail,Prison Guard II,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+18,Joey,G,Padilla,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+18,Joey,G,Padilla,Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+18,Joey,G,Padilla,Pangasinan Provincial Jail,Prison Guard II,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+18,Joey,G,Padilla,Pangasinan Provincial Jail,Prison Guard II,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+18,Joey,G,Padilla,Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+19,Randy,T,Rivera,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+19,Randy,T,Rivera,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+19,Randy,T,Rivera,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+19,Randy,T,Rivera,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+19,Randy,T,Rivera,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+19,Randy,T,Rivera,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+20,Henry,D,San Jose,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+20,Henry,D,San Jose,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+20,Henry,D,San Jose,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+20,Henry,D,San Jose,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+20,Henry,D,San Jose,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+20,Henry,D,San Jose,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Lecture,1st Quarter of 2025
+21,Emma,P,Sison,Pangasinan Provincial Jail,Admin Aide IV,Managing Client Request,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2024
+21,Emma,P,Sison,Pangasinan Provincial Jail,Admin Aide IV,Managing Client Request,Advanced Knowledge,Lecture,2nd Quarter of 2025
+21,Emma,P,Sison,Pangasinan Provincial Jail,Admin Aide IV,Managing Communications,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+21,Emma,P,Sison,Pangasinan Provincial Jail,Admin Aide IV,Managing Communications,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2026
+21,Emma,P,Sison,Pangasinan Provincial Jail,Admin Aide IV,Records Management,Advanced Knowledge,Lecture,2nd Quarter of 2025
+21,Emma,P,Sison,Pangasinan Provincial Jail,Admin Aide IV,Records Management,Advanced Knowledge,Lecture,3rd Quarter of 2025
+22,Edwin,S,Solomon,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+22,Edwin,S,Solomon,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+22,Edwin,S,Solomon,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+22,Edwin,S,Solomon,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+22,Edwin,S,Solomon,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+22,Edwin,S,Solomon,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+23,Teofilo,T,"Soriano, Jr.",Pangasinan Provincial Jail,Prison Guard II,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+23,Teofilo,T,"Soriano, Jr.",Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+23,Teofilo,T,"Soriano, Jr.",Pangasinan Provincial Jail,Prison Guard II,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+23,Teofilo,T,"Soriano, Jr.",Pangasinan Provincial Jail,Prison Guard II,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+23,Teofilo,T,"Soriano, Jr.",Pangasinan Provincial Jail,Prison Guard II,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+23,Teofilo,T,"Soriano, Jr.",Pangasinan Provincial Jail,Prison Guard II,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+24,Julio,DC,"Tamondong, Jr.",Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+24,Julio,DC,"Tamondong, Jr.",Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+24,Julio,DC,"Tamondong, Jr.",Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+24,Julio,DC,"Tamondong, Jr.",Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+24,Julio,DC,"Tamondong, Jr.",Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+24,Julio,DC,"Tamondong, Jr.",Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+25,Rolando,B,Valdez,Pangasinan Provincial Jail,Security Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+25,Rolando,B,Valdez,Pangasinan Provincial Jail,Security Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+26,Huebner,P,Velasco,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+26,Huebner,P,Velasco,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+26,Huebner,P,Velasco,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+26,Huebner,P,Velasco,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+26,Huebner,P,Velasco,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+26,Huebner,P,Velasco,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+27,Jerome,M,Vinluan,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+27,Jerome,M,Vinluan,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+27,Jerome,M,Vinluan,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+27,Jerome,M,Vinluan,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+27,Jerome,M,Vinluan,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+27,Jerome,M,Vinluan,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+28,Marvin,S,Zara,Pangasinan Provincial Jail,Prison Guard I,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+28,Marvin,S,Zara,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+28,Marvin,S,Zara,Pangasinan Provincial Jail,Prison Guard I,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+28,Marvin,S,Zara,Pangasinan Provincial Jail,Prison Guard I,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+28,Marvin,S,Zara,Pangasinan Provincial Jail,Prison Guard I,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+28,Marvin,S,Zara,Pangasinan Provincial Jail,Prison Guard I,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Liaising Communications and Official Documents,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2024
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Liaising Communications and Official Documents,Advanced Knowledge,Lecture,1st Quarter of 2026
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Liaising Communications and Official Documents,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Managing Client Request,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2026
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Managing Client Request,Advanced Knowledge,Lecture,2nd Quarter of 2026
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Managing Client Request,Succession Planning,Lecture,1st Quarter of 2025
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Managing Communications,Advanced Knowledge,Lecture,3rd Quarter of 2026
+29,Arlander,V,Bautista,Pangasinan Provincial Jail,Admin Aide/Liaison,Managing Communications,Succession Planning,Coaching and Mentoring,2nd Quarter of 2025
+30,Larry,A,De Guzman,Pangasinan Provincial Jail,Admin Aide/Driver,Attention to Details,Requirement for the Position,Lecture and Demonstration,2nd Quarter of 2025
+30,Larry,A,De Guzman,Pangasinan Provincial Jail,Admin Aide/Driver,Attention to Details,Succession Planning,Lecture,2nd Quarter of 2025
+30,Larry,A,De Guzman,Pangasinan Provincial Jail,Admin Aide/Driver,Communication Skills,Succession Planning,Lecture,2nd Quarter of 2025
+30,Larry,A,De Guzman,Pangasinan Provincial Jail,Admin Aide/Driver,Driving Skills,Succession Planning,Lecture,2nd Quarter of 2025
+30,Larry,A,De Guzman,Pangasinan Provincial Jail,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Succession Planning,Lecture,2nd Quarter of 2025
+30,Larry,A,De Guzman,Pangasinan Provincial Jail,Admin Aide/Driver,Vehicle Repair and Maintenance,Requirements for the Position,Lecture and Demonstration,1st Quarter of 2024
+30,Larry,A,De Guzman,Pangasinan Provincial Jail,Admin Aide/Driver,Vehicle Repair and Maintenance,Succession Planning,Lecture,2nd Quarter of 2025
+31,Jesus,A,Gordo,Pangasinan Provincial Jail,Admin Aide/Driver,Attention to Details,Requirements for the Position,Coaching and Mentoring,2nd Quarter of 2025
+31,Jesus,A,Gordo,Pangasinan Provincial Jail,Admin Aide/Driver,Attention to Details,Succession Planning,Lecture,2nd Quarter of 2025
+31,Jesus,A,Gordo,Pangasinan Provincial Jail,Admin Aide/Driver,Communication Skills,Succession Planning,Lecture,2nd Quarter of 2025
+31,Jesus,A,Gordo,Pangasinan Provincial Jail,Admin Aide/Driver,Driving Skills,Succession Planning,Lecture,2nd Quarter of 2025
+31,Jesus,A,Gordo,Pangasinan Provincial Jail,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Succession Planning,Lecture,2nd Quarter of 2025
+31,Jesus,A,Gordo,Pangasinan Provincial Jail,Admin Aide/Driver,Vehicle Repair and Maintenance,Requirements for the Position,Lecture,1st Quarter of 2024
+31,Jesus,A,Gordo,Pangasinan Provincial Jail,Admin Aide/Driver,Vehicle Repair and Maintenance,Succession Planning,Lecture,2nd Quarter of 2025
+32,Noel,DC,Melchor,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+32,Noel,DC,Melchor,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+32,Noel,DC,Melchor,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+32,Noel,DC,Melchor,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Advanced Knowledge,Demonstration,1st Quarter of 2025
+32,Noel,DC,Melchor,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+32,Noel,DC,Melchor,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+33,Antonino,V,Ocampo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,"Attendance, Leave and Record Management",Advanced Knowledge,Lecture,4th Quarter of 2026
+33,Antonino,V,Ocampo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Managing Communications and Client Request,Advanced Knowledge,Lecture,1st Quarter of 2026
+33,Antonino,V,Ocampo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Managing Office Supplies and Resources,Advanced Knowledge,Lecture,1st Quarter of 2027
+33,Antonino,V,Ocampo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Processing Office Funds and Expenditures,Advanced Knowledge,Lecture,1st Quarter of 2027
+33,Antonino,V,Ocampo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Records Management,Advanced Knowledge,Lecture,3rd Quarter of 2025
+33,Antonino,V,Ocampo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Written Communication Skills,Advanced Knowledge,Lecture,1st Quarter of 2026
+33,Antonino,V,Ocampo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Written Communication Skills,Advanced Knowledge,Lecture,2nd Quarter of 2024
+34,Arnold,D,Perez,Pangasinan Provincial Jail,Admin Aide/Driver,Attention to Details,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2025
+34,Arnold,D,Perez,Pangasinan Provincial Jail,Admin Aide/Driver,Attention to Details,Succession Planning,Lecture,2nd Quarter of 2025
+34,Arnold,D,Perez,Pangasinan Provincial Jail,Admin Aide/Driver,Communication Skills,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2024
+34,Arnold,D,Perez,Pangasinan Provincial Jail,Admin Aide/Driver,Communication Skills,Succession Planning,Lecture,2nd Quarter of 2025
+34,Arnold,D,Perez,Pangasinan Provincial Jail,Admin Aide/Driver,Driving Skills,Succession Planning,Lecture,2nd Quarter of 2025
+34,Arnold,D,Perez,Pangasinan Provincial Jail,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Succession Planning,Lecture,2nd Quarter of 2025
+34,Arnold,D,Perez,Pangasinan Provincial Jail,Admin Aide/Driver,Vehicle Repair and Maintenance,Succession Planning,Lecture,2nd Quarter of 2025
+35,Mark Anthony,O,Ungos,Pangasinan Provincial Jail,Admin Aide/Driver,Attention to Details,Requirements for the Position/Succession Planning,Coaching and Mentoring/Lecture,2nd Quarter of 2025
+35,Mark Anthony,O,Ungos,Pangasinan Provincial Jail,Admin Aide/Driver,Communication Skills,Succession Planning,Lecture,2nd Quarter of 2025
+35,Mark Anthony,O,Ungos,Pangasinan Provincial Jail,Admin Aide/Driver,Driving Skills,Succession Planning,Lecture,2nd Quarter of 2025
+35,Mark Anthony,O,Ungos,Pangasinan Provincial Jail,Admin Aide/Driver,Knowledge on Traffic Rules and Regulations,Succession Planning,Lecture,2nd Quarter of 2025
+35,Mark Anthony,O,Ungos,Pangasinan Provincial Jail,Admin Aide/Driver,Vehicle Repair and Maintenance,Requirements for the Position,Lecture,1st Quarter of 2024
+35,Mark Anthony,O,Ungos,Pangasinan Provincial Jail,Admin Aide/Driver,Vehicle Repair and Maintenance,Succession Planning,Lecture,2nd Quarter of 2025
+36,Tony,G,"Abungan, Jr.",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,Coaching and Mentoring,2nd Quarter of 2026
+36,Tony,G,"Abungan, Jr.",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Markmanship Training,4th Quarter of 2024
+36,Tony,G,"Abungan, Jr.",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Liaising Communications and Official Documents,Advanced Knowledge,Lecture,2nd Quarter of 2026
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Liaising Communications and Official Documents,Succession Planning,Coaching and Mentoring,2nd Quarter of 2025
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Communications,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Communications and Client Request,Advanced Knowledge,Lecture,1st Quarter of 2026
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Lecture,1st Quarter of 2025
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Lecture,3rd Quarter of 2026
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Succession Planning,Lecture,2nd Quarter of 2025
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Records Management,Advanced Knowledge,Lecture,3rd Quarter of 2026
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Updating and Maintaining Records and System,Advanced Knowledge,Lecture,1st Quarter of 2026
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Written Communication Skills,Advanced Knowledge,Lecture,1st Quarter of 2026
+37,Angelica,D,Aquino,Pangasinan Provincial Jail,Admin Aide/Office Staff,Written Communication Skills,Succession Planning,Lecture,1st Quarter of 2025
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Client Request,Advanced Knowledge,Lecture,3rd Quarter of 2026
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Communications,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2026
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Communications,Advanced Knowledge,Coaching and Mentoring,3rd Quarter of 2026
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Lecture,1st Quarter of 2025
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Lecture,2nd Quarter of 2026
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Succession Planning,Lecture,2nd Quarter of 2025
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operation and Troubleshooting of Reproductive Machines,Advanced Knowledge,Lecture,2nd Quarter of 2026
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operation and Troubleshooting of Reproductive Machines,Succession Planning,Lecture,2nd Quarter of 2025
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operations of Reproductive Machines,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2024
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Written Communication Skills,Advanced Knowledge,Lecture,1st Quarter of 2026
+38,Mae Anne Lynlee,L,Batistiana,Pangasinan Provincial Jail,Admin Aide/Office Staff,Written Communication Skills,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,PJICE,3rd Quarter of 2026
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,Demonstration,2nd Quarter of 2026
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,1st Quarter of 2026
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Advanced Knowledge,PJICE,4th Quarter of 2026
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,PJICE,2nd Quarter of 2026
+39,Loderico,P,Camarao,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,Lecture/PJICE,1st Quarter of 2025
+40,Exequiel,M,Casaclang,Pangasinan Provincial Jail,Admin Aide/Utility,Attention to Details,Succession Planning,Lecture,1st Quarter of 2025
+40,Exequiel,M,Casaclang,Pangasinan Provincial Jail,Admin Aide/Utility,Cleaning Tools Operation,Succession Planning,Lecture,1st Quarter of 2025
+40,Exequiel,M,Casaclang,Pangasinan Provincial Jail,Admin Aide/Utility,Housekeeping,Advanced Knowledge/Succession Planning,Lecture,1st Quarter of 2024
+40,Exequiel,M,Casaclang,Pangasinan Provincial Jail,Admin Aide/Utility,Supplies Management,Succession Planning,Lecture,1st Quarter of 2025
+40,Exequiel,M,Casaclang,Pangasinan Provincial Jail,Admin Aide/Utility,Waste Management,Advanced Knowledge/Succession Planning,Lecture,1st Quarter of 2025
+41,Freddie,R,Castillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+41,Freddie,R,Castillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,1st Quarter of 2024
+41,Freddie,R,Castillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+41,Freddie,R,Castillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+41,Freddie,R,Castillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+41,Freddie,R,Castillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Lecture,1st Quarter of 2025
+41,Freddie,R,Castillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Requirements for the Position,Coaching and Mentoring,2nd Quarter of 2026
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Requirements for the Position,Markmanship Training,4th Quarter of 2024
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Requirements for the Position,PJICE,1st Quarter of 2024
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Requirements for the Position,Demonstration,1st Quarter of 2025
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Requirements for the Position,Coaching and Mentoring,1st Quarter of 2025
+42,Joy Friend,S,Castro,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+43,Jason,B,Catabay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+43,Jason,B,Catabay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+43,Jason,B,Catabay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+43,Jason,B,Catabay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+43,Jason,B,Catabay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+43,Jason,B,Catabay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Attention to Details,Succession Planning,Coaching and Mentoring,1st Quarter of 2026
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Attention to Details,Succession Planning,Lecture,1st Quarter of 2025
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Cleaning Tools Operation,Succession Planning,Coaching and Mentoring,2nd Quarter of 2025
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Cleaning Tools Operation,Succession Planning,Lecture,1st Quarter of 2025
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Housekeeping,Succession Planning,Lecture,1st Quarter of 2024
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Housekeeping,Succession Planning,Lecture,1st Quarter of 2025
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Supplies Management,Succession Planning,Coaching and Mentoring,4th Quarter of 2024
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Supplies Management,Succession Planning,Lecture,1st Quarter of 2025
+44,Sherlyn,D,Cualbar,Pangasinan Provincial Jail,Admin Aide/Utility,Waste Management,Succession Planning,Coaching and Mentoring/Lecture,1st Quarter of 2025
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+45,Novilyn,P,Cuaresma,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+46,Jessabelle,C,Cuntapay,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Client Request,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2026
+46,Jessabelle,C,Cuntapay,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Client Request,Succession Planning,Lecture,1st Quarter of 2025
+46,Jessabelle,C,Cuntapay,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Lecture,1st Quarter of 2025
+46,Jessabelle,C,Cuntapay,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Succession Planning,Lecture,2nd Quarter of 2025
+46,Jessabelle,C,Cuntapay,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operation and Troubleshooting of Reproductive Machines,Succession Planning,Lecture,2nd Quarter of 2025
+46,Jessabelle,C,Cuntapay,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operations of Reproductive Machines,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+46,Jessabelle,C,Cuntapay,Pangasinan Provincial Jail,Admin Aide/Office Staff,Written Communication Skills,Advanced Knowledge/Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+47,Ferdinand,F,David,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+47,Ferdinand,F,David,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+47,Ferdinand,F,David,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+47,Ferdinand,F,David,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Advanced Knowledge,Demonstration,1st Quarter of 2024
+47,Ferdinand,F,David,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+47,Ferdinand,F,David,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Coaching and Mentoring/PJICE,1st Quarter of 2025
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Requirements for the Position,Coaching and Mentoring,2nd Quarter of 2026
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Requirements for the Position,Markmanship Training,4th Quarter of 2024
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Requirements for the Position,PJICE,1st Quarter of 2024
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Requirements for the Position,Demonstration,1st Quarter of 2025
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Requirements for the Position,Coaching and Mentoring,1st Quarter of 2025
+48,Dennis,E,De Guzman,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+49,Lovely,M,Decano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+49,Lovely,M,Decano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+49,Lovely,M,Decano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+49,Lovely,M,Decano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+49,Lovely,M,Decano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+49,Lovely,M,Decano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+49,Lovely,M,Decano,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Requirements for the Position,Coaching and Mentoring,2nd Quarter of 2026
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Requirements for the Position,Markmanship Training,4th Quarter of 2024
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Requirements for the Position,PJICE,1st Quarter of 2024
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Requirements for the Position,Demonstration,1st Quarter of 2025
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+50,Carlo,DL,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Requirements for the Position/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+51,Ronnel,C,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+51,Ronnel,C,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+51,Ronnel,C,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+51,Ronnel,C,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+51,Ronnel,C,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+51,Ronnel,C,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+51,Ronnel,C,Dela Cruz,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,PJICE,1st Quarter of 2025
+52,Ricardo,B,"De Leon, Jr.",Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Client Request,Succession Planning,Lecture,1st Quarter of 2025
+52,Ricardo,B,"De Leon, Jr.",Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Lecture,1st Quarter of 2025
+52,Ricardo,B,"De Leon, Jr.",Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Succession Planning,Lecture,2nd Quarter of 2025
+52,Ricardo,B,"De Leon, Jr.",Pangasinan Provincial Jail,Admin Aide/Office Staff,Operation and Troubleshooting of Reproductive Machines,Succession Planning,Lecture,2nd Quarter of 2025
+52,Ricardo,B,"De Leon, Jr.",Pangasinan Provincial Jail,Admin Aide/Office Staff,Operations of Reproductive Machines,Advanced Knowledge,Coaching and Mentoring,2nd Quarter of 2024
+53,Ronald,A,De Leon,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+53,Ronald,A,De Leon,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Lecture,1st Quarter of 2025
+54,Oliver,C,Diego,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+54,Oliver,C,Diego,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+54,Oliver,C,Diego,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+54,Oliver,C,Diego,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+54,Oliver,C,Diego,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+54,Oliver,C,Diego,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+55,Jolina,R,Domantay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,Coaching and Mentoring,2nd Quarter of 2026
+55,Jolina,R,Domantay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+55,Jolina,R,Domantay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+55,Jolina,R,Domantay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Markmanship Training,4th Quarter of 2024
+55,Jolina,R,Domantay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+55,Jolina,R,Domantay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+55,Jolina,R,Domantay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+56,Rosemarie,C,Domaoal,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+56,Rosemarie,C,Domaoal,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+56,Rosemarie,C,Domaoal,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+56,Rosemarie,C,Domaoal,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Requirements for the Position,PJICE,1st Quarter of 2024
+56,Rosemarie,C,Domaoal,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+56,Rosemarie,C,Domaoal,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+56,Rosemarie,C,Domaoal,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+57,Neriza,V,Esquillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+57,Neriza,V,Esquillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+57,Neriza,V,Esquillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+57,Neriza,V,Esquillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+57,Neriza,V,Esquillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+57,Neriza,V,Esquillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+57,Neriza,V,Esquillo,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+58,Ronald,B,Estero,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+58,Ronald,B,Estero,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+58,Ronald,B,Estero,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+58,Ronald,B,Estero,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+58,Ronald,B,Estero,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+58,Ronald,B,Estero,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+58,Ronald,B,Estero,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+59,Frexil,T,Fernandez,Pangasinan Provincial Jail,Admin Aide/Utility,Attention to Details,Succession Planning,Lecture,1st Quarter of 2025
+59,Frexil,T,Fernandez,Pangasinan Provincial Jail,Admin Aide/Utility,Cleaning Tools Operation,Succession Planning,Lecture,1st Quarter of 2025
+59,Frexil,T,Fernandez,Pangasinan Provincial Jail,Admin Aide/Utility,Housekeeping,Advanced Knowledge,Lecture,1st Quarter of 2024
+59,Frexil,T,Fernandez,Pangasinan Provincial Jail,Admin Aide/Utility,Housekeeping,Succession Planning,Lecture,1st Quarter of 2025
+59,Frexil,T,Fernandez,Pangasinan Provincial Jail,Admin Aide/Utility,Supplies Management,Succession Planning,Lecture,1st Quarter of 2025
+59,Frexil,T,Fernandez,Pangasinan Provincial Jail,Admin Aide/Utility,Waste Management,Advanced Knowledge/Succession Planning,Lecture,1st Quarter of 2025
+60,Vicente,S,"Ferrer, II",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+60,Vicente,S,"Ferrer, II",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+60,Vicente,S,"Ferrer, II",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+60,Vicente,S,"Ferrer, II",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+60,Vicente,S,"Ferrer, II",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+60,Vicente,S,"Ferrer, II",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+60,Vicente,S,"Ferrer, II",Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+61,Emiliano,DC,Magsanoc,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,PJICE,2nd Quarter of 2025
+61,Emiliano,DC,Magsanoc,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Demonstration,1st Quarter of 2025
+61,Emiliano,DC,Magsanoc,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Demonstration,4th Quarter of 2024
+61,Emiliano,DC,Magsanoc,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Advanced Knowledge,PJICE,4th Quarter of 2025
+61,Emiliano,DC,Magsanoc,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Advanced Knowledge,PJICE,2nd Quarter of 2025
+61,Emiliano,DC,Magsanoc,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Lecture/PJICE,1st Quarter of 2025
+62,Noel,S,Maneclang,Pangasinan Provincial Jail,Admin Aide/CCTV Operator,Managing Client Request,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+62,Noel,S,Maneclang,Pangasinan Provincial Jail,Admin Aide/CCTV Operator,Monitoring Skills,Advanced Knowledge,Lecture,1st Quarter of 2024
+62,Noel,S,Maneclang,Pangasinan Provincial Jail,Admin Aide/CCTV Operator,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Managing Communications,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Advanced Knowledge,Lecture,1st Quarter of 2025
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Operating Computer Programs and Systems,Succession Planning,Lecture,2nd Quarter of 2025
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Records Management,Advanced Knowledge,Lecture,2nd Quarter of 2024
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Records Management,Succession Planning,Lecture,3rd Quarter of 2025
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Updating and Maintaining Records and System,Advanced Knowledge,Lecture,1st Quarter of 2026
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Updating and Maintaining Records and System,Succession Planning,Lecture,4th Quarter of 2025
+63,Michelle,C,Manuel,Pangasinan Provincial Jail,Admin Aide/Office Staff,Written Communication Skills,Succession Planning,Lecture,1st Quarter of 2025
+64,Richard,V,Manuel,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge/Succession Planning,Demonstration/PJICE,2nd Quarter of 2025
+64,Richard,V,Manuel,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+64,Richard,V,Manuel,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+64,Richard,V,Manuel,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+64,Richard,V,Manuel,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+64,Richard,V,Manuel,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+65,Geverly,,Nanalis,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+65,Geverly,,Nanalis,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Requirements for the Position,PJICE,2nd Quarter of 2026
+65,Geverly,,Nanalis,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+66,Richard,L,Padilla,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+66,Richard,L,Padilla,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+66,Richard,L,Padilla,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+66,Richard,L,Padilla,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+66,Richard,L,Padilla,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+66,Richard,L,Padilla,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+66,Richard,L,Padilla,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+67,Walter,P,Paragas,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+67,Walter,P,Paragas,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+67,Walter,P,Paragas,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+67,Walter,P,Paragas,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+67,Walter,P,Paragas,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+67,Walter,P,Paragas,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Lecture/PJICE,1st Quarter of 2025
+68,Raymond,J,Salgado,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+68,Raymond,J,Salgado,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+68,Raymond,J,Salgado,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+68,Raymond,J,Salgado,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+68,Raymond,J,Salgado,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+68,Raymond,J,Salgado,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+68,Raymond,J,Salgado,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Lecture/PJICE,1st Quarter of 2025
+69,Michael Rey,S,Santos,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+69,Michael Rey,S,Santos,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+69,Michael Rey,S,Santos,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+69,Michael Rey,S,Santos,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+69,Michael Rey,S,Santos,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+69,Michael Rey,S,Santos,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+69,Michael Rey,S,Santos,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+70,Asterio,V,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+70,Asterio,V,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+70,Asterio,V,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+70,Asterio,V,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+70,Asterio,V,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+70,Asterio,V,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+71,Jocel,C,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Advanced Knowledge,Demonstration,2nd Quarter of 2026
+71,Jocel,C,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+71,Jocel,C,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2025
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Requirements for the Position,Coaching and Mentoring,2nd Quarter of 2026
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Requirements for the Position,Markmanship Training,4th Quarter of 2024
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Requirements for the Position,PJICE,1st Quarter of 2024
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Requirements for the Position,Demonstration,1st Quarter of 2025
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+72,Joevic Klyde,B,Sison,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Requirements for the Position/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+73,Alvin,S,Soriano,Pangasinan Provincial Jail,Admin Aide/Liaison,Liaising Communications and Official Documents,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+73,Alvin,S,Soriano,Pangasinan Provincial Jail,Admin Aide/Liaison,Liaising Official Documents and Communications,Advanced Knowledge,Coaching and Mentoring,1st Quarter of 2024
+73,Alvin,S,Soriano,Pangasinan Provincial Jail,Admin Aide/Liaison,Operating Computer Programs and Systems,Succession Planning,Lecture,2nd Quarter of 2025
+73,Alvin,S,Soriano,Pangasinan Provincial Jail,Admin Aide/Liaison,Operation and Troubleshooting of Reproductive Machines,Advanced Knowledge,Demonstration,1st Quarter of 2025
+73,Alvin,S,Soriano,Pangasinan Provincial Jail,Admin Aide/Liaison,Operation and Troubleshooting of Reproductive Machines,Succession Planning,Lecture,2nd Quarter of 2025
+73,Alvin,S,Soriano,Pangasinan Provincial Jail,Admin Aide/Liaison,Processing Office Funds and Expenditures,Succession Planning,Coaching and Mentoring,1st Quarter of 2025
+73,Alvin,S,Soriano,Pangasinan Provincial Jail,Admin Aide/Liaison,Updating and Maintaining Records and System,Advanced Knowledge,Lecture,1st Quarter of 2026
+74,Aubrey Bernadette,H,Tadena,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+74,Aubrey Bernadette,H,Tadena,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+74,Aubrey Bernadette,H,Tadena,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+74,Aubrey Bernadette,H,Tadena,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Requirements for the Position,PJICE,1st Quarter of 2024
+74,Aubrey Bernadette,H,Tadena,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+74,Aubrey Bernadette,H,Tadena,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+74,Aubrey Bernadette,H,Tadena,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
+75,Nickson,M,Unay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Attention to Details,Succession Planning,PJICE,2nd Quarter of 2025
+75,Nickson,M,Unay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Advanced Knowledge,Markmanship Training,4th Quarter of 2024
+75,Nickson,M,Unay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Firearms Operation,Succession Planning,Demonstration,1st Quarter of 2025
+75,Nickson,M,Unay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Knowledge on Prison Rules and Regulations,Succession Planning,PJICE,4th Quarter of 2025
+75,Nickson,M,Unay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Monitoring of Inmates,Succession Planning,PJICE,2nd Quarter of 2025
+75,Nickson,M,Unay,Pangasinan Provincial Jail,Admin Aide/Jail Guard,Report Writing,Advanced Knowledge/Succession Planning,Coaching and Mentoring/PJICE,1st Quarter of 2025
