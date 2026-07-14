@@ -26,7 +26,11 @@ import {
   Network,
   Sun,
   Moon,
-  ChevronLeft
+  ChevronLeft,
+  Copy,
+  Check,
+  Globe,
+  Lock
 } from "lucide-react";
 import { User, DashboardStats, Employee, LearningNeed } from "./types";
 import LoginScreen from "./components/LoginScreen";
@@ -61,6 +65,9 @@ export default function App() {
 
   // Active View Tab State: home, add, view
   const [activeTab, setActiveTab] = useState<"home" | "add" | "view">("home");
+
+  // IP Address Clipboard Copied Toast State
+  const [ipCopied, setIpCopied] = useState(false);
 
   // Edit / Form state
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
@@ -582,15 +589,15 @@ export default function App() {
                 </div>
 
                 {/* Web App Access Guidelines & Reminders */}
-                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6 transition-colors duration-200">
+                <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-6 sm:p-8 space-y-6 transition-all duration-300">
                   {/* Header Section */}
-                  <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
-                    <div className="flex items-center gap-3">
-                      <div className="p-2 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-lg border dark:border-blue-900/40">
+                  <div className="border-b border-slate-50 dark:border-slate-800/50 pb-4">
+                    <div className="flex items-center gap-3.5">
+                      <div className="p-2.5 bg-slate-50 dark:bg-slate-850/60 text-slate-800 dark:text-slate-200 rounded-xl">
                         <HelpCircle className="h-5 w-5" />
                       </div>
                       <div>
-                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight font-display">
+                        <h3 className="text-base font-extrabold text-slate-900 dark:text-slate-100 tracking-tight font-display">
                           Web App Access Guidelines & Reminders
                         </h3>
                         <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
@@ -603,10 +610,12 @@ export default function App() {
                   {/* Grid Layout */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     {/* Access Steps Card */}
-                    <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-6 space-y-4 hover:shadow-xs transition-all duration-200">
-                      <h4 className="text-xs font-bold text-slate-850 dark:text-slate-200 font-display flex items-center gap-2 uppercase tracking-wider text-slate-450 dark:text-slate-450">
-                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 text-[10px] font-bold">1</span>
-                        How to Access the App (For All Users)
+                    <div className="bg-slate-50/50 dark:bg-slate-950/30 rounded-2xl p-6 space-y-4 shadow-sm hover:shadow-md transition-all duration-200">
+                      <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 font-display flex items-center gap-2.5 tracking-tight">
+                        <div className="p-1.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-lg">
+                          <Globe className="h-4.5 w-4.5" />
+                        </div>
+                        <span>How to Access the App (For All Users)</span>
                       </h4>
                       <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                         To access the employee database, please follow these steps:
@@ -615,9 +624,9 @@ export default function App() {
                         <li className="flex gap-2">
                           <span className="text-blue-500 font-bold shrink-0">•</span>
                           <div>
-                            <strong>Connect to the Network:</strong> Ensure your device is connected to the <span className="font-bold text-slate-850 dark:text-slate-200">CEEOD</span> office router.
-                            <div className="mt-1 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 text-[10px] px-2.5 py-1.5 rounded-lg border border-amber-200/25 dark:border-amber-900/30 flex items-start gap-1.5 leading-snug">
-                              <Info className="h-3 w-3 shrink-0 mt-0.5" />
+                            <strong>Connect to the Network:</strong> Ensure your device is connected to the <span className="font-bold text-slate-800 dark:text-slate-200">CEEOD</span> office router.
+                            <div className="mt-1.5 bg-amber-50/60 dark:bg-amber-950/15 text-amber-800 dark:text-amber-400 text-[10px] px-3 py-2 rounded-xl flex items-start gap-2 leading-relaxed shadow-3xs">
+                              <Info className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-500" />
                               <span>This is a strictly local database. It is <strong>not</strong> accessible outside the office or on any other network.</span>
                             </div>
                           </div>
@@ -626,8 +635,32 @@ export default function App() {
                           <span className="text-blue-500 font-bold shrink-0">•</span>
                           <div>
                             <strong>Open the App:</strong> Once connected, open any web browser on your device and enter the following IP address in the address bar:
-                            <div className="mt-1.5 font-mono text-xs text-blue-600 dark:text-blue-400 font-semibold bg-blue-50/40 dark:bg-blue-950/20 py-1.5 px-3 rounded-lg border border-blue-200/50 dark:border-blue-800/40 inline-block shadow-2xs">
-                              http://192.168.2.150
+                            
+                            <div className="mt-2.5 flex items-center gap-2">
+                              <div className="font-mono text-xs text-blue-700 dark:text-blue-450 font-bold bg-blue-50 dark:bg-blue-950/60 py-2 px-3.5 rounded-xl shadow-2xs select-all">
+                                http://192.168.2.150
+                              </div>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText("http://192.168.2.150");
+                                  setIpCopied(true);
+                                  setTimeout(() => setIpCopied(false), 2000);
+                                }}
+                                className="p-2 bg-slate-200/60 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl transition-all active:scale-95 shadow-3xs cursor-pointer flex items-center gap-1.5 text-[10px] font-semibold"
+                                title="Copy IP to Clipboard"
+                              >
+                                {ipCopied ? (
+                                  <>
+                                    <Check className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-500 animate-in zoom-in duration-200" />
+                                    <span className="text-emerald-600 dark:text-emerald-500">Copied!</span>
+                                  </>
+                                ) : (
+                                  <>
+                                    <Copy className="h-3.5 w-3.5 text-slate-500" />
+                                    <span>Copy IP</span>
+                                  </>
+                                )}
+                              </button>
                             </div>
                           </div>
                         </li>
@@ -636,28 +669,32 @@ export default function App() {
 
                     {/* Security Notice Card & Admin Notes */}
                     <div className="space-y-6">
-                      <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-6 space-y-3 hover:shadow-xs transition-all duration-200">
-                        <h4 className="text-xs font-bold text-slate-850 dark:text-slate-200 font-display flex items-center gap-2 uppercase tracking-wider text-slate-450 dark:text-slate-450">
-                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">2</span>
-                          Why is the App Local? (Security Notice)
+                      <div className="bg-slate-50/50 dark:bg-slate-950/30 rounded-2xl p-6 space-y-3.5 shadow-sm hover:shadow-md transition-all duration-200">
+                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 font-display flex items-center gap-2.5 tracking-tight">
+                          <div className="p-1.5 bg-emerald-50 dark:bg-emerald-950 text-emerald-600 dark:text-emerald-400 rounded-lg">
+                            <Lock className="h-4.5 w-4.5" />
+                          </div>
+                          <span>Why is the App Local? (Security Notice)</span>
                         </h4>
                         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                           Because this application handles sensitive employee information, <strong>we do not use a cloud service provider</strong>.
                         </p>
-                        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border dark:border-slate-800/80 leading-relaxed text-xs text-slate-600 dark:text-slate-400">
+                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-4 shadow-3xs leading-relaxed text-xs text-slate-650 dark:text-slate-450">
                           Keeping the database entirely offline and local to the office router ensures maximum security, data privacy, and complete protection against unauthorized external network access.
                         </div>
                       </div>
 
                       {/* Admin Card inside right column for better grid balance */}
-                      <div className="bg-blue-50/30 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/20 rounded-2xl p-6 space-y-2 hover:shadow-xs transition-all duration-200">
-                        <h4 className="text-xs font-bold text-blue-800 dark:text-blue-400 font-display flex items-center gap-2 uppercase tracking-wider">
-                          <Server className="h-4.5 w-4.5" />
-                          For the Host PC Administrator
+                      <div className="bg-slate-50/50 dark:bg-slate-950/30 rounded-2xl p-6 space-y-3.5 shadow-sm hover:shadow-md transition-all duration-200">
+                        <h4 className="text-sm font-bold text-slate-800 dark:text-slate-200 font-display flex items-center gap-2.5 tracking-tight">
+                          <div className="p-1.5 bg-blue-50 dark:bg-blue-950 text-blue-600 dark:text-blue-400 rounded-lg">
+                            <Server className="h-4.5 w-4.5" />
+                          </div>
+                          <span>For the Host PC Administrator</span>
                         </h4>
-                        <ul className="space-y-2 text-xs text-slate-650 dark:text-slate-350 list-none pl-0">
-                          <li className="flex gap-2 items-start">
-                            <span className="text-blue-500 shrink-0">•</span>
+                        <ul className="space-y-2 text-xs text-slate-600 dark:text-slate-400 list-none pl-0">
+                          <li className="flex gap-2.5 items-start">
+                            <span className="text-blue-500 shrink-0 mt-1">•</span>
                             <p className="leading-relaxed">
                               <strong>Keep the Host PC Running:</strong> The web application must remain active and running on the host PC at all times. If the host PC is turned off, goes to sleep, or logs out, other team members will lose access to the system immediately.
                             </p>
