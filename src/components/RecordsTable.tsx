@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye } from "lucide-react";
 import { Employee, LearningNeed } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
@@ -20,6 +20,8 @@ interface JoinedRecord {
   UpdatedAt: string;
   CreatedBy: string;
   UpdatedBy: string;
+  EmployeeCreatedBy?: string;
+  EmployeeCreatedAt?: string;
 }
 
 interface RecordsTableProps {
@@ -98,6 +100,18 @@ export default function RecordsTable({
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+
+  const cardsContainerRef = useRef<HTMLDivElement>(null);
+  const isFirstMount = useRef(true);
+
+  // Scroll smoothly to directory cards block on page changes
+  useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
+    cardsContainerRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+  }, [currentPage]);
 
   // Detail Modal overlay state
   const [selectedEmployeeDetail, setSelectedEmployeeDetail] = useState<Employee | null>(null);
@@ -229,6 +243,8 @@ export default function RecordsTable({
         UpdatedBy: string;
       }>;
       CreatedAt: string;
+      CreatedBy: string;
+      EmployeeCreatedAt: string;
     }>();
     
     flatRecords.forEach((rec) => {
@@ -241,7 +257,9 @@ export default function RecordsTable({
           Office: rec.Office,
           Position: rec.Position,
           Needs: [],
-          CreatedAt: rec.CreatedAt
+          CreatedAt: rec.CreatedAt,
+          CreatedBy: rec.EmployeeCreatedBy || rec.CreatedBy,
+          EmployeeCreatedAt: rec.EmployeeCreatedAt || rec.CreatedAt
         });
       }
       
@@ -278,19 +296,26 @@ export default function RecordsTable({
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
   };
 
+  const isRecentEntry = (createdAtStr: string) => {
+    if (!createdAtStr) return false;
+    const date = new Date(createdAtStr);
+    const cutoff = new Date("2026-07-14T05:00:00.000Z");
+    return date >= cutoff;
+  };
+
   return (
     <div className="space-y-6">
       {/* Filtering Header Toolbar */}
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-xs p-6 space-y-4">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-xs p-6 space-y-4 transition-colors duration-200">
+        <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
           <div className="flex items-center gap-2">
             <Filter className="h-5 w-5 text-blue-600" />
-            <h3 className="font-bold text-slate-800 tracking-tight font-display">Filter & Search Directory</h3>
+            <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display">Filter & Search Directory</h3>
           </div>
           
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 font-semibold px-4 py-2 rounded-xl text-xs transition border border-emerald-100 cursor-pointer shadow-sm shadow-emerald-500/5"
+            className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-semibold px-4 py-2 rounded-xl text-xs transition border border-emerald-100 dark:border-emerald-900/60 cursor-pointer shadow-sm shadow-emerald-500/5"
           >
             <FileSpreadsheet className="h-4 w-4" />
             <span>Export Search to Excel</span>
@@ -300,7 +325,7 @@ export default function RecordsTable({
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Search Term */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Employee or Position
             </label>
             <div className="relative">
@@ -310,14 +335,14 @@ export default function RecordsTable({
                 value={searchTerm}
                 onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
                 placeholder="Search name, role..."
-                className="w-full pl-9 pr-3.5 py-2 border border-slate-200 bg-white rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-9 pr-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
               />
             </div>
           </div>
 
           {/* Filter by Office */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Office / Department
             </label>
             <SearchableSelect
@@ -333,7 +358,7 @@ export default function RecordsTable({
 
           {/* Filter by Learning Need */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Learning Need
             </label>
             <SearchableSelect
@@ -349,42 +374,42 @@ export default function RecordsTable({
 
           {/* Start Date */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Start Record Date
             </label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => { setStartDate(e.target.value); setCurrentPage(1); }}
-              className="w-full px-3.5 py-1.5 border border-slate-200 bg-white rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
             />
           </div>
 
           {/* End Date */}
           <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               End Record Date
             </label>
             <input
               type="date"
               value={endDate}
               onChange={(e) => { setEndDate(e.target.value); setCurrentPage(1); }}
-              className="w-full px-3.5 py-1.5 border border-slate-200 bg-white rounded-xl text-xs text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl text-xs text-slate-700 dark:text-slate-200 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
             />
           </div>
         </div>
       </div>
 
       {/* Main Grid View */}
-      <div className="bg-white rounded-xl border border-slate-200/60 shadow-xs overflow-hidden">
+      <div ref={cardsContainerRef} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
             <thead>
-              <tr className="bg-slate-50/70 border-b border-slate-100 text-slate-500 uppercase tracking-wider font-semibold text-[10px]">
+              <tr className="bg-slate-50/70 dark:bg-slate-950/80 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold text-[10px] transition-colors duration-200">
                 <th className="py-4 px-6">
                   <button 
                     onClick={() => handleSort("LastName")}
-                    className="flex items-center gap-1 hover:text-blue-600 transition font-bold"
+                    className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition font-bold cursor-pointer"
                   >
                     <span>Employee Name</span>
                     <ArrowUpDown className="h-3 w-3" />
@@ -393,7 +418,7 @@ export default function RecordsTable({
                 <th className="py-4 px-6">
                   <button 
                     onClick={() => handleSort("Office")}
-                    className="flex items-center gap-1 hover:text-blue-600 transition font-bold"
+                    className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition font-bold cursor-pointer"
                   >
                     <span>Office / Department</span>
                     <ArrowUpDown className="h-3 w-3" />
@@ -402,7 +427,7 @@ export default function RecordsTable({
                 <th className="py-4 px-6">
                   <button 
                     onClick={() => handleSort("Position")}
-                    className="flex items-center gap-1 hover:text-blue-600 transition font-bold"
+                    className="flex items-center gap-1 hover:text-blue-600 dark:hover:text-blue-400 transition font-bold cursor-pointer"
                   >
                     <span>Position</span>
                     <ArrowUpDown className="h-3 w-3" />
@@ -435,22 +460,27 @@ export default function RecordsTable({
               currentRecords.map((rec) => (
                 <tbody 
                   key={rec.EmployeeID} 
-                  className="group border-b border-slate-200/80 last:border-b-0 divide-y divide-slate-100/40"
+                  className="group border-b border-slate-200/80 last:border-b-0 divide-y divide-slate-100/40 dark:border-slate-800/80 dark:divide-slate-800/60"
                 >
                   {/* Primary Meta Row */}
-                  <tr className="group-hover:bg-slate-50/40 transition-colors duration-100">
+                  <tr className="group-hover:bg-slate-50/40 dark:group-hover:bg-slate-950/40 transition-colors duration-100">
                     <td className="py-3 px-6 align-middle">
                       <div 
                         onClick={() => handleViewDetails(rec.EmployeeID)}
-                        className="font-extrabold text-slate-800 hover:text-blue-600 text-[14.5px] leading-snug tracking-tight hover:underline cursor-pointer transition-colors duration-100"
+                        className="font-extrabold text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 text-[14.5px] leading-snug tracking-tight hover:underline cursor-pointer transition-colors duration-100"
                       >
                         {rec.LastName}, {rec.FirstName}{rec.MiddleInitial ? ` ${rec.MiddleInitial}.` : ""}
                       </div>
+                      {isRecentEntry(rec.EmployeeCreatedAt) && (
+                        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                          Encoded by: <span className="font-semibold text-slate-500 dark:text-slate-400">{rec.CreatedBy || "system"}</span>
+                        </div>
+                      )}
                     </td>
-                    <td className="py-3 px-6 text-slate-600 align-middle text-[12px] font-medium">
+                    <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
                       {rec.Office}
                     </td>
-                    <td className="py-3 px-6 text-slate-600 align-middle text-[12px] font-medium">
+                    <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
                       {rec.Position}
                     </td>
                     <td className="py-3 px-6 text-center align-middle">
@@ -458,7 +488,7 @@ export default function RecordsTable({
                         {/* View Details */}
                         <button
                           onClick={() => handleViewDetails(rec.EmployeeID)}
-                          className="p-1.5 bg-slate-100 hover:bg-slate-200 hover:scale-105 active:scale-95 text-slate-600 rounded-lg transition-all duration-100 cursor-pointer"
+                          className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 rounded-lg border dark:border-slate-700 transition-all duration-100 cursor-pointer"
                           title="View Employee Profile"
                         >
                           <Eye className="h-4 w-4" />
@@ -467,7 +497,7 @@ export default function RecordsTable({
                         {/* Edit Records */}
                         <button
                           onClick={() => onEditEmployee(rec.EmployeeID)}
-                          className="p-1.5 bg-blue-50 hover:bg-blue-100 hover:scale-105 active:scale-95 text-blue-600 rounded-lg transition-all duration-100 cursor-pointer"
+                          className="p-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950 hover:scale-105 active:scale-95 text-blue-600 dark:text-blue-400 rounded-lg border dark:border-blue-900/40 transition-all duration-100 cursor-pointer"
                           title="Edit Full Profile"
                         >
                           <Edit className="h-4 w-4" />
@@ -476,7 +506,7 @@ export default function RecordsTable({
                         {/* Delete Employee */}
                         <button
                           onClick={() => handleDeleteEmployee(rec.EmployeeID)}
-                          className="p-1.5 bg-red-50 hover:bg-red-100 hover:scale-105 active:scale-95 text-red-600 rounded-lg transition-all duration-100 cursor-pointer"
+                          className="p-1.5 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950 hover:scale-105 active:scale-95 text-red-600 dark:text-red-400 rounded-lg border dark:border-red-900/40 transition-all duration-100 cursor-pointer"
                           title="Delete Employee"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -486,16 +516,16 @@ export default function RecordsTable({
                   </tr>
 
                   {/* Secondary Full-Width Row: Horizontally Stacked Target Learning Needs */}
-                  <tr className="bg-slate-100/85 group-hover:bg-slate-100 border-t border-b border-slate-200/60 transition-colors duration-100">
+                  <tr className="bg-slate-100/85 dark:bg-slate-950/40 group-hover:bg-slate-100 dark:group-hover:bg-slate-950/85 border-t border-b border-slate-200/60 dark:border-slate-800 transition-colors duration-100">
                     <td colSpan={4} className="px-6 pb-4.5 pt-3.5">
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[9.5px] font-extrabold text-slate-600 bg-slate-200/80 border border-slate-300/40 px-2 py-0.5 rounded-md uppercase tracking-wider">
+                          <span className="text-[9.5px] font-extrabold text-slate-600 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-900 border border-slate-300/40 dark:border-slate-800 px-2 py-0.5 rounded-md uppercase tracking-wider">
                             Target Learning Needs
                           </span>
-                          <div className="h-[1px] bg-slate-300/50 flex-1"></div>
+                          <div className="h-[1px] bg-slate-300/50 dark:bg-slate-800/80 flex-1"></div>
                           {rec.Needs.length > 0 && (
-                            <span className="text-[9.5px] font-extrabold text-slate-700 bg-white px-2 py-0.5 rounded-full border border-slate-300/30 shadow-2xs">
+                            <span className="text-[9.5px] font-extrabold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-300/30 dark:border-slate-800/60 shadow-2xs">
                               {rec.Needs.length} {rec.Needs.length === 1 ? "need" : "needs"}
                             </span>
                           )}
@@ -505,28 +535,28 @@ export default function RecordsTable({
                           {rec.Needs.map((need) => (
                             <div 
                               key={need.LearningNeedID} 
-                              className="bg-white border border-slate-200/60 rounded-xl p-3 relative group/need space-y-1.5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-100"
+                              className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 relative group/need space-y-1.5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-100"
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <span className="font-bold text-slate-800 text-[11.5px] leading-tight pr-5">
+                                <span className="font-bold text-slate-800 dark:text-slate-100 text-[11.5px] leading-tight pr-5">
                                   {need.LearningNeed}
                                 </span>
-                                <span className="bg-blue-50 text-blue-700 font-extrabold px-1.5 py-0.5 rounded text-[8.5px] border border-blue-100/50 whitespace-nowrap shrink-0">
+                                <span className="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded text-[8.5px] border border-blue-100/50 dark:border-blue-900/40 whitespace-nowrap shrink-0">
                                   {need.TargetSchedule}
                                 </span>
                               </div>
-                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500">
-                                <span className="bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                  <strong>Basis:</strong> {need.Basis}
+                              <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                <span className="bg-blue-50/40 dark:bg-blue-950/25 px-1.5 py-0.5 rounded border border-blue-100/60 dark:border-blue-900/30 text-blue-700 dark:text-blue-400 font-medium transition-colors">
+                                  <strong className="text-blue-800 dark:text-blue-300 font-semibold">Basis:</strong> {need.Basis}
                                 </span>
-                                <span className="bg-slate-50 px-1.5 py-0.5 rounded border border-slate-100">
-                                  <strong>Method:</strong> {need.Methodology}
+                                <span className="bg-blue-50/40 dark:bg-blue-950/25 px-1.5 py-0.5 rounded border border-blue-100/60 dark:border-blue-900/30 text-blue-700 dark:text-blue-400 font-medium transition-colors">
+                                  <strong className="text-blue-800 dark:text-blue-300 font-semibold">Method:</strong> {need.Methodology}
                                 </span>
                               </div>
                               {/* Delete single need button inside the item */}
                               <button
                                 onClick={() => handleDeleteNeed(need.LearningNeedID)}
-                                className="absolute top-1 right-1 opacity-0 group-hover/need:opacity-100 transition p-1 hover:bg-red-50 text-red-500 rounded-md cursor-pointer hover:scale-105 active:scale-95"
+                                className="absolute top-1 right-1 opacity-0 group-hover/need:opacity-100 transition p-1 hover:bg-red-50 dark:hover:bg-red-950/40 text-red-500 rounded-md cursor-pointer hover:scale-105 active:scale-95"
                                 title="Delete this learning need"
                               >
                                 <Trash2 className="h-3 w-3" />
@@ -550,33 +580,33 @@ export default function RecordsTable({
 
         {/* Pagination Controls */}
         {!loading && groupedRecords.length > 0 && (
-          <div className="bg-slate-50/50 px-6 py-4 flex items-center justify-between border-t border-slate-100 text-xs text-slate-500 font-medium">
+          <div className="bg-slate-50/50 dark:bg-slate-950/60 px-6 py-4 flex items-center justify-between border-t border-slate-100 dark:border-slate-800 text-xs text-slate-500 dark:text-slate-400 font-medium transition-colors duration-200">
             <span>
-              Showing <strong className="font-semibold text-slate-800">{indexOfFirstItem + 1}</strong> to{" "}
-              <strong className="font-semibold text-slate-800">
+              Showing <strong className="font-semibold text-slate-800 dark:text-slate-200">{indexOfFirstItem + 1}</strong> to{" "}
+              <strong className="font-semibold text-slate-800 dark:text-slate-200">
                 {indexOfLastItem > groupedRecords.length ? groupedRecords.length : indexOfLastItem}
               </strong>{" "}
-              of <strong className="font-semibold text-slate-800">{groupedRecords.length}</strong> employees
+              of <strong className="font-semibold text-slate-800 dark:text-slate-200">{groupedRecords.length}</strong> employees
             </span>
 
             <div className="flex items-center gap-2">
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(currentPage - 1)}
-                className="p-1 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-lg disabled:opacity-50 transition cursor-pointer"
+                className="p-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-lg disabled:opacity-50 transition cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
               
-              <span className="text-slate-700">
-                Page <strong className="font-semibold text-slate-900">{currentPage}</strong> of{" "}
-                <strong className="font-semibold text-slate-900">{totalPages || 1}</strong>
+              <span className="text-slate-700 dark:text-slate-200">
+                Page <strong className="font-semibold text-slate-900 dark:text-slate-200">{currentPage}</strong> of{" "}
+                <strong className="font-semibold text-slate-900 dark:text-slate-200">{totalPages || 1}</strong>
               </span>
 
               <button
                 disabled={currentPage === totalPages || totalPages === 0}
                 onClick={() => setCurrentPage(currentPage + 1)}
-                className="p-1 border border-slate-200 bg-white hover:bg-slate-50 text-slate-600 rounded-lg disabled:opacity-50 transition cursor-pointer"
+                className="p-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-lg disabled:opacity-50 transition cursor-pointer"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -588,15 +618,15 @@ export default function RecordsTable({
       {/* Delete Confirmation Modal Overlay */}
       {deleteConfirmId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-100">
-          <div className="bg-white rounded-xl border border-slate-200/60 shadow-2xl p-6 w-full max-w-sm relative animate-in zoom-in-95 duration-100">
-            <h4 className="text-base font-bold text-slate-900 font-display">Delete Learning Need?</h4>
-            <p className="text-xs text-slate-500 mt-2">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-2xl p-6 w-full max-w-sm relative animate-in zoom-in-95 duration-100 transition-colors duration-200">
+            <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 font-display">Delete Learning Need?</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               This will permanently delete this specific learning need entry from the database. This action is irreversible.
             </p>
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 transition-all duration-100 cursor-pointer"
+                className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-905 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all duration-100 cursor-pointer"
               >
                 Cancel
               </button>
@@ -614,15 +644,15 @@ export default function RecordsTable({
       {/* Delete Employee Confirmation Modal Overlay */}
       {deleteEmployeeConfirmId && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-100">
-          <div className="bg-white rounded-xl border border-slate-200/60 shadow-2xl p-6 w-full max-w-sm relative animate-in zoom-in-95 duration-100">
-            <h4 className="text-base font-bold text-slate-900 font-display">Delete Employee?</h4>
-            <p className="text-xs text-slate-500 mt-2">
+          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-2xl p-6 w-full max-w-sm relative animate-in zoom-in-95 duration-100 transition-colors duration-200">
+            <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 font-display">Delete Employee?</h4>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
               This will permanently delete this employee and all associated learning needs from the database. This action is irreversible.
             </p>
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setDeleteEmployeeConfirmId(null)}
-                className="px-4 py-2 border border-slate-200 hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 transition-all duration-100 cursor-pointer"
+                className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all duration-100 cursor-pointer"
               >
                 Cancel
               </button>
@@ -640,16 +670,16 @@ export default function RecordsTable({
       {/* View Employee Detail Drawer Overlay */}
       {detailModalOpen && selectedEmployeeDetail && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-end animate-in fade-in duration-100">
-          <div className="w-full max-w-lg bg-white h-full shadow-2xl flex flex-col relative animate-in slide-in-from-right duration-200">
+          <div className="w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col relative animate-in slide-in-from-right duration-200 transition-colors duration-200">
             {/* Topbar */}
-            <div className="border-b border-slate-100 p-6 flex items-center justify-between bg-slate-50/50">
+            <div className="border-b border-slate-100 dark:border-slate-800 p-6 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40 transition-colors duration-200">
               <div>
-                <h3 className="text-lg font-bold text-slate-900 font-display">Employee Profile Card</h3>
-                <p className="text-xs text-slate-400">View registered metadata & training requirements</p>
+                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display">Employee Profile Card</h3>
+                <p className="text-xs text-slate-400 dark:text-slate-550 font-medium">View registered metadata & training requirements</p>
               </div>
               <button
                 onClick={() => setDetailModalOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 hover:scale-105 active:scale-95 transition-all duration-100 cursor-pointer"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-105 active:scale-95 transition-all duration-100 cursor-pointer"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -658,34 +688,36 @@ export default function RecordsTable({
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* Demographics Card */}
-              <div className="bg-slate-50 rounded-xl border border-slate-200/60 p-5 space-y-4">
+              <div className="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-slate-800 p-5 space-y-4 transition-colors duration-200">
                 <div className="space-y-1">
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Demographics Name</span>
-                  <h4 className="text-xl font-bold text-slate-900 font-display">
+                  <h4 className="text-xl font-bold text-slate-900 dark:text-slate-100 font-display">
                     {selectedEmployeeDetail.LastName}, {selectedEmployeeDetail.FirstName} {selectedEmployeeDetail.MiddleInitial || ""}
                   </h4>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 border-t border-slate-200/60 pt-4">
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-200/60 dark:border-slate-800 pt-4">
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Office</span>
-                    <span className="text-xs font-semibold text-slate-700">{selectedEmployeeDetail.Office}</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{selectedEmployeeDetail.Office}</span>
                   </div>
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Position</span>
-                    <span className="text-xs font-semibold text-slate-700">{selectedEmployeeDetail.Position}</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{selectedEmployeeDetail.Position}</span>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4 border-t border-slate-200/60 pt-4 text-[11px] text-slate-400">
-                  <div>
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-200/60 dark:border-slate-800 pt-4 text-[11px] text-slate-400">
+                  <div className={isRecentEntry(selectedEmployeeDetail.CreatedAt) ? "" : "col-span-2"}>
                     <span className="block">Recorded:</span>
                     <span>{formatShortDate(selectedEmployeeDetail.CreatedAt)}</span>
                   </div>
-                  <div>
-                    <span className="block">Encoder Log:</span>
-                    <span>{selectedEmployeeDetail.CreatedBy}</span>
-                  </div>
+                  {isRecentEntry(selectedEmployeeDetail.CreatedAt) && (
+                    <div>
+                      <span className="block">Encoder Log:</span>
+                      <span className="font-semibold text-slate-700 dark:text-slate-300">{selectedEmployeeDetail.CreatedBy}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -698,16 +730,16 @@ export default function RecordsTable({
                 ) : (
                   <div className="space-y-3">
                     {selectedEmployeeNeeds.map((need, idx) => (
-                      <div key={idx} className="border border-slate-100 rounded-xl p-4 bg-white shadow-sm space-y-2.5">
+                      <div key={idx} className="border border-slate-100 dark:border-slate-800 rounded-xl p-4 bg-white dark:bg-slate-950 shadow-sm space-y-2.5 transition-colors duration-200">
                         <div className="flex items-start justify-between">
-                          <span className="text-xs font-bold text-slate-800 leading-tight">
+                          <span className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-tight">
                             {need.LearningNeed}
                           </span>
-                          <span className="bg-blue-50 text-blue-700 font-semibold px-2 py-0.5 rounded text-[10px] whitespace-nowrap">
+                          <span className="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-semibold px-2 py-0.5 rounded text-[10px] whitespace-nowrap border dark:border-blue-900/40">
                             {need.TargetSchedule}
                           </span>
                         </div>
-                        <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 border-t border-slate-50 pt-2">
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-slate-500 dark:text-slate-400 border-t border-slate-50 dark:border-slate-800 pt-2">
                           <div>
                             <strong className="text-slate-400 font-normal">Basis:</strong> {need.Basis}
                           </div>
@@ -723,10 +755,10 @@ export default function RecordsTable({
             </div>
 
             {/* Actions Footer */}
-            <div className="p-6 border-t border-slate-100 flex items-center justify-end gap-3 bg-slate-50/50">
+            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-950/40 transition-colors duration-200">
               <button
                 onClick={() => setDetailModalOpen(false)}
-                className="px-5 py-2.5 border border-slate-200 hover:bg-slate-100 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 transition-all duration-100 cursor-pointer"
+                className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all duration-100 cursor-pointer"
               >
                 Close Profile
               </button>

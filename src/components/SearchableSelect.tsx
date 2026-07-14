@@ -12,6 +12,7 @@ interface SearchableSelectProps {
   triggerRef?: React.RefObject<HTMLDivElement | null>;
   onDeleteCustom?: (val: string) => void;
   isCustom?: (val: string) => boolean;
+  autoFocus?: boolean;
 }
 
 export default function SearchableSelect({ 
@@ -24,7 +25,8 @@ export default function SearchableSelect({
   allowCustom = false,
   triggerRef: externalTriggerRef,
   onDeleteCustom = () => {},
-  isCustom = () => false
+  isCustom = () => false,
+  autoFocus = false
 }: SearchableSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -79,6 +81,17 @@ export default function SearchableSelect({
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  useEffect(() => {
+    if (autoFocus) {
+      triggerRef.current?.focus();
+      setIsOpen(true);
+      setHighlightedIndex(0);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
+    }
+  }, [autoFocus]);
 
   const handleSelect = (option: string) => {
     onChange(option);
@@ -137,7 +150,7 @@ export default function SearchableSelect({
   return (
     <div className="relative space-y-1.5" ref={containerRef}>
       {label && (
-        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
       )}
@@ -149,21 +162,21 @@ export default function SearchableSelect({
         aria-expanded={isOpen}
         onClick={handleToggle}
         onKeyDown={handleTriggerKeyDown}
-        className={`flex items-center justify-between w-full px-3.5 py-2 border rounded-xl shadow-sm text-xs cursor-pointer transition outline-none ${
+        className={`flex items-center justify-between w-full px-3.5 py-2 border rounded-xl shadow-sm text-xs cursor-pointer transition outline-none transition-colors duration-200 ${
           isOpen 
-            ? "border-blue-500 ring-2 ring-blue-500 bg-white text-slate-800" 
-            : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            ? "border-blue-500 ring-2 ring-blue-500 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100" 
+            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
         }`}
       >
-        <span className={value ? "text-slate-800 font-medium" : "text-slate-400"}>
+        <span className={value ? "text-slate-800 dark:text-slate-100 font-medium" : "text-slate-400 dark:text-slate-500"}>
           {value || placeholder}
         </span>
         <ChevronDown className={`h-4 w-4 transition-transform duration-200 text-slate-400 ${isOpen ? "rotate-180" : ""}`} />
       </div>
 
       {isOpen && (
-        <div className="absolute z-30 w-full mt-1.5 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden max-h-60 flex flex-col animate-in slide-in-from-top-2 duration-100">
-          <div className="p-2 border-b border-slate-100 bg-slate-50 flex items-center gap-2">
+        <div className="absolute z-30 w-full mt-1.5 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden max-h-60 flex flex-col animate-in slide-in-from-top-2 duration-100 transition-colors duration-200">
+          <div className="p-2 border-b border-slate-100 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 flex items-center gap-2 transition-colors duration-200">
             <Search className="h-4 w-4 text-slate-400 shrink-0" />
             <input
               type="text"
@@ -172,11 +185,11 @@ export default function SearchableSelect({
               onChange={(e) => setSearchQuery(e.target.value)}
               onKeyDown={handleInputKeyDown}
               placeholder="Type to filter list..."
-              className="w-full bg-transparent border-none text-xs text-slate-800 focus:outline-none placeholder-slate-400 py-1"
+              className="w-full bg-transparent border-none text-xs text-slate-800 dark:text-slate-100 focus:outline-none placeholder-slate-400 dark:placeholder-slate-500 py-1"
             />
           </div>
           
-          <div ref={listContainerRef} className="overflow-y-auto max-h-48 divide-y divide-slate-50">
+          <div ref={listContainerRef} className="overflow-y-auto max-h-48 divide-y divide-slate-50 dark:divide-slate-800/60">
             {selectableOptions.map((opt, idx) => {
               const isCustomOption = showCustomOption && idx === 0;
               const isHighlighted = idx === highlightedIndex;
@@ -190,17 +203,17 @@ export default function SearchableSelect({
                   onMouseEnter={() => setHighlightedIndex(idx)}
                   className={`px-3.5 py-2.5 text-xs cursor-pointer transition text-left flex items-center gap-2 justify-between ${
                     isHighlighted 
-                      ? "bg-blue-50 text-blue-700 font-semibold" 
+                      ? "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400 font-semibold" 
                       : isSelected 
-                        ? "bg-slate-50 text-slate-800 font-medium" 
-                        : "text-slate-600 hover:bg-slate-50"
+                        ? "bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 font-medium" 
+                        : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950/60"
                   }`}
                 >
                   <div className="flex items-center gap-2 flex-1">
                     {isCustomOption ? (
                       <>
-                        <Plus className={`h-3.5 w-3.5 shrink-0 ${isHighlighted ? "text-blue-700" : "text-blue-600"}`} />
-                        <span className={isHighlighted ? "text-blue-700 font-bold" : "text-blue-600 font-semibold"}>
+                        <Plus className={`h-3.5 w-3.5 shrink-0 ${isHighlighted ? "text-blue-700 dark:text-blue-400" : "text-blue-600"}`} />
+                        <span className={isHighlighted ? "text-blue-700 dark:text-blue-400 font-bold" : "text-blue-600 font-semibold"}>
                           Add custom: "{opt}"
                         </span>
                       </>
@@ -215,7 +228,7 @@ export default function SearchableSelect({
                         e.stopPropagation();
                         onDeleteCustom!(opt);
                       }}
-                      className="p-1 hover:bg-red-100 rounded-md text-red-500 transition-colors shrink-0"
+                      className="p-1 hover:bg-red-100 dark:hover:bg-red-950/40 rounded-md text-red-500 transition-colors shrink-0"
                       title="Delete custom option"
                     >
                       <Trash className="h-3 w-3" />
@@ -226,7 +239,7 @@ export default function SearchableSelect({
             })}
 
             {selectableOptions.length === 0 && (
-              <div className="p-3 text-xs text-slate-400 text-center">
+              <div className="p-3 text-xs text-slate-400 dark:text-slate-500 text-center">
                 {allowCustom ? "No matching standard options" : "No options found"}
               </div>
             )}

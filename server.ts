@@ -11,33 +11,177 @@ const DB_FILE = path.join(process.cwd(), "database", "db.json");
 // Middleware
 app.use(express.json());
 
+const DEFAULT_OFFICES = [
+  "Mapandan Community Hospital",
+  "Manaoag Community Hospital",
+  "Lingayen District Hospital",
+  "Provincial Engineering Office",
+  "Pangasinan Polytechnic College",
+  "Capitol Resort Hotel",
+  "Provincial Legal Office",
+  "Western Pangasinan District Hospital",
+  "Bayambang District Hospital",
+  "Dasol Community Hospital"
+];
+
+const DEFAULT_POSITIONS = [
+  "Nurse",
+  "Nurse I",
+  "Nurse II",
+  "Nurse (Casual)",
+  "Medical Technologist",
+  "Medical Consultant",
+  "Caregiver",
+  "Admin. Aide/ Utility Worker (JO)",
+  "Admin. Aide/IT Encoder",
+  "Admin. Aide/ Ekonsulta Clerk",
+  "Admin. Aide/ Philhealth Clerk",
+  "Utility Worker",
+  "Driver (Casual)",
+  "Driver I",
+  "HEO I",
+  "Heavy Equipment Operator IE",
+  "Engineer I",
+  "Engineer II",
+  "Engineer III",
+  "Engineering Aide",
+  "Attorney III",
+  "Legal Assistant I",
+  "Legal Researcher III",
+  "Instructor III",
+  "Associate Professor II",
+  "Assistant Professor III",
+  "Professor II",
+  "Administrative Aide/ Housekeeping",
+  "Administrative Aide/ Cook",
+  "Administrative Aide/ Food & Beverages",
+  "Administrative Aide/ Frontdesk Clerk",
+  "Accounting Clerk (JO)",
+  "Social Worker Officer I",
+  "Pharmacist I",
+  "Midwife",
+  "Security Officer (Casual)",
+  "Liaison Officer (Casual)",
+  "Carpenter",
+  "Draftsman I",
+  "Administrative Assistant III",
+  "Administrative Officer II",
+  "Administrative Officer IV",
+  "Supervising Administrative Officer"
+];
+
+const DEFAULT_LEARNING_NEEDS = [
+  "Direct Sputum Smear Microscopy (DSSM)",
+  "Basic Blood Banking Procedures",
+  "Drug Testing Training",
+  "Total Quality Management for Blood Services Facilities",
+  "Lactation Management",
+  "Infection Prevention and Control",
+  "Vital Signs Taking",
+  "Carrying out Doctor's Order",
+  "Providing Nursing Care to Patients",
+  "Operating Equipment",
+  "Assisting Physicians with Diagnostic and Therapeutic Procedures",
+  "Knowledge of the Operation of Different types of equipment",
+  "Knowledge on Traffic Rules and Regulations",
+  "Ability to Perform Pre-Post Equipment Operation",
+  "Knowledge on Basic Safety Guidelines",
+  "Ability in Operating Cleaning Equipment and Tools",
+  "Customer Service Orientation",
+  "Effective Written & Verbal Communication Skills",
+  "Records & Archives Management",
+  "Property, Supplies, and Equipment Procurement Management",
+  "Financial Services (Budget, Accounting, Cashier Functions)",
+  "Enhanced Computer Operations Skills",
+  "People Management Skills",
+  "Essential Driving and Vehicle Maintenance Skills",
+  "General Maintenance & Repair Skills",
+  "Liaising Skills",
+  "Enhanced Administrative Skills",
+  "Liaising Communications and Official Documents",
+  "Managing Client Request",
+  "Supply officer Planning",
+  "Waste Management",
+  "Social Work Case Management",
+  "Pharmacy Planning",
+  "Audit Report Writing",
+  "Drafting Provincial Resolutions and Ordinances",
+  "Preparing Transcript of Proceedings",
+  "Maintaining Digital Records System"
+];
+
+const DEFAULT_BASES = [
+  "Requirement of the position",
+  "Competency Gap",
+  "Licensing Requirement",
+  "Update/Learning Requirement",
+  "Succession Planning",
+  "Competency Improvement",
+  "N/A"
+];
+
+const DEFAULT_METHODOLOGIES = [
+  "Seminar/Training",
+  "Coaching & Mentoring",
+  "Refresher Training",
+  "Webinar",
+  "Values Restoration Drive",
+  "Job Rotation",
+  "Shadowing",
+  "N/A"
+];
+
+const DEFAULT_SCHEDULES = [
+  "Immediately",
+  "1st Quarter of 2024",
+  "2nd Quarter of 2024",
+  "3rd Quarter of 2024",
+  "4th Quarter of 2024",
+  "1st Quarter of 2025",
+  "2nd Quarter of 2025",
+  "3rd Quarter of 2025",
+  "4th Quarter of 2025",
+  "1st Quarter of 2026",
+  "2nd Quarter of 2026",
+  "3rd Quarter of 2026",
+  "4th Quarter of 2026",
+  "1st Quarter of 2027",
+  "2nd Quarter of 2027",
+  "3rd Quarter of 2027",
+  "4th Quarter of 2027",
+  "Quarterly"
+];
+
 // Helper functions for DB reading & writing
 function readDatabase() {
   try {
+    const defaults = {
+      basis: DEFAULT_BASES,
+      methodology: DEFAULT_METHODOLOGIES,
+      office: DEFAULT_OFFICES,
+      position: DEFAULT_POSITIONS,
+      learningNeed: DEFAULT_LEARNING_NEEDS,
+      schedule: DEFAULT_SCHEDULES
+    };
+
     if (!fs.existsSync(DB_FILE)) {
       return { 
         users: [], 
         employees: [], 
         learningNeeds: [], 
-        customOptions: { 
-          basis: [], 
-          methodology: [],
-          office: [],
-          position: [],
-          learningNeed: [],
-          schedule: []
-        } 
+        customOptions: { ...defaults } 
       };
     }
     const data = fs.readFileSync(DB_FILE, "utf-8");
     const db = JSON.parse(data);
     if (!db.customOptions) {
-      db.customOptions = { basis: [], methodology: [], office: [], position: [], learningNeed: [], schedule: [] };
+      db.customOptions = { ...defaults };
     } else {
-      // Ensure all required keys exist
-      ["basis", "methodology", "office", "position", "learningNeed", "schedule"].forEach(key => {
-        if (!db.customOptions[key as keyof typeof db.customOptions]) {
-          db.customOptions[key as keyof typeof db.customOptions] = [];
+      // Ensure all required keys exist and are seeded if empty
+      Object.keys(defaults).forEach(key => {
+        const k = key as keyof typeof defaults;
+        if (!db.customOptions[k] || !Array.isArray(db.customOptions[k]) || db.customOptions[k].length === 0) {
+          db.customOptions[k] = [...defaults[k]];
         }
       });
     }
@@ -69,6 +213,72 @@ function writeDatabase(data: any) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
   } catch (error) {
     console.error("Error writing database:", error);
+  }
+}
+
+function formatName(val: string): string {
+  if (!val) return "";
+  return val
+    .toLowerCase()
+    .replace(/\s+/g, " ")
+    .replace(/\b\w/g, (char) => char.toUpperCase())
+    .trim();
+}
+
+function formatMiddleInitial(val: string): string {
+  const cleaned = (val || "").trim().toUpperCase();
+  if (!cleaned) return "";
+  if (cleaned.length === 1) {
+    return cleaned + ".";
+  }
+  if (cleaned.length === 2 && cleaned.endsWith(".")) {
+    return cleaned;
+  }
+  return cleaned.charAt(0) + ".";
+}
+
+function ensureCustomOptionsExist(employee: any, needs: any[], db: any) {
+  if (!db.customOptions) {
+    db.customOptions = { basis: [], methodology: [], office: [], position: [], learningNeed: [], schedule: [] };
+  }
+
+  const addOption = (type: string, val: string) => {
+    if (!val) return;
+    const trimmed = val.trim();
+    if (!trimmed || trimmed.toLowerCase() === "n/a") return;
+    
+    const list = db.customOptions[type];
+    if (Array.isArray(list)) {
+      const exists = list.some((item: string) => item.toLowerCase() === trimmed.toLowerCase());
+      if (!exists) {
+        list.push(trimmed);
+      }
+    }
+  };
+
+  // 1. Office & Position
+  if (employee.Office) addOption("office", employee.Office);
+  if (employee.Position) addOption("position", employee.Position);
+
+  // 2. Learning needs
+  if (Array.isArray(needs)) {
+    needs.forEach((need: any) => {
+      if (need.LearningNeed) addOption("learningNeed", need.LearningNeed);
+      if (need.TargetSchedule) addOption("schedule", need.TargetSchedule);
+
+      // Basis and Methodology can be array or comma-separated string
+      const parseList = (val: any) => {
+        if (Array.isArray(val)) {
+          return val.map(item => (item || "").trim()).filter(Boolean);
+        } else if (typeof val === "string") {
+          return val.split(",").map(item => item.trim()).filter(Boolean);
+        }
+        return [];
+      };
+
+      parseList(need.Basis).forEach(b => addOption("basis", b));
+      parseList(need.Methodology).forEach(m => addOption("methodology", m));
+    });
   }
 }
 
@@ -262,9 +472,9 @@ app.post("/api/employees", (req, res) => {
   const db = readDatabase();
 
   // Clean data
-  const cleanFirst = firstName.trim();
-  const cleanMiddle = (middleInitial || "").trim();
-  const cleanLast = lastName.trim();
+  const cleanFirst = formatName(firstName);
+  const cleanMiddle = formatMiddleInitial(middleInitial);
+  const cleanLast = formatName(lastName);
   const cleanOffice = office.trim();
   const cleanPosition = position.trim();
 
@@ -284,6 +494,7 @@ app.post("/api/employees", (req, res) => {
   };
 
   db.employees.push(newEmployee);
+  ensureCustomOptionsExist(newEmployee, [], db);
   writeDatabase(db);
 
   return res.status(201).json(newEmployee);
@@ -308,9 +519,9 @@ app.put("/api/employees/:id", (req, res) => {
   // Update employee info
   db.employees[employeeIndex] = {
     ...db.employees[employeeIndex],
-    FirstName: firstName.trim(),
-    MiddleInitial: (middleInitial || "").trim(),
-    LastName: lastName.trim(),
+    FirstName: formatName(firstName),
+    MiddleInitial: formatMiddleInitial(middleInitial),
+    LastName: formatName(lastName),
     Office: office.trim(),
     Position: position.trim(),
     UpdatedAt: new Date().toISOString(),
@@ -340,6 +551,7 @@ app.put("/api/employees/:id", (req, res) => {
     });
   });
 
+  ensureCustomOptionsExist(db.employees[employeeIndex], needs, db);
   writeDatabase(db);
   return res.json({
     ...db.employees[employeeIndex],
@@ -426,6 +638,8 @@ app.get("/api/learning-needs", (req, res) => {
         UpdatedAt: ln.UpdatedAt,
         CreatedBy: ln.CreatedBy,
         UpdatedBy: ln.UpdatedBy,
+        EmployeeCreatedBy: emp.CreatedBy,
+        EmployeeCreatedAt: emp.CreatedAt,
       });
     }
   });

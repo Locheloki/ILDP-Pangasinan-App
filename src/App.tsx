@@ -23,7 +23,10 @@ import {
   Mail,
   Facebook,
   Server,
-  Network
+  Network,
+  Sun,
+  Moon,
+  ChevronLeft
 } from "lucide-react";
 import { User, DashboardStats, Employee, LearningNeed } from "./types";
 import LoginScreen from "./components/LoginScreen";
@@ -33,6 +36,26 @@ import RecordsTable from "./components/RecordsTable";
 import SaveConfirmDialog from "./components/SaveConfirmDialog";
 
 export default function App() {
+  // Dark Mode State
+  const [darkMode, setDarkMode] = useState(() => {
+    if (typeof window !== "undefined") {
+      const savedTheme = localStorage.getItem("theme");
+      if (savedTheme) return savedTheme === "dark";
+      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      localStorage.setItem("theme", "dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+      localStorage.setItem("theme", "light");
+    }
+  }, [darkMode]);
+
   // Authentication State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
 
@@ -55,6 +78,8 @@ export default function App() {
   const [pendingEmployee, setPendingEmployee] = useState<Partial<Employee> | null>(null);
   const [pendingNeeds, setPendingNeeds] = useState<LearningNeed[] | null>(null);
   const [skipConfirmation, setSkipConfirmation] = useState(false);
+  // Force remount of add form to clear after successful save
+  const [formKey, setFormKey] = useState(0);
 
   // Status Alerts
   const [toastMessage, setToastMessage] = useState<string | null>(null);
@@ -223,7 +248,13 @@ export default function App() {
       
       // Refresh Stats and redirect to table list
       fetchStats();
-      setActiveTab("view");
+      if (isEdit) {
+        setActiveTab("view");
+      } else {
+        // Keep user on Add New page and reset the form for convenience
+        setActiveTab("add");
+        setFormKey((k) => k + 1);
+      }
     } catch (error) {
       console.error("Save error:", error);
       showToast("An error occurred while saving the records. Please try again.", "error");
@@ -238,6 +269,7 @@ export default function App() {
 
   // Sidebar mobile toggle state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
 
   useEffect(() => {
@@ -282,7 +314,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-full bg-slate-50 flex overflow-hidden antialiased font-sans">
+    <div className="h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex overflow-hidden antialiased font-sans transition-colors duration-200">
       {/* Dynamic Toast Alerts */}
       {toastMessage && (
         <div className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl border shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300 ${
@@ -307,18 +339,25 @@ export default function App() {
 
       {/* 1. Left Sidebar Component - Geometric Slate Design */}
       <aside
-        className="fixed inset-y-0 left-0 z-50 w-64 bg-slate-900 text-slate-200 flex flex-col shrink-0 md:static md:translate-x-0"
+        className={`fixed inset-y-0 left-0 z-50 bg-slate-900 text-slate-200 flex flex-col shrink-0 transform transition-all duration-300 ease-in-out ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        } md:static md:translate-x-0 ${
+          isSidebarCollapsed 
+            ? 'md:w-0 md:opacity-0 md:pointer-events-none md:overflow-hidden' 
+            : 'w-64 md:w-64 md:opacity-100'
+        }`}
+        aria-hidden={(!isSidebarOpen && !isDesktop) || (isDesktop && isSidebarCollapsed)}
       >
         {/* Branding header */}
         <div className="p-6 border-b border-slate-800">
           <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
+            <div className="flex items-center space-x-3 min-w-0">
               <img
                 src="/pangasinan-logo.svg"
                 alt="Pangasinan Provincial Seal"
-                className="w-9 h-9 object-contain bg-white rounded-full p-0.5"
+                className="w-9 h-9 object-contain bg-white rounded-full p-0.5 shrink-0"
               />
-              <span className="font-bold tracking-tight text-white text-md leading-tight">
+              <span className="font-bold tracking-tight text-white text-md leading-tight truncate">
                 ILDP Pangasinan
                 <span className="text-blue-400 text-[10px] block uppercase font-mono tracking-widest mt-0.5">Learning Needs Summary System</span>
               </span>
@@ -329,6 +368,14 @@ export default function App() {
               className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white md:hidden"
             >
               <X className="h-5 w-5" />
+            </button>
+            {/* Collapse button for desktop mode */}
+            <button 
+              onClick={() => setIsSidebarCollapsed(true)}
+              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white hidden md:block cursor-pointer transition shrink-0 ml-2"
+              title="Collapse Sidebar"
+            >
+              <ChevronLeft className="h-5 w-5" />
             </button>
           </div>
         </div>
@@ -342,7 +389,7 @@ export default function App() {
             <div className="space-y-1 menu-hover-fill">
               <button
                 style={{ "--active-color": "#3b82f6" } as React.CSSProperties}
-                onClick={() => { setActiveTab("home"); setEditingEmployee(null); setIsSidebarOpen(false); }}
+                onClick={() => { setActiveTab("home"); setIsSidebarOpen(false); }}
                 className={`w-full flex items-center px-6 py-3 text-xs font-semibold transition-all duration-150 text-left border-l-4 ${
                   activeTab === "home" 
                     ? "bg-slate-800/80 border-blue-500 text-white font-bold" 
@@ -355,7 +402,7 @@ export default function App() {
 
               <button
                 style={{ "--active-color": "#8b5cf6" } as React.CSSProperties}
-                onClick={() => { setActiveTab("add"); setEditingEmployee(null); setIsSidebarOpen(false); }}
+                onClick={() => { setActiveTab("add"); setIsSidebarOpen(false); }}
                 className={`w-full flex items-center px-6 py-3 text-xs font-semibold transition-all duration-150 text-left border-l-4 ${
                   activeTab === "add" 
                     ? "bg-slate-800/80 border-violet-500 text-white font-bold" 
@@ -370,7 +417,7 @@ export default function App() {
 
               <button
                 style={{ "--active-color": "#10b981" } as React.CSSProperties}
-                onClick={() => { setActiveTab("view"); setEditingEmployee(null); setIsSidebarOpen(false); }}
+                onClick={() => { setActiveTab("view"); setIsSidebarOpen(false); }}
                 className={`w-full flex items-center px-6 py-3 text-xs font-semibold transition-all duration-150 text-left border-l-4 ${
                   activeTab === "view" 
                     ? "bg-slate-800/80 border-emerald-500 text-white font-bold" 
@@ -425,36 +472,55 @@ export default function App() {
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         
         {/* Persistent Top Header */}
-        <header className="h-16 bg-white border-b border-slate-200 flex items-center justify-between px-6 sm:px-8 shrink-0 shadow-xs">
+        <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sm:px-8 shrink-0 shadow-xs transition-colors duration-200">
           <div className="flex items-center gap-3">
+            {/* Mobile Sidebar Menu Button */}
             <button 
               onClick={() => setIsSidebarOpen(true)}
               className="p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 md:hidden transition"
             >
               <Menu className="h-5 w-5" />
             </button>
+
+            {/* Desktop Sidebar Expand Menu Button */}
+            {isSidebarCollapsed && (
+              <button 
+                onClick={() => setIsSidebarCollapsed(false)}
+                className="p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 hidden md:flex transition cursor-pointer animate-in fade-in duration-200"
+                title="Expand Sidebar"
+              >
+                <Menu className="h-5 w-5" />
+              </button>
+            )}
             <div>
-              <h2 className="text-sm font-bold text-slate-800 tracking-tight font-display sm:text-base">
+              <h2 className="text-sm font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display sm:text-base">
                 {activeTab === "home" && "Home Dashboard"}
                 {activeTab === "add" && (editingEmployee ? "Modify Employee Record" : "New Entry Wizard")}
                 {activeTab === "view" && "Registered Learning Needs Directory"}
               </h2>
-              <p className="text-[11px] text-slate-400 font-medium">
+              <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 {formatHeaderDate()}
               </p>
             </div>
           </div>
 
-
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => setDarkMode(!darkMode)}
+              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100 transition-all cursor-pointer animate-in fade-in duration-200"
+              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {darkMode ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+            </button>
+          </div>
         </header>
 
         {/* Scrollable panel area */}
-        <div className="flex-1 overflow-y-auto bg-slate-50 p-6 sm:p-8">
+        <div className="flex-1 overflow-y-auto bg-slate-50 dark:bg-slate-950 p-6 sm:p-8 transition-colors duration-200">
           <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Render Page 1: Home Dashboard */}
-            {activeTab === "home" && (
-              <div className="space-y-6 animate-in fade-in duration-200">
+            <div className={`space-y-6 animate-in fade-in duration-200 ${activeTab === "home" ? "" : "hidden"}`}>
                 {/* Welcome banner */}
                 <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -515,47 +581,89 @@ export default function App() {
                   />
                 </div>
 
-                {/* Grid layout for Quick Actions and recent instructions */}
-                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                  {/* Quick Actions Panel */}
-                  <div className="lg:col-span-3 bg-white border border-slate-200/60 shadow-sm rounded-xl p-6">
-                    <h3 className="font-bold text-slate-800 tracking-tight font-display mb-4 text-xs uppercase tracking-wider text-slate-400">
-                      System Quick Navigation
-                    </h3>
-                    
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      <button
-                        onClick={() => { setActiveTab("add"); setEditingEmployee(null); }}
-                        className="p-5 border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 rounded-xl flex flex-col items-center justify-center text-center group transition cursor-pointer"
-                      >
-                        <div className="bg-blue-600 text-white p-2.5 rounded-lg shadow-sm mb-3 group-hover:scale-105 transition">
-                          <Plus className="h-4 w-4" />
-                        </div>
-                        <span className="font-bold text-slate-800 text-xs font-display">Add New Record</span>
-                        <span className="text-[10px] text-slate-400 mt-1">Encode plans & details</span>
-                      </button>
+                {/* Web App Access Guidelines & Reminders */}
+                <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-slate-800 shadow-sm p-6 sm:p-8 space-y-6 transition-colors duration-200">
+                  {/* Header Section */}
+                  <div className="border-b border-slate-100 dark:border-slate-800 pb-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 rounded-lg border dark:border-blue-900/40">
+                        <HelpCircle className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-slate-100 tracking-tight font-display">
+                          Web App Access Guidelines & Reminders
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+                          System connectivity instructions, security notifications, and administrator reminders
+                        </p>
+                      </div>
+                    </div>
+                  </div>
 
-                      <button
-                        onClick={() => { setActiveTab("view"); setEditingEmployee(null); }}
-                        className="p-5 border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 rounded-xl flex flex-col items-center justify-center text-center group transition cursor-pointer"
-                      >
-                        <div className="bg-slate-800 text-white p-2.5 rounded-lg shadow-sm mb-3 group-hover:scale-105 transition">
-                          <Database className="h-4 w-4" />
-                        </div>
-                        <span className="font-bold text-slate-800 text-xs font-display">View Records</span>
-                        <span className="text-[10px] text-slate-400 mt-1">Search & filter registry</span>
-                      </button>
+                  {/* Grid Layout */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Access Steps Card */}
+                    <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-6 space-y-4 hover:shadow-xs transition-all duration-200">
+                      <h4 className="text-xs font-bold text-slate-850 dark:text-slate-200 font-display flex items-center gap-2 uppercase tracking-wider text-slate-450 dark:text-slate-450">
+                        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-400 text-[10px] font-bold">1</span>
+                        How to Access the App (For All Users)
+                      </h4>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                        To access the employee database, please follow these steps:
+                      </p>
+                      <ol className="space-y-3.5 text-xs text-slate-600 dark:text-slate-400">
+                        <li className="flex gap-2">
+                          <span className="text-blue-500 font-bold shrink-0">•</span>
+                          <div>
+                            <strong>Connect to the Network:</strong> Ensure your device is connected to the <span className="font-bold text-slate-850 dark:text-slate-200">CEEOD</span> office router.
+                            <div className="mt-1 bg-amber-50/50 dark:bg-amber-950/20 text-amber-800 dark:text-amber-400 text-[10px] px-2.5 py-1.5 rounded-lg border border-amber-200/25 dark:border-amber-900/30 flex items-start gap-1.5 leading-snug">
+                              <Info className="h-3 w-3 shrink-0 mt-0.5" />
+                              <span>This is a strictly local database. It is <strong>not</strong> accessible outside the office or on any other network.</span>
+                            </div>
+                          </div>
+                        </li>
+                        <li className="flex gap-2">
+                          <span className="text-blue-500 font-bold shrink-0">•</span>
+                          <div>
+                            <strong>Open the App:</strong> Once connected, open any web browser on your device and enter the following IP address in the address bar:
+                            <div className="mt-1.5 font-mono text-xs text-blue-600 dark:text-blue-400 font-semibold bg-blue-50/40 dark:bg-blue-950/20 py-1.5 px-3 rounded-lg border border-blue-200/50 dark:border-blue-800/40 inline-block shadow-2xs">
+                              http://192.168.2.150
+                            </div>
+                          </div>
+                        </li>
+                      </ol>
+                    </div>
 
-                      <button
-                        onClick={triggerExcelExportAll}
-                        className="p-5 border border-slate-100 bg-slate-50/50 hover:bg-slate-50 hover:border-slate-200 rounded-xl flex flex-col items-center justify-center text-center group transition cursor-pointer"
-                      >
-                        <div className="bg-emerald-600 text-white p-2.5 rounded-lg shadow-sm mb-3 group-hover:scale-105 transition">
-                          <FileSpreadsheet className="h-4 w-4" />
+                    {/* Security Notice Card & Admin Notes */}
+                    <div className="space-y-6">
+                      <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded-2xl p-6 space-y-3 hover:shadow-xs transition-all duration-200">
+                        <h4 className="text-xs font-bold text-slate-850 dark:text-slate-200 font-display flex items-center gap-2 uppercase tracking-wider text-slate-450 dark:text-slate-450">
+                          <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-400 text-[10px] font-bold">2</span>
+                          Why is the App Local? (Security Notice)
+                        </h4>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                          Because this application handles sensitive employee information, <strong>we do not use a cloud service provider</strong>.
+                        </p>
+                        <div className="bg-white dark:bg-slate-900 rounded-xl p-3 border dark:border-slate-800/80 leading-relaxed text-xs text-slate-600 dark:text-slate-400">
+                          Keeping the database entirely offline and local to the office router ensures maximum security, data privacy, and complete protection against unauthorized external network access.
                         </div>
-                        <span className="font-bold text-slate-800 text-xs font-display">Export to Excel</span>
-                        <span className="text-[10px] text-slate-400 mt-1">Download spreadsheet</span>
-                      </button>
+                      </div>
+
+                      {/* Admin Card inside right column for better grid balance */}
+                      <div className="bg-blue-50/30 dark:bg-blue-950/10 border border-blue-100/50 dark:border-blue-900/20 rounded-2xl p-6 space-y-2 hover:shadow-xs transition-all duration-200">
+                        <h4 className="text-xs font-bold text-blue-800 dark:text-blue-400 font-display flex items-center gap-2 uppercase tracking-wider">
+                          <Server className="h-4.5 w-4.5" />
+                          For the Host PC Administrator
+                        </h4>
+                        <ul className="space-y-2 text-xs text-slate-650 dark:text-slate-350 list-none pl-0">
+                          <li className="flex gap-2 items-start">
+                            <span className="text-blue-500 shrink-0">•</span>
+                            <p className="leading-relaxed">
+                              <strong>Keep the Host PC Running:</strong> The web application must remain active and running on the host PC at all times. If the host PC is turned off, goes to sleep, or logs out, other team members will lose access to the system immediately.
+                            </p>
+                          </li>
+                        </ul>
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -633,39 +741,35 @@ export default function App() {
                   </div>
                 </div>
               </div>
-            )}
 
             {/* Render Page 2: Add/Edit Record */}
-            {activeTab === "add" && (
-              <div className="animate-in fade-in duration-200">
-                <EmployeeForm
-                  employee={editingEmployee}
-                  currentUser={currentUser}
-                  onSave={handleFormSaveRequest}
-                  onCancel={() => { setActiveTab("home"); setEditingEmployee(null); }}
-                  customOptionsVersion={customOptionsVersion}
-                  onCustomOptionsChange={handleCustomOptionsChange}
-                />
-              </div>
-            )}
+            <div className={`animate-in fade-in duration-200 ${activeTab === "add" ? "" : "hidden"}`}>
+              <EmployeeForm
+                key={formKey}
+                employee={editingEmployee}
+                currentUser={currentUser}
+                onSave={handleFormSaveRequest}
+                onCancel={() => { setActiveTab("home"); setEditingEmployee(null); setFormKey((k) => k + 1); }}
+                customOptionsVersion={customOptionsVersion}
+                onCustomOptionsChange={handleCustomOptionsChange}
+              />
+            </div>
 
             {/* Render Page 3: View Records Table */}
-            {activeTab === "view" && (
-              <div className="animate-in fade-in duration-200">
-                <RecordsTable
-                  onEditEmployee={handleEditEmployeeTrigger}
-                  onRefreshStats={fetchStats}
-                  customOptionsVersion={customOptionsVersion}
-                  onCustomOptionsChange={handleCustomOptionsChange}
-                />
-              </div>
-            )}
+            <div className={`animate-in fade-in duration-200 ${activeTab === "view" ? "" : "hidden"}`}>
+              <RecordsTable
+                onEditEmployee={handleEditEmployeeTrigger}
+                onRefreshStats={fetchStats}
+                customOptionsVersion={customOptionsVersion}
+                onCustomOptionsChange={handleCustomOptionsChange}
+              />
+            </div>
 
           </div>
         </div>
 
         {/* System footer */}
-        <footer className="h-12 bg-white border-t border-slate-200 flex items-center justify-between px-6 sm:px-8 text-[11px] text-slate-400 shrink-0">
+        <footer className="h-12 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sm:px-8 text-[11px] text-slate-400 dark:text-slate-500 shrink-0 transition-colors duration-200">
           <span>ILDP Summary System</span>
           <span>© {new Date().getFullYear()} Provincial Government of Pangasinan</span>
         </footer>

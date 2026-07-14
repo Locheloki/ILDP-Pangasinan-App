@@ -24,6 +24,7 @@ export default function EmployeeForm({
   customOptionsVersion,
   onCustomOptionsChange
 }: EmployeeFormProps) {
+  const formRef = useRef<HTMLFormElement>(null);
   // Employee State
   const [firstName, setFirstName] = useState("");
   const [middleInitial, setMiddleInitial] = useState("");
@@ -108,7 +109,7 @@ export default function EmployeeForm({
           if (data.needs) {
             setNeeds(data.needs.map((n: any) => ({
               ...n,
-              Basis: Array.isArray(n.Basis) ? n.Basis : (n.Basis ? (n.Basis as string).split(",").map((s: string) => s.trim()) : ["Requirement of the position"]),
+              Basis: Array.isArray(n.Basis) ? n.Basis : (n.Basis ? (n.Basis as string).split(",").map((s: string) => s.trim()) : ["Advanced Knowledge"]),
               Methodology: Array.isArray(n.Methodology) ? n.Methodology : (n.Methodology ? (n.Methodology as string).split(",").map((s: string) => s.trim()) : ["Seminar/Training"]),
             })));
           }
@@ -130,11 +131,45 @@ export default function EmployeeForm({
   function createEmptyNeed(): LearningNeed {
     return {
       LearningNeed: "",
-      Basis: ["Requirement of the position"],
+      Basis: ["Advanced Knowledge"],
       Methodology: ["Seminar/Training"],
       TargetSchedule: "1st Quarter of 2026",
     };
   }
+
+  // Reset form fields back to starting values
+  const handleReset = () => {
+    if (window.confirm("Are you sure you want to reset all form fields? Any typed progress will be cleared.")) {
+      if (employee) {
+        setFirstName(employee.FirstName);
+        setMiddleInitial(employee.MiddleInitial || "");
+        setLastName(employee.LastName);
+        setOffice(employee.Office);
+        setPosition(employee.Position);
+        
+        fetch(`/api/employees/${employee.EmployeeID}`)
+          .then((res) => res.json())
+          .then((data) => {
+            if (data.needs) {
+              setNeeds(data.needs.map((n: any) => ({
+                ...n,
+                Basis: Array.isArray(n.Basis) ? n.Basis : (n.Basis ? (n.Basis as string).split(",").map((s: string) => s.trim()) : ["Advanced Knowledge"]),
+                Methodology: Array.isArray(n.Methodology) ? n.Methodology : (n.Methodology ? (n.Methodology as string).split(",").map((s: string) => s.trim()) : ["Seminar/Training"]),
+              })));
+            }
+          });
+      } else {
+        setFirstName("");
+        setMiddleInitial("");
+        setLastName("");
+        setOffice("");
+        setPosition("");
+        setNeeds([createEmptyNeed()]);
+      }
+      setSimilarEmployees([]);
+      setSelectedSimilar(null);
+    }
+  };
 
   // Handle similarity checking while typing first/last name
   useEffect(() => {
@@ -190,19 +225,34 @@ export default function EmployeeForm({
 
   // Handle proper capitalization & spacing (Rule: proper names capitalized)
   const formatName = (val: string) => {
+    if (!val) return "";
     return val
+      .toLowerCase()
       .replace(/\s+/g, " ") // trim internal extra spaces
-      .replace(/\b\w/g, (char) => char.toUpperCase()); // proper casing
+      .replace(/\b\w/g, (char) => char.toUpperCase()) // proper casing
+      .trim();
   };
 
   const handleFirstNameBlur = () => {
-    setFirstName(formatName(firstName).trim());
+    setFirstName(formatName(firstName));
     setTimeout(() => setActiveSuggestionField(null), 200);
   };
 
   const handleLastNameBlur = () => {
-    setLastName(formatName(lastName).trim());
+    setLastName(formatName(lastName));
     setTimeout(() => setActiveSuggestionField(null), 200);
+  };
+
+  const handleMiddleInitialBlur = () => {
+    let val = middleInitial.trim().toUpperCase();
+    if (val) {
+      if (val.length === 1) {
+        val = val + ".";
+      } else if (val.length > 2) {
+        val = val.charAt(0) + ".";
+      }
+    }
+    setMiddleInitial(val);
   };
 
   // Keyboard navigation inside Suggestions list and moving between inputs
@@ -281,7 +331,7 @@ export default function EmployeeForm({
         if (data.needs && data.needs.length > 0) {
           setNeeds(data.needs.map((n: any) => ({
             ...n,
-            Basis: Array.isArray(n.Basis) ? n.Basis : (n.Basis ? (n.Basis as string).split(",").map((s: string) => s.trim()) : ["Requirement of the position"]),
+              Basis: Array.isArray(n.Basis) ? n.Basis : (n.Basis ? (n.Basis as string).split(",").map((s: string) => s.trim()) : ["Advanced Knowledge"]),
             Methodology: Array.isArray(n.Methodology) ? n.Methodology : (n.Methodology ? (n.Methodology as string).split(",").map((s: string) => s.trim()) : ["Seminar/Training"]),
           })));
         } else {
@@ -296,7 +346,19 @@ export default function EmployeeForm({
   // Learning Need Actions
   const handleAddNeed = () => {
     setIsAddingCard(true);
-    setNeeds((prev) => [...prev, createEmptyNeed()]);
+    setNeeds((prev) => {
+      if (prev.length > 0) {
+        const lastNeed = prev[prev.length - 1];
+        const copyNeed: LearningNeed = {
+          LearningNeed: "",
+          Basis: [...lastNeed.Basis],
+          Methodology: [...lastNeed.Methodology],
+          TargetSchedule: lastNeed.TargetSchedule,
+        };
+        return [...prev, copyNeed];
+      }
+      return [...prev, createEmptyNeed()];
+    });
   };
 
   const handleAddCustomOption = (type: "basis" | "methodology" | "office" | "position" | "learningNeed" | "schedule", value: string) => {
@@ -361,6 +423,16 @@ export default function EmployeeForm({
       }, 100);
     }
   }, [needs.length, isAddingCard]);
+
+  // When opening the Add New view (no `employee` provided), scroll the form into view
+  useEffect(() => {
+    if (!employee) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        firstInputRef.current?.focus();
+      }, 80);
+    }
+  }, [employee]);
 
   // Global form hotkeys (like Alt+N to add card)
   useEffect(() => {
@@ -437,36 +509,36 @@ export default function EmployeeForm({
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-200">
-      <div className="bg-white rounded-2xl border border-slate-100 shadow-sm">
+    <form ref={formRef} onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-200">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-colors duration-200">
         {/* Panel Title */}
-        <div className="border-b border-slate-100 bg-slate-50/50 px-6 py-4 flex items-center justify-between rounded-t-2xl">
+        <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 px-6 py-4 flex items-center justify-between rounded-t-2xl transition-colors duration-200">
           <div className="flex items-center gap-2.5">
             <div className="bg-blue-600 text-white p-2 rounded-xl">
               <UserCheck className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-slate-800 tracking-tight font-display">
+              <h2 className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display">
                 {employee ? "Edit Employee Records" : "Employee Information & Demographics"}
               </h2>
-              <p className="text-xs text-slate-500">Provide personal and professional information</p>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Provide personal and professional information</p>
             </div>
           </div>
-          <span className="text-xs bg-blue-50 text-blue-700 font-medium px-2.5 py-1 rounded-full">
+          <span className="text-xs bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 font-medium px-2.5 py-1 rounded-full border dark:border-blue-900/40">
             Encoder: {currentUser.name} ({currentUser.role})
           </span>
         </div>
 
         {/* Warning: Similar Employee Detection */}
         {similarEmployees.length > 0 && (
-          <div className="m-6 p-4 bg-amber-50 border border-amber-200 rounded-xl flex flex-col sm:flex-row items-start gap-4">
+          <div className="m-6 p-4 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-900/60 rounded-xl flex flex-col sm:flex-row items-start gap-4">
             <div className="bg-amber-100 text-amber-800 p-2.5 rounded-full shrink-0">
               <AlertTriangle className="h-5 w-5" />
             </div>
             <div className="space-y-3 w-full">
               <div>
-                <h4 className="font-bold text-amber-900 text-sm">Similar employee found.</h4>
-                <p className="text-xs text-amber-700 mt-1">
+                <h4 className="font-bold text-amber-900 dark:text-amber-300 text-sm">Similar employee found.</h4>
+                <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
                   We found matching employees with a similar name. Would you like to use an existing record instead to prevent creating duplicates?
                 </p>
               </div>
@@ -476,7 +548,7 @@ export default function EmployeeForm({
                     key={emp.EmployeeID}
                     type="button"
                     onClick={() => handleUseExisting(emp)}
-                    className="flex items-center gap-2 bg-white hover:bg-slate-50 border border-amber-200 hover:border-amber-300 text-slate-700 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-sm transition text-left cursor-pointer"
+                    className="flex items-center gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 border border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-sm transition text-left cursor-pointer"
                   >
                     <span>{emp.LastName}, {emp.FirstName} ({emp.Office})</span>
                     <ArrowRight className="h-3 w-3 text-amber-600 shrink-0" />
@@ -489,9 +561,9 @@ export default function EmployeeForm({
 
         {/* Selected Similar Employee Notification */}
         {selectedSimilar && (
-          <div className="mx-6 mt-6 p-4 bg-blue-50 border border-blue-200 rounded-xl flex items-center gap-3">
+          <div className="mx-6 mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 rounded-xl flex items-center gap-3">
             <UserCheck className="h-5 w-5 text-blue-600" />
-            <div className="text-xs text-blue-800">
+            <div className="text-xs text-blue-800 dark:text-blue-300">
               Selected Existing Record: <strong className="font-semibold">{selectedSimilar.FirstName} {selectedSimilar.LastName}</strong>. The system will merge these learning needs instead of creating a new employee.
             </div>
             <button
@@ -513,7 +585,7 @@ export default function EmployeeForm({
         <div className="p-6 grid grid-cols-1 md:grid-cols-6 gap-5">
           {/* First Name */}
           <div className="md:col-span-2 relative">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               First Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -528,19 +600,19 @@ export default function EmployeeForm({
               }}
               onKeyDown={(e) => handleKeyDown(e, "first")}
               onBlur={handleFirstNameBlur}
-              className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 text-sm shadow-sm"
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200"
               placeholder="e.g. Vivian Lyn"
             />
             
             {/* Auto-complete dropdown */}
             {activeSuggestionField === "first" && firstNameSuggestions.length > 0 && (
-              <div className="absolute z-20 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-50">
+              <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-50 dark:divide-slate-800">
                 {firstNameSuggestions.map((suggestion, i) => (
                   <div
                     key={i}
                     onMouseDown={() => selectSuggestion(suggestion, "first")}
                     className={`px-3.5 py-2 text-xs cursor-pointer transition ${
-                      i === highlightedIndex ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"
+                      i === highlightedIndex ? "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950"
                     }`}
                   >
                     {suggestion}
@@ -552,7 +624,7 @@ export default function EmployeeForm({
 
           {/* Middle Initial */}
           <div className="md:col-span-1">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               M.I.
             </label>
             <input
@@ -562,14 +634,15 @@ export default function EmployeeForm({
               value={middleInitial}
               onChange={(e) => setMiddleInitial(e.target.value.toUpperCase())}
               onKeyDown={(e) => handleKeyDown(e, "mi")}
-              className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 text-sm text-center shadow-sm"
+              onBlur={handleMiddleInitialBlur}
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm text-center shadow-sm transition-colors duration-200"
               placeholder="e.g. E."
             />
           </div>
 
           {/* Last Name */}
           <div className="md:col-span-3 relative">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 mb-1.5">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Last Name <span className="text-red-500">*</span>
             </label>
             <input
@@ -584,19 +657,19 @@ export default function EmployeeForm({
               }}
               onKeyDown={(e) => handleKeyDown(e, "last")}
               onBlur={handleLastNameBlur}
-              className="block w-full px-3.5 py-2.5 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 text-sm shadow-sm"
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200"
               placeholder="e.g. De Guzman"
             />
 
             {/* Auto-complete dropdown */}
             {activeSuggestionField === "last" && lastNameSuggestions.length > 0 && (
-              <div className="absolute z-20 w-full mt-1 bg-white border border-slate-100 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-50">
+              <div className="absolute z-20 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-xl shadow-xl overflow-hidden divide-y divide-slate-50 dark:divide-slate-800">
                 {lastNameSuggestions.map((suggestion, i) => (
                   <div
                     key={i}
                     onMouseDown={() => selectSuggestion(suggestion, "last")}
                     className={`px-3.5 py-2 text-xs cursor-pointer transition ${
-                      i === highlightedIndex ? "bg-blue-50 text-blue-700" : "text-slate-600 hover:bg-slate-50"
+                      i === highlightedIndex ? "bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-400" : "text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950"
                     }`}
                   >
                     {suggestion}
@@ -654,20 +727,20 @@ export default function EmployeeForm({
       <div className="space-y-5">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-base font-bold text-slate-800 tracking-tight font-display">
+            <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display">
               Target Learning Needs ({needs.length})
             </h3>
-            <p className="text-xs text-slate-500">Provide one or more learning needs / target schedules</p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">Provide one or more learning needs / target schedules</p>
           </div>
           
           <button
             type="button"
             onClick={handleAddNeed}
-            className="flex items-center gap-1.5 bg-blue-50 hover:bg-blue-100 hover:scale-[1.02] active:scale-[0.98] text-blue-700 font-semibold px-4 py-2.5 rounded-xl text-xs shadow-sm hover:shadow transition-all duration-100 border border-blue-100 cursor-pointer"
+            className="flex items-center gap-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950 hover:scale-[1.02] active:scale-[0.98] text-blue-700 dark:text-blue-400 font-semibold px-4 py-2.5 rounded-xl text-xs shadow-sm hover:shadow transition-all duration-100 border border-blue-100 dark:border-blue-900/60 cursor-pointer"
           >
             <Plus className="h-4 w-4" />
             <span>Add Need Card</span>
-            <span className="text-[9px] bg-blue-200/50 text-blue-800 px-1.5 py-0.5 rounded font-mono ml-1">Alt+N</span>
+            <span className="text-[9px] bg-blue-200/50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-1.5 py-0.5 rounded font-mono ml-1">Alt+N</span>
           </button>
         </div>
 
@@ -676,23 +749,31 @@ export default function EmployeeForm({
           {needs.map((need, index) => (
             <div
               key={index}
-              className="bg-white rounded-2xl border border-slate-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-100 p-5 space-y-4 relative group"
+              onFocus={(e) => {
+                const card = e.currentTarget;
+                if (!card.contains(e.relatedTarget as Node)) {
+                  setTimeout(() => {
+                    card.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }, 50);
+                }
+              }}
+              className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm p-5 space-y-4 relative group transition-colors duration-200"
             >
               {/* Delete Need Float Button */}
               <button
                 type="button"
                 onClick={() => handleDeleteNeed(index)}
-                className="absolute top-4 right-4 p-1.5 bg-red-50 text-red-600 rounded-lg opacity-80 hover:opacity-100 hover:bg-red-100 hover:scale-105 active:scale-95 transition-all duration-100 cursor-pointer"
+                className="absolute top-4 right-4 p-1.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-lg opacity-80 hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-950 hover:scale-105 active:scale-95 transition-all duration-100 cursor-pointer border dark:border-red-900/40"
                 title="Remove Need Card"
               >
                 <Trash className="h-4 w-4" />
               </button>
 
-              <div className="flex items-center gap-2 border-b border-slate-100 pb-3">
-                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-500">
+              <div className="flex items-center gap-2 border-b border-slate-100 dark:border-slate-800 pb-3">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-slate-100 dark:bg-slate-950 text-[10px] font-bold text-slate-500 dark:text-slate-400 border dark:border-slate-800">
                   {index + 1}
                 </span>
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">
+                <span className="text-xs font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">
                   Need Specification
                 </span>
               </div>
@@ -717,7 +798,7 @@ export default function EmployeeForm({
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Basis of Need
                   </label>
                   {need.Basis.map((basis, bIdx) => (
@@ -738,6 +819,7 @@ export default function EmployeeForm({
                         allowCustom
                         onDeleteCustom={(val) => handleDeleteCustomOption("basis", val)}
                         isCustom={() => true}
+                        autoFocus={basis === "" && bIdx === need.Basis.length - 1 && bIdx > 0}
                       />
                       {need.Basis.length > 1 && (
                         <button
@@ -756,14 +838,14 @@ export default function EmployeeForm({
                   <button
                     type="button"
                     onClick={() => handleNeedChange(index, "Basis", [...need.Basis, ""])}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold flex items-center gap-1"
                   >
                     <Plus className="h-3 w-3" /> Add Basis
                   </button>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500">
+                  <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Proposed Methodology
                   </label>
                   {need.Methodology.map((meth, mIdx) => (
@@ -784,6 +866,7 @@ export default function EmployeeForm({
                         allowCustom
                         onDeleteCustom={(val) => handleDeleteCustomOption("methodology", val)}
                         isCustom={() => true}
+                        autoFocus={meth === "" && mIdx === need.Methodology.length - 1 && mIdx > 0}
                       />
                       {need.Methodology.length > 1 && (
                         <button
@@ -802,7 +885,7 @@ export default function EmployeeForm({
                   <button
                     type="button"
                     onClick={() => handleNeedChange(index, "Methodology", [...need.Methodology, ""])}
-                    className="text-xs text-blue-600 hover:text-blue-800 font-semibold flex items-center gap-1"
+                    className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 font-semibold flex items-center gap-1"
                   >
                     <Plus className="h-3 w-3" /> Add Methodology
                   </button>
@@ -830,11 +913,18 @@ export default function EmployeeForm({
       </div>
 
       {/* Save Button Row */}
-      <div className="pt-4 border-t border-slate-200 flex items-center justify-end gap-3">
+      <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">
+        <button
+          type="button"
+          onClick={handleReset}
+          className="px-5 py-2.5 border border-red-200 dark:border-red-900/40 hover:bg-red-50 dark:hover:bg-red-950/20 hover:scale-[1.02] active:scale-[0.98] text-red-600 dark:text-red-400 rounded-xl text-sm font-medium transition-all duration-100 cursor-pointer mr-auto"
+        >
+          Reset Fields
+        </button>
         <button
           type="button"
           onClick={onCancel}
-          className="px-5 py-2.5 border border-slate-200 hover:bg-slate-50 hover:scale-[1.02] active:scale-[0.98] text-slate-700 rounded-xl text-sm font-medium transition-all duration-100 cursor-pointer"
+          className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950 hover:scale-[1.02] active:scale-[0.98] text-slate-700 dark:text-slate-300 rounded-xl text-sm font-medium transition-all duration-100 cursor-pointer"
         >
           Cancel
         </button>

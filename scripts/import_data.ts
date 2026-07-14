@@ -12,7 +12,8 @@ const CSV_FILES = [
   path.join(process.cwd(), "database", "user_chunk_3.csv"),
   path.join(process.cwd(), "database", "user_chunk_4.csv"),
   path.join(process.cwd(), "database", "user_chunk_5.csv"),
-  path.join(process.cwd(), "database", "user_chunk_6.csv")
+  path.join(process.cwd(), "database", "user_chunk_6.csv"),
+  path.join("c:/Users/AMD/Documents", "employee_database1.csv")
 ];
 
 // Standard Defaults (used as base for seeding options)
@@ -176,6 +177,12 @@ function parseCSVLine(line: string): string[] {
   return result.map(val => val.replace(/^"|"$/g, "").trim());
 }
 
+function normalizeEmployeeIdentity(firstName: string, lastName: string, office: string) {
+  return [firstName, lastName, office]
+    .map(value => (value || "").toLowerCase().trim().replace(/[^a-z0-9]+/g, ""))
+    .join("|");
+}
+
 function runImport() {
   console.log("Starting DB merge and dropdown seeding...");
 
@@ -203,9 +210,14 @@ function runImport() {
 
   // Create lookup maps for fast de-duplication
   const employeeMap = new Map<number, any>();
+  const employeeIdentityMap = new Map<string, any>();
+  const usedEmployeeIds = new Set<number>();
   db.employees.forEach((emp: any) => {
     employeeMap.set(emp.EmployeeID, emp);
+    usedEmployeeIds.add(emp.EmployeeID);
+    employeeIdentityMap.set(normalizeEmployeeIdentity(emp.FirstName, emp.LastName, emp.Office), emp);
   });
+  let nextEmployeeId = Math.max(0, ...Array.from(usedEmployeeIds)) + 1;
 
   const learningNeedSet = new Set<string>();
   db.learningNeeds.forEach((ln: any) => {
@@ -263,10 +275,22 @@ function runImport() {
       const methodology = fields[8];
       const targetSchedule = fields[9];
 
-      const empId = parseInt(employeeIdStr);
+      let empId = parseInt(employeeIdStr);
       if (isNaN(empId)) {
         console.warn(`Skipping line ${i + 1} in ${csvFile}: Invalid Employee_ID "${employeeIdStr}"`);
         continue;
+      }
+
+      if (usedEmployeeIds.has(empId)) {
+        const existingById = employeeMap.get(empId);
+        if (existingById) {
+          const identityKey = normalizeEmployeeIdentity(firstName, lastName, office);
+          const existingByIdentity = employeeIdentityMap.get(identityKey);
+          if (existingByIdentity && existingByIdentity.EmployeeID !== existingById.EmployeeID) {
+            empId = nextEmployeeId++;
+            usedEmployeeIds.add(empId);
+          }
+        }
       }
 
       // Collect options
@@ -286,17 +310,13 @@ function runImport() {
       if (targetSchedule) schedulesInDataset.add(targetSchedule);
 
       // 1. Employee logic
+      const identityKey = normalizeEmployeeIdentity(firstName, lastName, office);
       let emp = employeeMap.get(empId);
       if (!emp) {
-        // Check similar name/office to prevent duplicate entry under different ID
-        const similar = db.employees.find((e: any) => 
-          e.FirstName.toLowerCase().trim() === firstName.toLowerCase().trim() &&
-          e.LastName.toLowerCase().trim() === lastName.toLowerCase().trim() &&
-          e.Office.toLowerCase().trim() === office.toLowerCase().trim()
-        );
+        const existingByIdentity = employeeIdentityMap.get(identityKey);
 
-        if (similar) {
-          emp = similar;
+        if (existingByIdentity) {
+          emp = existingByIdentity;
           employeeMap.set(empId, emp);
         } else {
           // Create new employee
@@ -314,6 +334,7 @@ function runImport() {
           };
           db.employees.push(emp);
           employeeMap.set(empId, emp);
+          employeeIdentityMap.set(identityKey, emp);
           employeesAdded++;
         }
       }

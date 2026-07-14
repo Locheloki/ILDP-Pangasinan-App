@@ -98,7 +98,7 @@ export const LEARNING_NEEDS = [
 ];
 
 export const BASES = [
-  "Requirement of the position",
+  "Advanced Knowledge",
   "Competency Gap",
   "Licensing Requirement",
   "Update/Learning Requirement",

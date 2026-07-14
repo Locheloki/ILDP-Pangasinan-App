@@ -35,41 +35,41 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
   return (
     <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
       <div 
-        className="w-full max-w-md bg-white rounded-2xl border border-slate-100 shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-100"
+        className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-2xl p-6 relative animate-in fade-in zoom-in-95 duration-100 transition-colors duration-200"
         role="dialog"
         aria-modal="true"
       >
         <button 
           onClick={onCancel}
-          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 transition-all duration-100 cursor-pointer"
+          className="absolute top-4 right-4 p-1.5 rounded-lg text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-100 cursor-pointer"
           aria-label="Close dialog"
         >
           <X className="h-4 w-4" />
         </button>
 
         <div className="flex gap-4 items-start">
-          <div className="bg-blue-50 p-3 rounded-full text-blue-600 shrink-0">
+          <div className="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-full text-blue-600 dark:text-blue-400 border dark:border-blue-900/40 shrink-0">
             <AlertCircle className="h-6 w-6" />
           </div>
           <div className="space-y-2">
-            <h3 className="text-lg font-bold text-slate-900 tracking-tight font-display">
+            <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight font-display">
               Save this record?
             </h3>
-            <p className="text-sm text-slate-500 leading-relaxed">
+            <p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               Are you sure you want to save this employee and all entered learning needs? This will update the system instantly.
             </p>
           </div>
         </div>
 
-        <div className="mt-5 bg-slate-50 p-3 rounded-xl flex items-center gap-2">
+        <div className="mt-5 bg-slate-50 dark:bg-slate-950 p-3 rounded-xl flex items-center gap-2 border dark:border-slate-800 transition-colors duration-200">
           <input
             type="checkbox"
             id="dont-ask-again"
             checked={dontAskAgain}
             onChange={(e) => setDontAskAgain(e.target.checked)}
-            className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+            className="h-4 w-4 rounded border-slate-300 dark:border-slate-700 text-blue-600 dark:bg-slate-900 focus:ring-blue-500 cursor-pointer"
           />
-          <label htmlFor="dont-ask-again" className="text-xs font-medium text-slate-600 cursor-pointer select-none">
+          <label htmlFor="dont-ask-again" className="text-xs font-medium text-slate-600 dark:text-slate-400 cursor-pointer select-none">
             Don't ask again (remember for current session)
           </label>
         </div>
@@ -78,20 +78,20 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-slate-200 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-slate-600 hover:bg-slate-50 text-sm font-medium transition-all duration-100 cursor-pointer"
+            className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950 text-sm font-medium transition-all duration-100 cursor-pointer"
           >
-            Cancel <span className="text-[10px] text-slate-400 font-normal ml-1">Esc</span>
+            Cancel <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal ml-1">Esc</span>
           </button>
           
           <button
             type="button"
             ref={confirmButtonRef}
             onClick={() => onConfirm(dontAskAgain)}
-            className="px-5 py-2 bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] text-white rounded-xl text-sm font-medium transition-all duration-100 shadow-md shadow-blue-500/10 flex items-center gap-1.5 cursor-pointer"
+            className="px-5 py-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 hover:scale-[1.02] active:scale-[0.98] text-white rounded-xl text-sm font-medium transition-all duration-100 shadow-md shadow-blue-500/10 dark:shadow-blue-900/10 flex items-center gap-1.5 cursor-pointer"
           >
             <CheckCircle className="h-4 w-4" />
             <span>Save Record</span>
-            <span className="text-[10px] text-blue-200 font-normal ml-1">Enter</span>
+            <span className="text-[10px] text-blue-200 dark:text-blue-300 font-normal ml-1">Enter</span>
           </button>
         </div>
       </div>
