@@ -27,6 +27,7 @@ import {
   Sun,
   Moon,
   ChevronLeft,
+  ArrowLeft,
   Copy,
   Check,
   Globe,
@@ -65,6 +66,14 @@ export default function App() {
 
   // Active View Tab State: home, add, view
   const [activeTab, setActiveTab] = useState<"home" | "add" | "view">("home");
+  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view">("view");
+
+  const changeTab = (tab: "home" | "add" | "view") => {
+    if (tab === "add" && activeTab !== "add") {
+      setTabBeforeEdit(activeTab);
+    }
+    setActiveTab(tab);
+  };
 
   // IP Address Clipboard Copied Toast State
   const [ipCopied, setIpCopied] = useState(false);
@@ -149,6 +158,7 @@ export default function App() {
 
   // Switch directory row edit mode
   const handleEditEmployeeTrigger = (employeeId: number) => {
+    setTabBeforeEdit(activeTab);
     fetch(`/api/employees/${employeeId}`)
       .then((res) => res.json())
       .then((emp) => {
@@ -256,10 +266,10 @@ export default function App() {
       // Refresh Stats and redirect to table list
       fetchStats();
       if (isEdit) {
-        setActiveTab("view");
+        changeTab("view");
       } else {
         // Keep user on Add New page and reset the form for convenience
-        setActiveTab("add");
+        changeTab("add");
         setFormKey((k) => k + 1);
       }
     } catch (error) {
@@ -344,79 +354,80 @@ export default function App() {
         />
       )}
 
-      {/* 1. Left Sidebar Component - Geometric Slate Design */}
+      {/* 1. Left Sidebar Component - Floating Liquid Glass Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-slate-900 text-slate-200 flex flex-col shrink-0 transform transition-all duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 bg-slate-900/75 dark:bg-slate-900/55 backdrop-blur-xl text-slate-200 flex flex-col shrink-0 transform transition-all duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:static md:translate-x-0 ${
           isSidebarCollapsed 
-            ? 'md:w-0 md:opacity-0 md:pointer-events-none md:overflow-hidden' 
-            : 'w-64 md:w-64 md:opacity-100'
+            ? 'md:w-0 md:opacity-0 md:pointer-events-none md:overflow-hidden md:m-0 md:border-0' 
+            : 'w-64 md:w-64 md:opacity-100 md:my-4 md:ml-4 md:rounded-3xl md:border md:border-white/10 dark:md:border-white/15 md:shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] md:h-[calc(100vh-2rem)]'
         }`}
         aria-hidden={(!isSidebarOpen && !isDesktop) || (isDesktop && isSidebarCollapsed)}
       >
         {/* Branding header */}
-        <div className="p-6 border-b border-slate-800">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3 min-w-0">
-              <img
-                src="/pangasinan-logo.svg"
-                alt="Pangasinan Provincial Seal"
-                className="w-9 h-9 object-contain bg-white rounded-full p-0.5 shrink-0"
-              />
-              <span className="font-bold tracking-tight text-white text-md leading-tight truncate">
-                ILDP Pangasinan
-                <span className="text-blue-400 text-[10px] block uppercase font-mono tracking-widest mt-0.5">Learning Needs Summary System</span>
-              </span>
-            </div>
-            {/* Close button for mobile menu */}
-            <button 
-              onClick={() => setIsSidebarOpen(false)}
-              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white md:hidden"
-            >
-              <X className="h-5 w-5" />
-            </button>
+        <div className="p-5 pb-2">
+          <div className="flex items-center space-x-2.5 min-w-0">
             {/* Collapse button for desktop mode */}
             <button 
               onClick={() => setIsSidebarCollapsed(true)}
-              className="p-1 rounded-lg hover:bg-slate-800 text-slate-400 hover:text-white hidden md:block cursor-pointer transition shrink-0 ml-2"
+              className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white hidden md:block cursor-pointer transition shrink-0"
               title="Collapse Sidebar"
             >
-              <ChevronLeft className="h-5 w-5" />
+              <ArrowLeft className="h-5 w-5" />
             </button>
+            {/* Close button for mobile menu */}
+            <button 
+              onClick={() => setIsSidebarOpen(false)}
+              className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white md:hidden cursor-pointer transition shrink-0"
+              title="Close Menu"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </button>
+
+            <div className="flex items-center space-x-2 min-w-0">
+              <img
+                src="/pangasinan-logo.svg"
+                alt="Pangasinan Provincial Seal"
+                className="w-6 h-6 object-contain bg-white rounded-full p-0.5 shrink-0"
+              />
+              <span className="font-semibold text-white text-base tracking-tight font-sans">
+                ILDP
+              </span>
+            </div>
           </div>
         </div>
 
         {/* Sidebar navigation */}
-        <nav className="flex-1 py-6 space-y-7">
+        <nav className="flex-1 py-6 space-y-6">
           <div>
-            <div className="px-6 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+            <div className="px-6 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Main Menu
             </div>
-            <div className="space-y-1 menu-hover-fill">
+            <div className="px-3 space-y-1 menu-hover-fill">
               <button
                 style={{ "--active-color": "#3b82f6" } as React.CSSProperties}
-                onClick={() => { setActiveTab("home"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-6 py-3 text-xs font-semibold transition-all duration-150 text-left border-l-4 ${
+                onClick={() => { changeTab("home"); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
                   activeTab === "home" 
-                    ? "bg-slate-800/80 border-blue-500 text-white font-bold" 
-                    : "border-transparent text-slate-400 hover:text-white"
+                    ? "bg-white/10 text-white" 
+                    : "text-slate-300 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <LayoutDashboard className="w-4 h-4 mr-3 shrink-0" />
+                <LayoutDashboard className="w-5 h-5 mr-3 shrink-0" />
                 <span className="menu-link" data-text="Dashboard">Dashboard</span>
               </button>
 
               <button
                 style={{ "--active-color": "#8b5cf6" } as React.CSSProperties}
-                onClick={() => { setActiveTab("add"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-6 py-3 text-xs font-semibold transition-all duration-150 text-left border-l-4 ${
+                onClick={() => { changeTab("add"); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
                   activeTab === "add" 
-                    ? "bg-slate-800/80 border-violet-500 text-white font-bold" 
-                    : "border-transparent text-slate-400 hover:text-white"
+                    ? "bg-white/10 text-white" 
+                    : "text-slate-300 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <UserPlus className="w-4 h-4 mr-3 shrink-0" />
+                <UserPlus className="w-5 h-5 mr-3 shrink-0" />
                 <span className="menu-link" data-text={editingEmployee ? "Modify Records" : "Add New Record"}>
                   {editingEmployee ? "Modify Records" : "Add New Record"}
                 </span>
@@ -424,59 +435,59 @@ export default function App() {
 
               <button
                 style={{ "--active-color": "#10b981" } as React.CSSProperties}
-                onClick={() => { setActiveTab("view"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-6 py-3 text-xs font-semibold transition-all duration-150 text-left border-l-4 ${
+                onClick={() => { changeTab("view"); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
                   activeTab === "view" 
-                    ? "bg-slate-800/80 border-emerald-500 text-white font-bold" 
-                    : "border-transparent text-slate-400 hover:text-white"
+                    ? "bg-white/10 text-white" 
+                    : "text-slate-300 hover:text-white hover:bg-white/5"
                 }`}
               >
-                <Database className="w-4 h-4 mr-3 shrink-0" />
+                <Database className="w-5 h-5 mr-3 shrink-0" />
                 <span className="menu-link" data-text="View Records">View Records</span>
               </button>
             </div>
           </div>
 
-          <div>
-            <div className="px-6 mb-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest">
+          <div className="mx-3 mt-4 p-4 bg-slate-900/30 dark:bg-slate-850/20 border border-white/5 dark:border-white/10 rounded-2xl shadow-inner space-y-3">
+            <div className="px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
               Reports & Actions
             </div>
             <div className="space-y-1 menu-hover-fill">
               <button
                 style={{ "--active-color": "#f59e0b" } as React.CSSProperties}
                 onClick={() => { triggerExcelExportAll(); setIsSidebarOpen(false); }}
-                className="w-full flex items-center px-6 py-3 text-xs font-semibold transition-all duration-150 text-left text-slate-400 hover:text-white border-l-4 border-transparent"
+                className="w-full flex items-center px-3 py-2.5 text-xs font-medium transition-all duration-150 text-left text-slate-300 hover:text-white hover:bg-white/5 rounded-xl"
               >
-                <FileSpreadsheet className="w-4 h-4 mr-3 shrink-0 text-emerald-500" />
+                <FileSpreadsheet className="w-5 h-5 mr-3 shrink-0 text-emerald-500" />
                 <span className="menu-link" data-text="Excel Summary Export">Excel Summary Export</span>
               </button>
             </div>
           </div>
         </nav>
 
-        {/* Sidebar bottom logged-in card */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/40 flex items-center justify-between">
+        {/* Sidebar bottom logged-in section (floating overlay styling) */}
+        <div className="mt-auto p-6 flex items-center justify-between bg-transparent">
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-8 h-8 rounded-full bg-slate-700 text-white font-bold flex items-center justify-center shrink-0 uppercase text-xs">
+            <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 text-white font-bold flex items-center justify-center shrink-0 uppercase text-sm shadow-md">
               {currentUser.name.charAt(0)}
             </div>
             <div className="min-w-0">
-              <p className="text-xs font-semibold text-white truncate">{currentUser.name}</p>
-              <p className="text-[10px] text-slate-400 truncate">{currentUser.role}</p>
+              <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
+              <p className="text-[10px] text-slate-400 truncate font-medium">{currentUser.role}</p>
             </div>
           </div>
           <button
             onClick={handleSignOut}
-            className="p-1.5 rounded-lg text-slate-400 hover:text-red-400 hover:bg-slate-800 transition cursor-pointer"
+            className="p-1.5 rounded-full text-slate-400 hover:text-red-400 hover:bg-white/10 transition cursor-pointer"
             title="Sign Out"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-4.5 w-4.5" />
           </button>
         </div>
       </aside>
 
-      {/* 2. Main Content Wrapper */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
+      {/* 2. Main Content Wrapper - Floating layout on desktop to match sidebar card flow */}
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:my-4 md:mr-4 md:ml-2 md:rounded-3xl md:border md:border-slate-200 dark:md:border-slate-800/80 md:shadow-md bg-slate-50 dark:bg-slate-950">
         
         {/* Persistent Top Header */}
         <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sm:px-8 shrink-0 shadow-xs transition-colors duration-200">
@@ -514,7 +525,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <button
               onClick={() => setDarkMode(!darkMode)}
-              className="p-2 rounded-xl border border-slate-200 dark:border-slate-800 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-800 dark:hover:text-slate-100 transition-all cursor-pointer animate-in fade-in duration-200"
+              className="btn-glass p-2.5 rounded-xl cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 border-none"
               title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
             >
               {darkMode ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
@@ -527,7 +538,7 @@ export default function App() {
           <div className="max-w-7xl mx-auto space-y-6">
             
             {/* Render Page 1: Home Dashboard */}
-            <div className={`space-y-6 animate-in fade-in duration-200 ${activeTab === "home" ? "" : "hidden"}`}>
+            <div className={`space-y-6 tab-pane-animate ${activeTab === "home" ? "" : "hidden"}`}>
                 {/* Welcome banner */}
                 <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
@@ -708,16 +719,13 @@ export default function App() {
                 {/* Developer Contact Support Banner */}
                 <div className="pt-4">
                 <div 
-                    className="bg-slate-900/60 backdrop-blur-lg border border-white/10 shadow-xl rounded-2xl p-6 relative overflow-hidden transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl"
+                    className="developer-support-banner bg-slate-900/60 backdrop-blur-lg border border-white/10 shadow-xl rounded-2xl p-6 relative overflow-hidden transition-all duration-500 hover:scale-[1.01] hover:shadow-2xl"
                   >
-                    <div 
-                      className="absolute inset-0 bg-white/20 animate-pulse"
-                    />
                     <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6 relative z-10">
                       
                       {/* Left: Branding & Developer Info */}
                       <div className="flex items-start gap-3.5">
-                        <div className="bg-blue-600 text-white p-2.5 rounded-xl shadow-md shadow-blue-500/10 shrink-0 mt-0.5">
+                        <div className="stat-icon-glass theme-blue text-white p-2.5 rounded-xl shrink-0 mt-0.5">
                           <HelpCircle className="h-5 w-5" />
                         </div>
                         <div className="space-y-1">
@@ -738,19 +746,19 @@ export default function App() {
                       <div className="flex flex-col sm:flex-row sm:items-center gap-4 lg:gap-6 shrink-0">
                         <div className="space-y-2 text-xs text-slate-600">
                           <div 
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-5 py-3 rounded-xl shadow-md transition-all duration-200 hover:scale-105 backdrop-blur-sm"
+                            className="flex items-center gap-2 info-glass px-5 py-3 rounded-xl transition-all duration-200 hover:scale-102"
                           >
-                            <Phone className="h-4 w-4 text-white shrink-0" />
-                            <a href="tel:+639691637944" className="hover:text-white hover:underline font-mono font-semibold text-white/90">
+                            <Phone className="h-4 w-4 !text-white shrink-0" />
+                            <a href="tel:+639691637944" className="hover:text-white hover:underline font-mono font-semibold !text-white/90">
                               +63 969 163 7944
                             </a>
                           </div>
 
                           <div 
-                            className="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/10 px-5 py-3 rounded-xl shadow-md transition-all duration-200 hover:scale-105 backdrop-blur-sm"
+                            className="flex items-center gap-2 info-glass px-5 py-3 rounded-xl transition-all duration-200 hover:scale-102"
                           >
-                            <MapPin className="h-4 w-4 text-white shrink-0" />
-                            <span className="text-white/90 font-medium">Libsong East, Lingayen, Pangasinan</span>
+                            <MapPin className="h-4 w-4 !text-white shrink-0" />
+                            <span className="!text-white/90 font-medium">Libsong East, Lingayen, Pangasinan</span>
                           </div>
                         </div>
 
@@ -759,17 +767,17 @@ export default function App() {
                             href="https://www.facebook.com/Loche.Jimenez"
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="bg-blue-600/30 hover:bg-blue-600/40 text-white font-semibold text-xs py-3 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200 shrink-0 hover:scale-105 border border-white/10 backdrop-blur-sm"
+                            className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 !text-white border-blue-200/50 dark:border-blue-900/30 text-xs py-3 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200 shrink-0 hover:scale-105"
                           >
-                            <Facebook className="h-4 w-4 text-white" />
-                            <span>Connect on Facebook</span>
+                            <Facebook className="h-4 w-4 shrink-0 !text-blue-300" />
+                            <span className="!text-white">Connect on Facebook</span>
                           </a>
                           <a
                             href="mailto:jimenezguillermojimz@gmail.com"
-                            className="bg-red-600/30 hover:bg-red-600/40 text-white font-semibold text-xs py-3 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200 shrink-0 hover:scale-105 border border-white/10 backdrop-blur-sm"
+                            className="btn-glass bg-red-500/10 hover:bg-red-500/20 !text-white border-red-200/50 dark:border-red-900/30 text-xs py-3 px-5 rounded-xl flex items-center justify-center gap-2 shadow-md transition duration-200 shrink-0 hover:scale-105"
                           >
-                            <Mail className="h-4 w-4 text-white" />
-                            <span>Email Me</span>
+                            <Mail className="h-4 w-4 shrink-0 !text-red-300" />
+                            <span className="!text-white">Email Me</span>
                           </a>
                         </div>
                       </div>
@@ -780,20 +788,20 @@ export default function App() {
               </div>
 
             {/* Render Page 2: Add/Edit Record */}
-            <div className={`animate-in fade-in duration-200 ${activeTab === "add" ? "" : "hidden"}`}>
+            <div className={`tab-pane-animate ${activeTab === "add" ? "" : "hidden"}`}>
               <EmployeeForm
                 key={formKey}
                 employee={editingEmployee}
                 currentUser={currentUser}
                 onSave={handleFormSaveRequest}
-                onCancel={() => { setActiveTab("home"); setEditingEmployee(null); setFormKey((k) => k + 1); }}
+                onCancel={() => { changeTab(tabBeforeEdit); setEditingEmployee(null); setFormKey((k) => k + 1); }}
                 customOptionsVersion={customOptionsVersion}
                 onCustomOptionsChange={handleCustomOptionsChange}
               />
             </div>
 
             {/* Render Page 3: View Records Table */}
-            <div className={`animate-in fade-in duration-200 ${activeTab === "view" ? "" : "hidden"}`}>
+            <div className={`tab-pane-animate ${activeTab === "view" ? "" : "hidden"}`}>
               <RecordsTable
                 onEditEmployee={handleEditEmployeeTrigger}
                 onRefreshStats={fetchStats}

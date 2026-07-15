@@ -1,12 +1,12 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Manrope:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Geist+Mono:wght@300;400;500;600&display=swap');
 @import "tailwindcss";
 
 @custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --font-display: "Manrope", ui-sans-serif, system-ui, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, monospace;
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "Geist Mono", ui-monospace, SFMono-Regular, monospace;
 }
 
 body {
@@ -96,4 +96,287 @@ body {
 
 .menu-hover-fill button:hover .menu-link {
   background-size: 100% 100%;
+}
+
+/* Premium Translucent Liquid Glass Button */
+.btn-glass {
+  --c-glass: #bbbbbc;
+  --c-light: #fff;
+  --c-dark: #000;
+  --glass-reflex-dark: 1;
+  --glass-reflex-light: 1;
+  --saturation: 150%;
+  
+  background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
+  backdrop-filter: blur(8px) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  border: none;
+  border-radius: 9999px; /* pill-shaped */
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 1px 5px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 6px 16px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent);
+  
+  color: #0f172a; /* slate-900 */
+  font-weight: 600;
+  transition: all 400ms cubic-bezier(1, 0.0, 0.4, 1);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+}
+
+.btn-glass:hover {
+  background-color: color-mix(in srgb, var(--c-glass) 20%, transparent);
+  transform: translateY(-1px);
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 15%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 95%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 85%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 70%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 15%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 25%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 25%), transparent), 
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 15%), transparent), 
+    0px 2px 8px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    0px 8px 24px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent);
+}
+
+.btn-glass:active {
+  transform: translateY(1px);
+  background-color: color-mix(in srgb, var(--c-glass) 6%, transparent);
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 5%), transparent),
+    inset 0.5px 1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 40%), transparent), 
+    inset -1px -1px 0px -1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 30%), transparent), 
+    inset 0px 1px 2px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 25%), transparent);
+}
+
+.dark .btn-glass {
+  --c-glass: #bbbbbc;
+  --c-light: #fff;
+  --c-dark: #000;
+  --glass-reflex-dark: 2;
+  --glass-reflex-light: 0.3;
+  --saturation: 150%;
+  color: #f8fafc; /* slate-50 */
+}
+
+/* Glassy Color Variant Enhancements (Primary / Warning / Success) */
+.btn-glass.bg-blue-500\/10 {
+  --c-glass: #3b82f6;
+  --c-light: #fff;
+  --c-dark: #000;
+  color: #1d4ed8; /* blue-700 */
+}
+.dark .btn-glass.bg-blue-500\/10 {
+  --c-glass: #3b82f6;
+  --c-light: #93c5fd;
+  --c-dark: #000;
+  color: #60a5fa; /* blue-400 */
+}
+
+.btn-glass.bg-red-500\/10 {
+  --c-glass: #ef4444;
+  --c-light: #fff;
+  --c-dark: #000;
+  color: #b91c1c; /* red-700 */
+}
+.dark .btn-glass.bg-red-500\/10 {
+  --c-glass: #ef4444;
+  --c-light: #fca5a5;
+  --c-dark: #000;
+  color: #f87171; /* red-400 */
+}
+
+.btn-glass.bg-emerald-500\/10 {
+  --c-glass: #10b981;
+  --c-light: #fff;
+  --c-dark: #000;
+  color: #047857; /* emerald-700 */
+}
+.dark .btn-glass.bg-emerald-500\/10 {
+  --c-glass: #10b981;
+  --c-light: #6ee7b7;
+  --c-dark: #000;
+  color: #34d399; /* emerald-400 */
+}
+.dark .btn-glass.bg-emerald-500\/10:hover {
+  background-color: rgba(16, 185, 129, 0.15);
+  border-color: rgba(16, 185, 129, 0.45);
+}
+
+.stat-icon-glass {
+  --glass-reflex-dark: 1;
+  --glass-reflex-light: 1;
+  --saturation: 150%;
+  backdrop-filter: blur(8px) saturate(var(--saturation));
+  -webkit-backdrop-filter: blur(8px) saturate(var(--saturation));
+  border: 1px solid transparent;
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 12%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 90%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 80%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 60%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 2px 6px 0px rgba(0, 0, 0, 0.08);
+  transition: all 300ms ease-in-out;
+}
+
+.dark .stat-icon-glass {
+  --glass-reflex-dark: 2;
+  --glass-reflex-light: 0.3;
+}
+
+/* Hover Adjustment: temporarily remove liquid glass and show clean translucent white hover style */
+.group:hover .stat-icon-glass {
+  background-color: rgba(255, 255, 255, 0.2) !important;
+  color: #ffffff !important;
+  box-shadow: none !important;
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  border-color: rgba(255, 255, 255, 0.2) !important;
+}
+
+/* Stat Icons Glass Color Schemes */
+.stat-icon-glass.theme-blue {
+  --c-glass: #3b82f6;
+  --c-light: #fff;
+  --c-dark: #000;
+  background-color: color-mix(in srgb, var(--c-glass) 18%, transparent);
+  color: #1d4ed8;
+}
+.dark .stat-icon-glass.theme-blue {
+  --c-glass: #3b82f6;
+  --c-light: #93c5fd;
+  --c-dark: #000;
+  color: #60a5fa;
+}
+
+.stat-icon-glass.theme-indigo {
+  --c-glass: #6366f1;
+  --c-light: #fff;
+  --c-dark: #000;
+  background-color: color-mix(in srgb, var(--c-glass) 18%, transparent);
+  color: #4338ca;
+}
+.dark .stat-icon-glass.theme-indigo {
+  --c-glass: #6366f1;
+  --c-light: #c7d2fe;
+  --c-dark: #000;
+  color: #818cf8;
+}
+
+.stat-icon-glass.theme-green {
+  --c-glass: #10b981;
+  --c-light: #fff;
+  --c-dark: #000;
+  background-color: color-mix(in srgb, var(--c-glass) 18%, transparent);
+  color: #047857;
+}
+.dark .stat-icon-glass.theme-green {
+  --c-glass: #10b981;
+  --c-light: #6ee7b7;
+  --c-dark: #000;
+  color: #34d399;
+}
+
+.stat-icon-glass.theme-amber {
+  --c-glass: #f59e0b;
+  --c-light: #fff;
+  --c-dark: #000;
+  background-color: color-mix(in srgb, var(--c-glass) 18%, transparent);
+  color: #b45309;
+}
+.dark .stat-icon-glass.theme-amber {
+  --c-glass: #f59e0b;
+  --c-light: #fde68a;
+  --c-dark: #000;
+  color: #fbbf24;
+}
+
+/* Page Transition Subtle Animations */
+@keyframes tabFadeInUp {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.tab-pane-animate {
+  animation: tabFadeInUp 350ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Developer Banner Info Card Liquid Glass */
+.info-glass {
+  --c-glass: #bbbbbc;
+  --c-light: #fff;
+  --c-dark: #000;
+  --glass-reflex-dark: 1.8;
+  --glass-reflex-light: 0.35;
+  background-color: color-mix(in srgb, var(--c-glass) 12%, transparent);
+  backdrop-filter: blur(8px) saturate(150%);
+  -webkit-backdrop-filter: blur(8px) saturate(150%);
+  border: none;
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 6%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 45%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 35%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 20%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent);
+}
+.dark .info-glass {
+  --glass-reflex-dark: 2.2;
+  --glass-reflex-light: 0.35;
+  background-color: color-mix(in srgb, var(--c-glass) 8%, transparent);
+}
+
+/* Specific override to apply dark, subtle glass theme to Developer support banner glass components in light mode */
+.developer-support-banner .btn-glass,
+.developer-support-banner .stat-icon-glass {
+  --glass-reflex-dark: 2.2;
+  --glass-reflex-light: 0.35;
+}
+.developer-support-banner .btn-glass {
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 6%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 45%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 35%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 20%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 20%), transparent), 
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 1px 5px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent), 
+    0px 6px 16px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 8%), transparent) !important;
+}
+.developer-support-banner .btn-glass:hover {
+  box-shadow: 
+    inset 0 0 0 1px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 10%), transparent),
+    inset 1.8px 3px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 55%), transparent), 
+    inset -2px -2px 0px -2px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 45%), transparent), 
+    inset -3px -8px 1px -6px color-mix(in srgb, var(--c-light) calc(var(--glass-reflex-light) * 30%), transparent), 
+    inset -0.3px -1px 4px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 15%), transparent), 
+    inset -1.5px 2.5px 0px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 25%), transparent), 
+    inset 0px 3px 4px -2px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 25%), transparent), 
+    inset 2px -6.5px 1px -4px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 15%), transparent), 
+    0px 2px 8px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
+    0px 8px 24px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent) !important;
 }

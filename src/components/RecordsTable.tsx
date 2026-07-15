@@ -315,7 +315,7 @@ export default function RecordsTable({
           
           <button
             onClick={handleExportExcel}
-            className="flex items-center gap-1.5 bg-emerald-50 dark:bg-emerald-950/40 hover:bg-emerald-100 dark:hover:bg-emerald-950 text-emerald-700 dark:text-emerald-400 font-semibold px-4 py-2 rounded-xl text-xs transition border border-emerald-100 dark:border-emerald-900/60 cursor-pointer shadow-sm shadow-emerald-500/5"
+            className="btn-glass text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-200/50 dark:border-emerald-900/30 text-xs py-2 px-4 cursor-pointer"
           >
             <FileSpreadsheet className="h-4 w-4" />
             <span>Export Search to Excel</span>
@@ -485,19 +485,10 @@ export default function RecordsTable({
                     </td>
                     <td className="py-3 px-6 text-center align-middle">
                       <div className="flex items-center justify-center gap-1.5">
-                        {/* View Details */}
-                        <button
-                          onClick={() => handleViewDetails(rec.EmployeeID)}
-                          className="p-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 hover:scale-105 active:scale-95 text-slate-600 dark:text-slate-300 rounded-lg border dark:border-slate-700 transition-all duration-100 cursor-pointer"
-                          title="View Employee Profile"
-                        >
-                          <Eye className="h-4 w-4" />
-                        </button>
-                        
                         {/* Edit Records */}
                         <button
                           onClick={() => onEditEmployee(rec.EmployeeID)}
-                          className="p-1.5 bg-blue-50 dark:bg-blue-950/40 hover:bg-blue-100 dark:hover:bg-blue-950 hover:scale-105 active:scale-95 text-blue-600 dark:text-blue-400 rounded-lg border dark:border-blue-900/40 transition-all duration-100 cursor-pointer"
+                          className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
                           title="Edit Full Profile"
                         >
                           <Edit className="h-4 w-4" />
@@ -506,7 +497,7 @@ export default function RecordsTable({
                         {/* Delete Employee */}
                         <button
                           onClick={() => handleDeleteEmployee(rec.EmployeeID)}
-                          className="p-1.5 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950 hover:scale-105 active:scale-95 text-red-600 dark:text-red-400 rounded-lg border dark:border-red-900/40 transition-all duration-100 cursor-pointer"
+                          className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
                           title="Delete Employee"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -538,14 +529,14 @@ export default function RecordsTable({
                               className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 relative group/need space-y-1.5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-100"
                             >
                               <div className="flex items-start justify-between gap-3">
-                                <span className="font-bold text-slate-800 dark:text-slate-100 text-[11.5px] leading-tight pr-5">
+                                <span className="font-bold text-slate-800 dark:text-slate-100 text-[11.5px] leading-tight pr-6">
                                   {need.LearningNeed}
-                                </span>
-                                <span className="bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 font-extrabold px-1.5 py-0.5 rounded text-[8.5px] border border-blue-100/50 dark:border-blue-900/40 whitespace-nowrap shrink-0">
-                                  {need.TargetSchedule}
                                 </span>
                               </div>
                               <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[10px] text-slate-500 dark:text-slate-400">
+                                <span className="bg-amber-50/40 dark:bg-amber-950/25 px-1.5 py-0.5 rounded border border-amber-100/60 dark:border-amber-900/30 text-amber-700 dark:text-amber-400 font-medium transition-colors">
+                                  <strong className="text-amber-800 dark:text-amber-300 font-semibold">Target:</strong> {need.TargetSchedule}
+                                </span>
                                 <span className="bg-blue-50/40 dark:bg-blue-950/25 px-1.5 py-0.5 rounded border border-blue-100/60 dark:border-blue-900/30 text-blue-700 dark:text-blue-400 font-medium transition-colors">
                                   <strong className="text-blue-800 dark:text-blue-300 font-semibold">Basis:</strong> {need.Basis}
                                 </span>
@@ -593,7 +584,7 @@ export default function RecordsTable({
               <button
                 disabled={currentPage === 1}
                 onClick={() => setCurrentPage(currentPage - 1)}
-                className="p-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-lg disabled:opacity-50 transition cursor-pointer"
+                className="btn-glass p-2 disabled:opacity-50 transition cursor-pointer"
               >
                 <ChevronLeft className="h-4 w-4" />
               </button>
@@ -606,7 +597,7 @@ export default function RecordsTable({
               <button
                 disabled={currentPage === totalPages || totalPages === 0}
                 onClick={() => setCurrentPage(currentPage + 1)}
-                className="p-1 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 text-slate-600 dark:text-slate-300 rounded-lg disabled:opacity-50 transition cursor-pointer"
+                className="btn-glass p-2 disabled:opacity-50 transition cursor-pointer"
               >
                 <ChevronRight className="h-4 w-4" />
               </button>
@@ -626,13 +617,13 @@ export default function RecordsTable({
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-905 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all duration-100 cursor-pointer"
+                className="btn-glass text-xs py-2 px-4 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={executeDeleteNeed}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 hover:scale-[1.02] active:scale-[0.98] text-white rounded-xl text-xs font-semibold shadow transition-all duration-100 cursor-pointer"
+                className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-red-500/5"
               >
                 Confirm Delete
               </button>
@@ -652,13 +643,13 @@ export default function RecordsTable({
             <div className="mt-5 flex justify-end gap-3">
               <button
                 onClick={() => setDeleteEmployeeConfirmId(null)}
-                className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:bg-slate-50 dark:hover:bg-slate-950 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all duration-100 cursor-pointer"
+                className="btn-glass text-xs py-2 px-4 cursor-pointer"
               >
                 Cancel
               </button>
               <button
                 onClick={executeDeleteEmployee}
-                className="px-4 py-2 bg-red-600 hover:bg-red-700 hover:scale-[1.02] active:scale-[0.98] text-white rounded-xl text-xs font-semibold shadow transition-all duration-100 cursor-pointer"
+                className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-red-500/5"
               >
                 Confirm Delete
               </button>
@@ -758,7 +749,7 @@ export default function RecordsTable({
             <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-950/40 transition-colors duration-200">
               <button
                 onClick={() => setDetailModalOpen(false)}
-                className="px-5 py-2.5 border border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-slate-800 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-xs font-semibold text-slate-600 dark:text-slate-300 transition-all duration-100 cursor-pointer"
+                className="btn-glass text-xs py-2 px-4 cursor-pointer"
               >
                 Close Profile
               </button>
@@ -767,7 +758,7 @@ export default function RecordsTable({
                   setDetailModalOpen(false);
                   onEditEmployee(selectedEmployeeDetail.EmployeeID);
                 }}
-                className="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 hover:scale-[1.02] active:scale-[0.98] text-white rounded-xl text-xs font-semibold shadow transition-all duration-100 cursor-pointer"
+                className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-blue-500/5"
               >
                 Modify Records
               </button>

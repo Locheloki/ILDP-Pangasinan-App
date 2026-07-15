@@ -39,10 +39,10 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 dark:bg-slate-950 flex items-center justify-center p-4 transition-colors duration-200">
-      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-xl shadow-xs border border-slate-200/80 dark:border-slate-800 overflow-hidden transition-colors duration-200">
+    <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50/20 to-slate-200 dark:from-slate-950 dark:via-blue-950/10 dark:to-slate-900 flex items-center justify-center p-4 transition-colors duration-200">
+      <div className="w-full max-w-md bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/10 overflow-hidden transition-colors duration-200">
         {/* Header Branding */}
-        <div className="bg-slate-900 p-8 text-white text-center relative overflow-hidden border-b border-slate-800">
+        <div className="bg-slate-950/60 dark:bg-slate-950/50 p-8 text-white text-center relative overflow-hidden border-b border-white/10 backdrop-blur-md">
           <div className="absolute -top-10 -right-10 w-40 h-40 bg-blue-500/10 rounded-full blur-2xl"></div>
           <div className="absolute -bottom-10 -left-10 w-40 h-40 bg-emerald-500/5 rounded-full blur-2xl"></div>
           
@@ -55,7 +55,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
               />
             </div>
           </div>
-          <h1 className="text-xl font-bold tracking-tight font-display text-white">ILDP Pangasinan</h1>
+          <h1 className="text-xl font-bold tracking-tight font-display text-white">ILDP</h1>
           <p className="text-slate-400 text-xs mt-1">Provincial Learning Needs Encoding & Summary System</p>
         </div>
 
@@ -109,7 +109,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-slate-900 dark:bg-slate-800 hover:bg-slate-800 dark:hover:bg-slate-700 hover:scale-[1.01] active:scale-[0.99] text-white font-semibold py-2.5 rounded-xl transition-all duration-100 focus:outline-none focus:ring-2 focus:ring-blue-500/20 shadow-xs flex items-center justify-center gap-2 text-xs"
+              className="w-full btn-glass text-xs py-2.5 font-bold"
             >
               {loading ? (
                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
@@ -120,8 +120,8 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
           </form>
 
           {/* Having Trouble? Contact Developer Support */}
-          <div className="mt-8 border-t border-slate-100 dark:border-slate-800 pt-6">
-            <div className="bg-slate-50 dark:bg-slate-950 border border-slate-200/60 dark:border-slate-800 rounded-xl p-4 transition-colors duration-200">
+          <div className="mt-8 border-t border-slate-200/40 dark:border-white/5 pt-6">
+            <div className="bg-slate-100/30 dark:bg-slate-950/30 border border-slate-200/40 dark:border-white/5 rounded-xl p-4 backdrop-blur-sm transition-colors duration-200">
               <span className="inline-flex items-center gap-1 bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-400 text-[9px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full border border-blue-200/50 dark:border-blue-800/80 mb-3">
                 <HelpCircle className="h-2.5 w-2.5" />
                 Having Trouble?

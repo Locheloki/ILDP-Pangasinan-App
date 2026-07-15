@@ -78,20 +78,20 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 border border-slate-200 dark:border-slate-800 hover:scale-[1.02] active:scale-[0.98] rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-950 text-sm font-medium transition-all duration-100 cursor-pointer"
+            className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer"
           >
-            Cancel <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal ml-1">Esc</span>
+            Cancel <span className="text-[10px] text-red-400 dark:text-red-300 font-normal ml-1">Esc</span>
           </button>
           
           <button
             type="button"
             ref={confirmButtonRef}
             onClick={() => onConfirm(dontAskAgain)}
-            className="px-5 py-2 bg-blue-600 dark:bg-blue-700 hover:bg-blue-700 dark:hover:bg-blue-600 hover:scale-[1.02] active:scale-[0.98] text-white rounded-xl text-sm font-medium transition-all duration-100 shadow-md shadow-blue-500/10 dark:shadow-blue-900/10 flex items-center gap-1.5 cursor-pointer"
+            className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-blue-500/5"
           >
             <CheckCircle className="h-4 w-4" />
             <span>Save Record</span>
-            <span className="text-[10px] text-blue-200 dark:text-blue-300 font-normal ml-1">Enter</span>
+            <span className="text-[10px] text-blue-400 dark:text-blue-300 font-normal ml-1">Enter</span>
           </button>
         </div>
       </div>
