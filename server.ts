@@ -370,6 +370,54 @@ app.post("/api/auth/login", (req, res) => {
   });
 });
 
+// 1b. Change Password Endpoint
+app.post("/api/auth/change-password", (req, res) => {
+  const { username, oldPassword, newPassword } = req.body;
+  if (!username || !oldPassword || !newPassword) {
+    return res.status(400).json({ message: "Username, old password, and new password are required" });
+  }
+
+  const db = readDatabase();
+  const userIndex = db.users.findIndex(
+    (u: any) => u.username.toLowerCase() === username.trim().toLowerCase()
+  );
+
+  if (userIndex === -1 || db.users[userIndex].password !== oldPassword) {
+    return res.status(401).json({ message: "Incorrect current password" });
+  }
+
+  db.users[userIndex].password = newPassword;
+  writeDatabase(db);
+
+  return res.json({ message: "Password updated successfully" });
+});
+
+// 1c. Reset Password (Forgot Password) Endpoint using Developer Code
+app.post("/api/auth/reset-password", (req, res) => {
+  const { username, devCode, newPassword } = req.body;
+  if (!username || !devCode || !newPassword) {
+    return res.status(400).json({ message: "Username, developer code, and new password are required" });
+  }
+
+  if (devCode.trim() !== "101819") {
+    return res.status(403).json({ message: "Invalid developer code. Contact developer." });
+  }
+
+  const db = readDatabase();
+  const userIndex = db.users.findIndex(
+    (u: any) => u.username.toLowerCase() === username.trim().toLowerCase()
+  );
+
+  if (userIndex === -1) {
+    return res.status(404).json({ message: "Username not found" });
+  }
+
+  db.users[userIndex].password = newPassword;
+  writeDatabase(db);
+
+  return res.json({ message: "Password reset successfully" });
+});
+
 // 2. Get Dashboard Stats
 app.get("/api/dashboard/stats", (req, res) => {
   const db = readDatabase();
@@ -393,11 +441,44 @@ app.get("/api/dashboard/stats", (req, res) => {
     );
   }).length;
 
+  // Calculate status review alerts (employees in status for 1+ year)
+  const alertEmployees: any[] = [];
+  const oneYearAgo = new Date();
+  oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+  db.employees.forEach((emp: any) => {
+    const status = emp.EmploymentStatus || "Unidentified (Pending Review)";
+    const changedAt = emp.StatusChangedAt;
+    if (!changedAt) return;
+
+    const changedDate = new Date(changedAt);
+    if (changedDate <= oneYearAgo) {
+      if (status === "Newly Hired" || status === "Re-employed") {
+        alertEmployees.push({
+          id: emp.EmployeeID,
+          name: `${emp.FirstName} ${emp.LastName}`,
+          office: emp.Office,
+          status,
+          message: "Not yet declared as Casual (1+ year in status)"
+        });
+      } else if (status === "Casual") {
+        alertEmployees.push({
+          id: emp.EmployeeID,
+          name: `${emp.FirstName} ${emp.LastName}`,
+          office: emp.Office,
+          status,
+          message: "Not yet declared as Permanent (1+ year in status)"
+        });
+      }
+    }
+  });
+
   return res.json({
     totalEmployees,
     totalLearningNeeds,
     addedToday,
     upcomingSchedules,
+    alertEmployees,
   });
 });
 
@@ -463,7 +544,7 @@ app.get("/api/employees/:id", (req, res) => {
 
 // 6. Create New Employee
 app.post("/api/employees", (req, res) => {
-  const { firstName, middleInitial, lastName, office, position, username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -477,6 +558,8 @@ app.post("/api/employees", (req, res) => {
   const cleanLast = formatName(lastName);
   const cleanOffice = office.trim();
   const cleanPosition = position.trim();
+  const type = employmentType || "Unidentified (Pending Review)";
+  const status = employmentStatus || "Unidentified (Pending Review)";
 
   // Create employee ID
   const maxId = db.employees.reduce((max: number, emp: any) => (emp.EmployeeID > max ? emp.EmployeeID : max), 0);
@@ -487,6 +570,9 @@ app.post("/api/employees", (req, res) => {
     LastName: cleanLast,
     Office: cleanOffice,
     Position: cleanPosition,
+    EmploymentType: type,
+    EmploymentStatus: status,
+    StatusChangedAt: ["Newly Hired", "Re-employed", "Casual"].includes(status) ? new Date().toISOString() : null,
     CreatedAt: new Date().toISOString(),
     UpdatedAt: new Date().toISOString(),
     CreatedBy: username,
@@ -503,7 +589,7 @@ app.post("/api/employees", (req, res) => {
 // 7. Update Employee and Learning Needs in one transaction (Sync)
 app.put("/api/employees/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const { firstName, middleInitial, lastName, office, position, needs = [], username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, needs = [], username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -516,14 +602,26 @@ app.put("/api/employees/:id", (req, res) => {
     return res.status(404).json({ message: "Employee not found" });
   }
 
+  const oldEmp = db.employees[employeeIndex];
+  const oldStatus = oldEmp.EmploymentStatus || "Unidentified (Pending Review)";
+  const newStatus = employmentStatus || "Unidentified (Pending Review)";
+  let statusChangedAt = oldEmp.StatusChangedAt;
+
+  if (oldStatus !== newStatus) {
+    statusChangedAt = ["Newly Hired", "Re-employed", "Casual"].includes(newStatus) ? new Date().toISOString() : null;
+  }
+
   // Update employee info
   db.employees[employeeIndex] = {
-    ...db.employees[employeeIndex],
+    ...oldEmp,
     FirstName: formatName(firstName),
     MiddleInitial: formatMiddleInitial(middleInitial),
     LastName: formatName(lastName),
     Office: office.trim(),
     Position: position.trim(),
+    EmploymentType: employmentType || "Unidentified (Pending Review)",
+    EmploymentStatus: newStatus,
+    StatusChangedAt: statusChangedAt,
     UpdatedAt: new Date().toISOString(),
     UpdatedBy: username,
   };
@@ -630,6 +728,9 @@ app.get("/api/learning-needs", (req, res) => {
         LastName: emp.LastName,
         Office: emp.Office,
         Position: emp.Position,
+        EmploymentType: emp.EmploymentType || "Unidentified (Pending Review)",
+        EmploymentStatus: emp.EmploymentStatus || "Unidentified (Pending Review)",
+        StatusChangedAt: emp.StatusChangedAt,
         LearningNeed: ln.LearningNeed,
         Basis: ln.Basis,
         Methodology: ln.Methodology,
@@ -713,6 +814,8 @@ app.get("/api/export/excel", async (req, res) => {
         LastName: emp.LastName,
         Office: emp.Office,
         Position: emp.Position,
+        EmploymentType: emp.EmploymentType || "Unidentified (Pending Review)",
+        EmploymentStatus: emp.EmploymentStatus || "Unidentified (Pending Review)",
         LearningNeed: ln.LearningNeed,
         Basis: ln.Basis,
         Methodology: ln.Methodology,
@@ -750,7 +853,7 @@ app.get("/api/export/excel", async (req, res) => {
   const worksheet = workbook.addWorksheet("Learning Needs Summary");
 
   // Title Row
-  worksheet.mergeCells("A1", "H1");
+  worksheet.mergeCells("A1", "J1");
   const titleCell = worksheet.getCell("A1");
   titleCell.value = "INDIVIDUAL LEARNING AND DEVELOPMENT PLAN (ILDP) LEARNING NEEDS SUMMARY";
   titleCell.font = { name: "Arial", size: 14, bold: true, color: { argb: "FFFFFFFF" } };
@@ -763,7 +866,7 @@ app.get("/api/export/excel", async (req, res) => {
   worksheet.getRow(1).height = 40;
 
   // Subtitle / Meta Row
-  worksheet.mergeCells("A2", "H2");
+  worksheet.mergeCells("A2", "J2");
   const subCell = worksheet.getCell("A2");
   subCell.value = `Exported on: ${new Date().toLocaleDateString()} | Total Records: ${results.length}`;
   subCell.font = { name: "Arial", size: 10, italic: true };
@@ -778,6 +881,8 @@ app.get("/api/export/excel", async (req, res) => {
     "Employee Name",
     "Office/Department",
     "Position",
+    "Employment Type",
+    "Employment Status",
     "Learning Need / Competency",
     "Basis of L&D Needs",
     "Proposed Action / Methodology",
@@ -809,6 +914,8 @@ app.get("/api/export/excel", async (req, res) => {
       fullName,
       item.Office,
       item.Position,
+      item.EmploymentType,
+      item.EmploymentStatus,
       item.LearningNeed,
       item.Basis,
       item.Methodology,

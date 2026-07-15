@@ -31,6 +31,8 @@ export default function EmployeeForm({
   const [lastName, setLastName] = useState("");
   const [office, setOffice] = useState("");
   const [position, setPosition] = useState("");
+  const [employmentType, setEmploymentType] = useState("Unidentified (Pending Review)");
+  const [employmentStatus, setEmploymentStatus] = useState("Unidentified (Pending Review)");
 
   // Learning Needs List
   const [needs, setNeeds] = useState<LearningNeed[]>([]);
@@ -101,6 +103,8 @@ export default function EmployeeForm({
       setLastName(employee.LastName);
       setOffice(employee.Office);
       setPosition(employee.Position);
+      setEmploymentType(employee.EmploymentType || "Unidentified (Pending Review)");
+      setEmploymentStatus(employee.EmploymentStatus || "Unidentified (Pending Review)");
 
       // Fetch employee's learning needs from backend
       fetch(`/api/employees/${employee.EmployeeID}`)
@@ -121,6 +125,8 @@ export default function EmployeeForm({
       setLastName("");
       setOffice("");
       setPosition("");
+      setEmploymentType("Unidentified (Pending Review)");
+      setEmploymentStatus("Unidentified (Pending Review)");
       setNeeds([createEmptyNeed()]);
     }
     setSimilarEmployees([]);
@@ -146,6 +152,8 @@ export default function EmployeeForm({
         setLastName(employee.LastName);
         setOffice(employee.Office);
         setPosition(employee.Position);
+        setEmploymentType(employee.EmploymentType || "Unidentified (Pending Review)");
+        setEmploymentStatus(employee.EmploymentStatus || "Unidentified (Pending Review)");
         
         fetch(`/api/employees/${employee.EmployeeID}`)
           .then((res) => res.json())
@@ -164,6 +172,8 @@ export default function EmployeeForm({
         setLastName("");
         setOffice("");
         setPosition("");
+        setEmploymentType("Unidentified (Pending Review)");
+        setEmploymentStatus("Unidentified (Pending Review)");
         setNeeds([createEmptyNeed()]);
       }
       setSimilarEmployees([]);
@@ -503,6 +513,8 @@ export default function EmployeeForm({
       LastName: lastName.trim(),
       Office: office,
       Position: position,
+      EmploymentType: employmentType,
+      EmploymentStatus: employmentStatus,
     };
 
     onSave(empData, needs);
@@ -524,7 +536,7 @@ export default function EmployeeForm({
               <p className="text-xs text-slate-500 dark:text-slate-400">Provide personal and professional information</p>
             </div>
           </div>
-          <span className="text-xs bg-blue-50 dark:bg-blue-950/50 text-blue-700 dark:text-blue-400 font-medium px-2.5 py-1 rounded-full border dark:border-blue-900/40">
+          <span className="btn-glass bg-blue-500/10 text-xs font-medium px-3 py-1.5 rounded-full">
             Encoder: {currentUser.name} ({currentUser.role})
           </span>
         </div>
@@ -720,6 +732,44 @@ export default function EmployeeForm({
               triggerRef={positionSelectRef}
             />
           </div>
+
+          {/* Employment Type */}
+          <div className="md:col-span-3">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Employment Type <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={employmentType}
+              onChange={(e) => setEmploymentType(e.target.value)}
+              required
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200 cursor-pointer"
+            >
+              <option value="Unidentified (Pending Review)">Unidentified (Pending Review)</option>
+              <option value="Job Order">Job Order</option>
+              <option value="Casual">Casual</option>
+              <option value="Consultant">Consultant</option>
+              <option value="Permanent">Permanent</option>
+            </select>
+          </div>
+
+          {/* Employment Status */}
+          <div className="md:col-span-3">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Employment Status <span className="text-red-500">*</span>
+            </label>
+            <select
+              value={employmentStatus}
+              onChange={(e) => setEmploymentStatus(e.target.value)}
+              required
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200 cursor-pointer"
+            >
+              <option value="Unidentified (Pending Review)">Unidentified (Pending Review)</option>
+              <option value="Newly Hired">Newly Hired</option>
+              <option value="Re-employed">Re-employed</option>
+              <option value="Casual">Casual</option>
+              <option value="Permanent">Permanent</option>
+            </select>
+          </div>
         </div>
       </div>
 
@@ -763,7 +813,7 @@ export default function EmployeeForm({
               <button
                 type="button"
                 onClick={() => handleDeleteNeed(index)}
-                className="absolute top-4 right-4 p-1.5 bg-red-50 dark:bg-red-950/40 text-red-600 dark:text-red-400 rounded-lg opacity-80 hover:opacity-100 hover:bg-red-100 dark:hover:bg-red-950 hover:scale-105 active:scale-95 transition-all duration-100 cursor-pointer border dark:border-red-900/40"
+                className="btn-glass bg-red-500/10 absolute top-4 right-4 p-2 rounded-xl hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer"
                 title="Remove Need Card"
               >
                 <Trash className="h-4 w-4" />

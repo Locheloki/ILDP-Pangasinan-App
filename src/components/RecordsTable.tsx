@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye } from "lucide-react";
+import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye, AlertTriangle } from "lucide-react";
 import { Employee, LearningNeed } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
 import SearchableSelect from "./SearchableSelect";
@@ -12,6 +12,9 @@ interface JoinedRecord {
   LastName: string;
   Office: string;
   Position: string;
+  EmploymentType?: string;
+  EmploymentStatus?: string;
+  StatusChangedAt?: string;
   LearningNeed: string;
   Basis: string;
   Methodology: string;
@@ -231,6 +234,9 @@ export default function RecordsTable({
       LastName: string;
       Office: string;
       Position: string;
+      EmploymentType?: string;
+      EmploymentStatus?: string;
+      StatusChangedAt?: string;
       Needs: Array<{
         LearningNeedID: number;
         LearningNeed: string;
@@ -256,6 +262,9 @@ export default function RecordsTable({
           LastName: rec.LastName,
           Office: rec.Office,
           Position: rec.Position,
+          EmploymentType: rec.EmploymentType,
+          EmploymentStatus: rec.EmploymentStatus,
+          StatusChangedAt: rec.StatusChangedAt,
           Needs: [],
           CreatedAt: rec.CreatedAt,
           CreatedBy: rec.EmployeeCreatedBy || rec.CreatedBy,
@@ -294,6 +303,26 @@ export default function RecordsTable({
     if (!isoString) return "N/A";
     const d = new Date(isoString);
     return d.toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" });
+  };
+
+  const getStatusAlert = (rec: { EmploymentStatus?: string; StatusChangedAt?: string }) => {
+    const status = rec.EmploymentStatus || "Unidentified (Pending Review)";
+    const changedAt = rec.StatusChangedAt;
+    if (!changedAt) return null;
+
+    const changedDate = new Date(changedAt);
+    const oneYearAgo = new Date();
+    oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+
+    if (changedDate <= oneYearAgo) {
+      if (status === "Newly Hired" || status === "Re-employed") {
+        return "Employee has not yet been declared as Casual (1+ year in status)";
+      }
+      if (status === "Casual") {
+        return "Employee has not yet been declared as Permanent (1+ year in status)";
+      }
+    }
+    return null;
   };
 
   const isRecentEntry = (createdAtStr: string) => {
@@ -433,6 +462,8 @@ export default function RecordsTable({
                     <ArrowUpDown className="h-3 w-3" />
                   </button>
                 </th>
+                <th className="py-4 px-6">Employment Type</th>
+                <th className="py-4 px-6">Employment Status</th>
                 <th className="py-4 px-6 text-center">Actions</th>
               </tr>
             </thead>
@@ -440,7 +471,7 @@ export default function RecordsTable({
             {loading ? (
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 <tr>
-                  <td colSpan={4} className="py-12 text-center">
+                  <td colSpan={6} className="py-12 text-center">
                     <div className="flex flex-col items-center justify-center gap-3">
                       <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
                       <span className="text-slate-400 font-medium text-xs">Loading records...</span>
@@ -451,64 +482,79 @@ export default function RecordsTable({
             ) : currentRecords.length === 0 ? (
               <tbody className="divide-y divide-slate-100 text-slate-700">
                 <tr>
-                  <td colSpan={4} className="py-12 text-center text-slate-400">
+                  <td colSpan={6} className="py-12 text-center text-slate-400">
                     No records found matching current filter query.
                   </td>
                 </tr>
               </tbody>
             ) : (
-              currentRecords.map((rec) => (
-                <tbody 
-                  key={rec.EmployeeID} 
-                  className="group border-b border-slate-200/80 last:border-b-0 divide-y divide-slate-100/40 dark:border-slate-800/80 dark:divide-slate-800/60"
-                >
-                  {/* Primary Meta Row */}
-                  <tr className="group-hover:bg-slate-50/40 dark:group-hover:bg-slate-950/40 transition-colors duration-100">
-                    <td className="py-3 px-6 align-middle">
-                      <div 
-                        onClick={() => handleViewDetails(rec.EmployeeID)}
-                        className="font-extrabold text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 text-[14.5px] leading-snug tracking-tight hover:underline cursor-pointer transition-colors duration-100"
-                      >
-                        {rec.LastName}, {rec.FirstName}{rec.MiddleInitial ? ` ${rec.MiddleInitial}.` : ""}
-                      </div>
-                      {isRecentEntry(rec.EmployeeCreatedAt) && (
-                        <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
-                          Encoded by: <span className="font-semibold text-slate-500 dark:text-slate-400">{rec.CreatedBy || "system"}</span>
+              currentRecords.map((rec) => {
+                const alertText = getStatusAlert(rec);
+                return (
+                  <tbody 
+                    key={rec.EmployeeID} 
+                    className="group border-b border-slate-200/80 last:border-b-0 divide-y divide-slate-100/40 dark:border-slate-800/80 dark:divide-slate-800/60"
+                  >
+                    {/* Primary Meta Row */}
+                    <tr className="group-hover:bg-slate-50/40 dark:group-hover:bg-slate-950/40 transition-colors duration-100">
+                      <td className="py-3 px-6 align-middle">
+                        <div 
+                          onClick={() => handleViewDetails(rec.EmployeeID)}
+                          className="font-extrabold text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 text-[14.5px] leading-snug tracking-tight hover:underline cursor-pointer transition-colors duration-100"
+                        >
+                          {rec.LastName}, {rec.FirstName}{rec.MiddleInitial ? ` ${rec.MiddleInitial}.` : ""}
                         </div>
-                      )}
-                    </td>
-                    <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
-                      {rec.Office}
-                    </td>
-                    <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
-                      {rec.Position}
-                    </td>
-                    <td className="py-3 px-6 text-center align-middle">
-                      <div className="flex items-center justify-center gap-1.5">
-                        {/* Edit Records */}
-                        <button
-                          onClick={() => onEditEmployee(rec.EmployeeID)}
-                          className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
-                          title="Edit Full Profile"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </button>
+                        {isRecentEntry(rec.EmployeeCreatedAt) && (
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                            Encoded by: <span className="font-semibold text-slate-500 dark:text-slate-400">{rec.CreatedBy || "system"}</span>
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
+                        {rec.Office}
+                      </td>
+                      <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
+                        {rec.Position}
+                      </td>
+                      <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
+                        {rec.EmploymentType || "Unidentified (Pending Review)"}
+                      </td>
+                      <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
+                        <div className="flex items-center gap-1.5">
+                          <span>{rec.EmploymentStatus || "Unidentified (Pending Review)"}</span>
+                          {alertText && (
+                            <span className="inline-flex items-center text-amber-600 dark:text-amber-400 cursor-help" title={alertText}>
+                              <AlertTriangle className="h-4 w-4 shrink-0 animate-pulse" />
+                            </span>
+                          )}
+                        </div>
+                      </td>
+                      <td className="py-3 px-6 text-center align-middle">
+                        <div className="flex items-center justify-center gap-1.5">
+                          {/* Edit Records */}
+                          <button
+                            onClick={() => onEditEmployee(rec.EmployeeID)}
+                            className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
+                            title="Edit Full Profile"
+                          >
+                            <Edit className="h-4 w-4" />
+                          </button>
 
-                        {/* Delete Employee */}
-                        <button
-                          onClick={() => handleDeleteEmployee(rec.EmployeeID)}
-                          className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
-                          title="Delete Employee"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                          {/* Delete Employee */}
+                          <button
+                            onClick={() => handleDeleteEmployee(rec.EmployeeID)}
+                            className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
+                            title="Delete Employee"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
 
-                  {/* Secondary Full-Width Row: Horizontally Stacked Target Learning Needs */}
-                  <tr className="bg-slate-100/85 dark:bg-slate-950/40 group-hover:bg-slate-100 dark:group-hover:bg-slate-950/85 border-t border-b border-slate-200/60 dark:border-slate-800 transition-colors duration-100">
-                    <td colSpan={4} className="px-6 pb-4.5 pt-3.5">
+                    {/* Secondary Full-Width Row: Horizontally Stacked Target Learning Needs */}
+                    <tr className="bg-slate-100/85 dark:bg-slate-950/40 group-hover:bg-slate-100 dark:group-hover:bg-slate-950/85 border-t border-b border-slate-200/60 dark:border-slate-800 transition-colors duration-100">
+                      <td colSpan={6} className="px-6 pb-4.5 pt-3.5">
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-2">
                           <span className="text-[9.5px] font-extrabold text-slate-600 dark:text-slate-400 bg-slate-200/80 dark:bg-slate-900 border border-slate-300/40 dark:border-slate-800 px-2 py-0.5 rounded-md uppercase tracking-wider">
@@ -564,7 +610,7 @@ export default function RecordsTable({
                     </td>
                   </tr>
                 </tbody>
-              ))
+              )})
             )}
           </table>
         </div>
@@ -678,6 +724,19 @@ export default function RecordsTable({
 
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Alert Banner if status review required */}
+              {getStatusAlert(selectedEmployeeDetail) && (
+                <div className="bg-amber-500/10 border border-amber-500/25 rounded-xl p-4 flex items-start gap-3 text-amber-700 dark:text-amber-400">
+                  <AlertTriangle className="h-5 w-5 shrink-0 mt-0.5" />
+                  <div className="space-y-1">
+                    <h5 className="text-xs font-bold uppercase tracking-wider">Declaration Review Required</h5>
+                    <p className="text-xs font-medium leading-relaxed">
+                      {getStatusAlert(selectedEmployeeDetail)}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Demographics Card */}
               <div className="bg-slate-50 dark:bg-slate-950 rounded-xl border border-slate-200/60 dark:border-slate-800 p-5 space-y-4 transition-colors duration-200">
                 <div className="space-y-1">
@@ -695,6 +754,21 @@ export default function RecordsTable({
                   <div>
                     <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Position</span>
                     <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">{selectedEmployeeDetail.Position}</span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 border-t border-slate-200/60 dark:border-slate-800 pt-4">
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Employment Type</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {selectedEmployeeDetail.EmploymentType || "Unidentified (Pending Review)"}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">Employment Status</span>
+                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                      {selectedEmployeeDetail.EmploymentStatus || "Unidentified (Pending Review)"}
+                    </span>
                   </div>
                 </div>
 

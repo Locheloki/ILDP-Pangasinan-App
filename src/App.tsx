@@ -10,6 +10,7 @@ import {
   CheckSquare, 
   UserCheck, 
   Plus, 
+  AlertTriangle,
   FileSpreadsheet, 
   Compass, 
   Info,
@@ -26,6 +27,7 @@ import {
   Network,
   Sun,
   Moon,
+  Sunset,
   ChevronLeft,
   ArrowLeft,
   Copy,
@@ -41,28 +43,34 @@ import RecordsTable from "./components/RecordsTable";
 import SaveConfirmDialog from "./components/SaveConfirmDialog";
 
 export default function App() {
-  // Dark Mode State
-  const [darkMode, setDarkMode] = useState(() => {
+  // Theme State: 'light' | 'dark' | 'sunset'
+  const [theme, setTheme] = useState<'light' | 'dark' | 'sunset'>(() => {
     if (typeof window !== "undefined") {
       const savedTheme = localStorage.getItem("theme");
-      if (savedTheme) return savedTheme === "dark";
-      return window.matchMedia("(prefers-color-scheme: dark)").matches;
+      if (savedTheme === "dark" || savedTheme === "sunset" || savedTheme === "light") return savedTheme;
+      return window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     }
-    return false;
+    return "light";
   });
 
+  const cycleTheme = () => {
+    setTheme(prev => prev === "light" ? "dark" : prev === "dark" ? "sunset" : "light");
+  };
+
   useEffect(() => {
-    if (darkMode) {
-      document.documentElement.classList.add("dark");
-      localStorage.setItem("theme", "dark");
-    } else {
-      document.documentElement.classList.remove("dark");
-      localStorage.setItem("theme", "light");
+    const root = document.documentElement;
+    root.classList.remove("dark", "sunset");
+    if (theme === "dark") {
+      root.classList.add("dark");
+    } else if (theme === "sunset") {
+      root.classList.add("dark", "sunset"); // sunset inherits dark-mode utility classes
     }
-  }, [darkMode]);
+    localStorage.setItem("theme", theme);
+  }, [theme]);
 
   // Authentication State
   const [currentUser, setCurrentUser] = useState<User | null>(null);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   // Active View Tab State: home, add, view
   const [activeTab, setActiveTab] = useState<"home" | "add" | "view">("home");
@@ -215,6 +223,8 @@ export default function App() {
         lastName: empData.LastName,
         office: empData.Office,
         position: empData.Position,
+        employmentType: empData.EmploymentType,
+        employmentStatus: empData.EmploymentStatus,
         needs: needsData,
         username: currentUser?.username || "system",
       };
@@ -247,6 +257,8 @@ export default function App() {
               lastName: newEmp.LastName,
               office: newEmp.Office,
               position: newEmp.Position,
+              employmentType: newEmp.EmploymentType,
+              employmentStatus: newEmp.EmploymentStatus,
               needs: needsData,
               username: currentUser?.username || "system",
             }),
@@ -476,13 +488,22 @@ export default function App() {
               <p className="text-[10px] text-slate-400 truncate font-medium">{currentUser.role}</p>
             </div>
           </div>
-          <button
-            onClick={handleSignOut}
-            className="p-1.5 rounded-full text-slate-400 hover:text-red-400 hover:bg-white/10 transition cursor-pointer"
-            title="Sign Out"
-          >
-            <LogOut className="h-4.5 w-4.5" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setIsChangePasswordOpen(true)}
+              className="p-1.5 rounded-full text-slate-400 hover:text-blue-400 hover:bg-white/10 transition cursor-pointer"
+              title="Change Password"
+            >
+              <Key className="h-4.5 w-4.5" />
+            </button>
+            <button
+              onClick={handleSignOut}
+              className="p-1.5 rounded-full text-slate-400 hover:text-red-400 hover:bg-white/10 transition cursor-pointer"
+              title="Sign Out"
+            >
+              <LogOut className="h-4.5 w-4.5" />
+            </button>
+          </div>
         </div>
       </aside>
 
@@ -524,11 +545,13 @@ export default function App() {
 
           <div className="flex items-center gap-2">
             <button
-              onClick={() => setDarkMode(!darkMode)}
+              onClick={cycleTheme}
               className="btn-glass p-2.5 rounded-xl cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 border-none"
-              title={darkMode ? "Switch to light mode" : "Switch to dark mode"}
+              title={theme === "light" ? "Switch to dark mode" : theme === "dark" ? "Switch to sunset mode" : "Switch to light mode"}
             >
-              {darkMode ? <Sun className="h-4.5 w-4.5" /> : <Moon className="h-4.5 w-4.5" />}
+              {theme === "light" && <Moon className="h-4.5 w-4.5" />}
+              {theme === "dark" && <Sunset className="h-4.5 w-4.5" />}
+              {theme === "sunset" && <Sun className="h-4.5 w-4.5" />}
             </button>
           </div>
         </header>
@@ -566,6 +589,51 @@ export default function App() {
                     </div>
                   </div>
                 </div>
+
+                {/* Employment Status Review Alerts */}
+                {stats.alertEmployees && stats.alertEmployees.length > 0 && (
+                  <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-6 space-y-4 animate-in fade-in duration-300">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 bg-amber-500/20 text-amber-700 dark:text-amber-400 rounded-xl">
+                        <AlertTriangle className="h-5 w-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-display">
+                          Employment Status Action Required ({stats.alertEmployees.length})
+                        </h3>
+                        <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                          The following employees have remained in their current status for over 1 year. Administrative review or declaration may be required.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5 pt-2 border-t border-slate-200/50 dark:border-slate-800/50">
+                      {stats.alertEmployees.map((emp) => (
+                        <div 
+                          key={emp.id}
+                          className="bg-white/60 dark:bg-slate-900/40 border border-slate-200/40 dark:border-white/5 rounded-xl p-3 flex items-center justify-between gap-4 shadow-2xs hover:shadow-xs transition"
+                        >
+                          <div>
+                            <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">{emp.name}</h4>
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{emp.office}</p>
+                            <span className="inline-block mt-1 text-[9px] bg-amber-500/10 text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                              Current: {emp.status}
+                            </span>
+                          </div>
+                          
+                          <button
+                            onClick={() => {
+                              handleEditEmployeeTrigger(emp.id);
+                            }}
+                            className="btn-glass bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border-amber-200/50 dark:border-amber-900/30 text-[10px] py-1.5 px-3 font-semibold rounded-lg shrink-0 cursor-pointer transition hover:scale-102 active:scale-98"
+                          >
+                            Review Profile
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Summary metrics widgets grid */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
@@ -827,6 +895,143 @@ export default function App() {
         onConfirm={handleConfirmSave}
         onCancel={handleCancelSave}
       />
+
+      {/* Change Password Dialogue */}
+      {isChangePasswordOpen && currentUser && (
+        <ChangePasswordModal
+          currentUser={currentUser}
+          onClose={() => setIsChangePasswordOpen(false)}
+          onSuccess={(msg) => {
+            showToast(msg, "success");
+            setIsChangePasswordOpen(false);
+          }}
+          onError={(msg) => {
+            showToast(msg, "error");
+          }}
+        />
+      )}
+    </div>
+  );
+}
+
+interface ChangePasswordModalProps {
+  currentUser: User;
+  onClose: () => void;
+  onSuccess: (msg: string) => void;
+  onError: (msg: string) => void;
+}
+
+function ChangePasswordModal({ currentUser, onClose, onSuccess, onError }: ChangePasswordModalProps) {
+  const [oldPassword, setOldPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      onError("New passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/change-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: currentUser.username,
+          oldPassword,
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to change password.");
+      }
+
+      onSuccess(data.message || "Password successfully changed!");
+    } catch (err: any) {
+      onError(err.message || "An error occurred.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-100">
+      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-white/10 shadow-2xl p-6 w-full max-w-sm relative overflow-hidden animate-in zoom-in-95 duration-100 transition-colors duration-200">
+        <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 font-display flex items-center gap-2">
+          <Lock className="h-4.5 w-4.5 text-blue-500" />
+          <span>Change Password</span>
+        </h4>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
+          Update the security credentials for your account (<strong>{currentUser.username}</strong>).
+        </p>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              Current Password
+            </label>
+            <input
+              type="password"
+              required
+              value={oldPassword}
+              onChange={(e) => setOldPassword(e.target.value)}
+              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              New Password
+            </label>
+            <input
+              type="password"
+              required
+              value={newPassword}
+              onChange={(e) => setNewPassword(e.target.value)}
+              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div>
+            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+              Confirm New Password
+            </label>
+            <input
+              type="password"
+              required
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
+              placeholder="••••••••"
+            />
+          </div>
+
+          <div className="mt-5 flex justify-end gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="btn-glass text-xs py-2 px-4 cursor-pointer"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={loading}
+              className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 cursor-pointer font-bold"
+            >
+              {loading ? "Saving..." : "Change Password"}
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

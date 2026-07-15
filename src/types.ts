@@ -14,6 +14,9 @@ export interface Employee {
   LastName: string;
   Office: string;
   Position: string;
+  EmploymentType?: string;
+  EmploymentStatus?: string;
+  StatusChangedAt?: string;
   CreatedAt: string;
   UpdatedAt: string;
   CreatedBy: string;
@@ -43,4 +46,11 @@ export interface DashboardStats {
   totalLearningNeeds: number;
   addedToday: number;
   upcomingSchedules: number;
+  alertEmployees?: Array<{
+    id: number;
+    name: string;
+    office: string;
+    status: string;
+    message: string;
+  }>;
 }

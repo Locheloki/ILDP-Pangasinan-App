@@ -161,9 +161,9 @@ body {
 }
 
 .dark .btn-glass {
-  --c-glass: #bbbbbc;
-  --c-light: #fff;
-  --c-dark: #000;
+  --c-glass: #3b82f6; /* beautiful translucent blue glass look in dark mode! */
+  --c-light: #93c5fd;
+  --c-dark: #0f172a;
   --glass-reflex-dark: 2;
   --glass-reflex-light: 0.3;
   --saturation: 150%;
@@ -351,8 +351,11 @@ body {
 /* Specific override to apply dark, subtle glass theme to Developer support banner glass components in light mode */
 .developer-support-banner .btn-glass,
 .developer-support-banner .stat-icon-glass {
+  --c-light: #93c5fd;
+  --c-dark: #1a0a15;
   --glass-reflex-dark: 2.2;
   --glass-reflex-light: 0.35;
+  color: #60a5fa;
 }
 .developer-support-banner .btn-glass {
   box-shadow: 
@@ -380,3 +383,279 @@ body {
     0px 2px 8px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 12%), transparent), 
     0px 8px 24px 0px color-mix(in srgb, var(--c-dark) calc(var(--glass-reflex-dark) * 10%), transparent) !important;
 }
+
+/* ============================================
+   SUNSET THEME
+   Warm sunset tones layered on top of dark mode.
+   .sunset is always applied alongside .dark so all
+   dark: Tailwind utilities still work. These CSS
+   overrides replace cool slate blues with warm
+   indigo/amber/coral tones.
+   ============================================ */
+
+/* Body & base overrides */
+.sunset body {
+  background-color: #1a1225 !important; /* deep warm indigo-purple */
+  color: #f0e6d6 !important; /* warm cream text */
+}
+
+/* Scrollbar */
+.sunset ::-webkit-scrollbar-thumb {
+  background: #4a3560;
+}
+
+/* Sidebar: warm dark purple with amber glass border glow */
+.sunset .bg-slate-900\/75 {
+  background-color: rgba(35, 20, 50, 0.82) !important;
+}
+.sunset .bg-slate-900\/55 {
+  background-color: rgba(35, 20, 50, 0.65) !important;
+}
+
+/* Main content container */
+.sunset .bg-slate-50 {
+  background-color: #1a1225 !important;
+}
+.sunset .bg-slate-950 {
+  background-color: #140e1e !important;
+}
+
+/* Header & Footer */
+.sunset .bg-white {
+  background-color: #1e1430 !important;
+}
+.sunset .bg-slate-900 {
+  background-color: #1e1430 !important;
+}
+
+/* Border overrides */
+.sunset .border-slate-200 {
+  border-color: rgba(180, 120, 80, 0.15) !important;
+}
+.sunset .border-slate-800 {
+  border-color: rgba(180, 120, 80, 0.2) !important;
+}
+.sunset .border-slate-800\/80 {
+  border-color: rgba(180, 120, 80, 0.15) !important;
+}
+
+/* Text color overrides for warm tones */
+.sunset .text-slate-100 {
+  color: #f0e6d6 !important;
+}
+.sunset .text-slate-400 {
+  color: #a0887a !important;
+}
+.sunset .text-slate-500 {
+  color: #8a7068 !important;
+}
+
+/* Cards */
+.sunset .bg-white.rounded-2xl,
+.sunset .dark\:bg-slate-900.rounded-2xl {
+  background-color: #221838 !important;
+}
+
+/* Info/subtle section backgrounds */
+.sunset .bg-slate-50\/50 {
+  background-color: rgba(30, 18, 45, 0.5) !important;
+}
+.sunset .bg-slate-950\/30 {
+  background-color: rgba(20, 14, 30, 0.4) !important;
+}
+
+/* Sunset Liquid Glass overrides */
+.sunset .btn-glass {
+  --c-glass: hsl(25, 80%, 65%); /* warm coral glass */
+  --c-light: #ffb88c; /* warm peachy highlight */
+  --c-dark: #1a0a15; /* very dark warm plum */
+  --glass-reflex-dark: 2;
+  --glass-reflex-light: 0.55;
+  --saturation: 180%;
+  color: #f0e6d6;
+}
+
+.sunset .stat-icon-glass {
+  --glass-reflex-dark: 2;
+  --glass-reflex-light: 0.55;
+}
+
+.sunset .info-glass {
+  --c-glass: hsl(25, 80%, 65%);
+  --c-light: #ffb88c;
+  --c-dark: #1a0a15;
+  --glass-reflex-dark: 2.2;
+  --glass-reflex-light: 0.5;
+}
+
+/* Sunset stat icon color schemes - warm amber/coral/pink variants */
+.sunset .stat-icon-glass.theme-blue {
+  --c-glass: #e07840;
+  --c-light: #ffc8a0;
+  --c-dark: #1a0a15;
+  color: #ffb088;
+}
+.sunset .stat-icon-glass.theme-indigo {
+  --c-glass: #c060d0;
+  --c-light: #e8b0f0;
+  --c-dark: #1a0a15;
+  color: #d898e0;
+}
+.sunset .stat-icon-glass.theme-green {
+  --c-glass: #c0a030;
+  --c-light: #f0e098;
+  --c-dark: #1a0a15;
+  color: #e0d070;
+}
+.sunset .stat-icon-glass.theme-amber {
+  --c-glass: #e86830;
+  --c-light: #ffc0a0;
+  --c-dark: #1a0a15;
+  color: #ffaa78;
+}
+
+/* Sunset button color variants */
+.sunset .btn-glass.bg-blue-500\/10 {
+  --c-glass: #e07840;
+  --c-light: #ffc8a0;
+  --c-dark: #1a0a15;
+  color: #ffb088;
+}
+.sunset .btn-glass.bg-red-500\/10 {
+  --c-glass: #e04060;
+  --c-light: #ffb0c0;
+  --c-dark: #1a0a15;
+  color: #ff8898;
+}
+.sunset .btn-glass.bg-emerald-500\/10 {
+  --c-glass: #c0a030;
+  --c-light: #f0e098;
+  --c-dark: #1a0a15;
+  color: #e0d070;
+}
+
+/* Sunset Dashboard Stat Card Overrides */
+
+/* Card container backgrounds */
+.sunset .bg-white\/60 {
+  background-color: rgba(30, 20, 45, 0.6) !important;
+}
+.sunset .bg-slate-900\/40 {
+  background-color: rgba(30, 20, 45, 0.55) !important;
+}
+
+/* Card border */
+.sunset .border-white\/10 {
+  border-color: rgba(180, 120, 80, 0.15) !important;
+}
+
+/* Stat card hover backgrounds — warm sunset tones per theme color */
+/* Blue theme → warm coral */
+.sunset .hover\:bg-blue-600:hover,
+.sunset .dark\:hover\:bg-blue-700:hover {
+  background-color: #c05a30 !important;
+}
+
+/* Emerald/green theme → warm golden */
+.sunset .hover\:bg-emerald-600:hover,
+.sunset .dark\:hover\:bg-emerald-700:hover {
+  background-color: #a08020 !important;
+}
+
+/* Amber theme → deep warm orange */
+.sunset .hover\:bg-amber-500:hover,
+.sunset .dark\:hover\:bg-amber-600:hover {
+  background-color: #c06020 !important;
+}
+
+/* Indigo theme → warm lavender-plum */
+.sunset .hover\:bg-indigo-600:hover,
+.sunset .dark\:hover\:bg-indigo-700:hover {
+  background-color: #8040a0 !important;
+}
+
+/* Stat icon resting backgrounds in sunset */
+.sunset .bg-blue-950\/40 {
+  background-color: rgba(180, 80, 40, 0.2) !important;
+}
+.sunset .bg-emerald-950\/40 {
+  background-color: rgba(160, 130, 30, 0.2) !important;
+}
+.sunset .bg-amber-950\/40 {
+  background-color: rgba(180, 90, 30, 0.2) !important;
+}
+.sunset .bg-indigo-950\/40 {
+  background-color: rgba(150, 60, 180, 0.2) !important;
+}
+
+/* Stat icon resting text colors in sunset */
+.sunset .text-blue-400 {
+  color: #ffb088 !important;
+}
+.sunset .text-emerald-400 {
+  color: #e0d070 !important;
+}
+.sunset .text-amber-400 {
+  color: #ffaa78 !important;
+}
+.sunset .text-indigo-400 {
+  color: #d898e0 !important;
+}
+
+/* Stat icon resting borders in sunset */
+.sunset .border-blue-900\/60 {
+  border-color: rgba(180, 80, 40, 0.25) !important;
+}
+.sunset .border-emerald-900\/60 {
+  border-color: rgba(160, 130, 30, 0.25) !important;
+}
+.sunset .border-amber-900\/60 {
+  border-color: rgba(180, 90, 30, 0.25) !important;
+}
+.sunset .border-indigo-900\/60 {
+  border-color: rgba(150, 60, 180, 0.25) !important;
+}
+
+/* Sidebar active nav link backgrounds in sunset */
+.sunset .bg-white\/10 {
+  background-color: rgba(200, 120, 60, 0.12) !important;
+}
+
+/* Sidebar reports sub-card */
+.sunset .bg-slate-900\/30 {
+  background-color: rgba(40, 22, 55, 0.4) !important;
+}
+.sunset .border-white\/5 {
+  border-color: rgba(200, 140, 80, 0.08) !important;
+}
+
+/* General hover:bg-slate overrides in sunset */
+.sunset .hover\:bg-slate-100:hover {
+  background-color: rgba(200, 140, 80, 0.1) !important;
+}
+.sunset .hover\:bg-slate-800:hover {
+  background-color: rgba(200, 140, 80, 0.12) !important;
+}
+
+/* Sunset stat card hover text — ensure readability on warm hover backgrounds */
+.sunset .group:hover .group-hover\:text-white {
+  color: #ffffff !important;
+}
+.sunset .group:hover .group-hover\:text-white\/90 {
+  color: rgba(255, 255, 255, 0.9) !important;
+}
+.sunset .group:hover .group-hover\:text-white\/70 {
+  color: rgba(255, 255, 255, 0.7) !important;
+}
+.sunset .hover\:text-white:hover {
+  color: #ffffff !important;
+}
+
+/* Sunset general hover text for header buttons */
+.sunset .hover\:text-slate-800:hover {
+  color: #f0e6d6 !important;
+}
+.sunset .hover\:text-slate-100:hover {
+  color: #f0e6d6 !important;
+}
+

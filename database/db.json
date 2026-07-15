@@ -20,6 +20,20 @@
       "password": "101819",
       "name": "Jims",
       "role": "System developer"
+    },
+    {
+      "id": "4",
+      "username": "patrice",
+      "password": "12345",
+      "name": "Patrice",
+      "role": "Encoder"
+    },
+    {
+      "id": "5",
+      "username": "jayson",
+      "password": "12345",
+      "name": "Jayson",
+      "role": "Encoder"
     }
   ],
   "employees": [
@@ -80501,7 +80515,9 @@
       "Provincial Agriculture Office (Dasol)",
       "Pangasinan Provincial Hospital",
       "Provincial Social Welfare wins",
-      "Office of the Sangguniang Panlalawigan Society"
+      "Office of the Sangguniang Panlalawigan Society",
+      "Office of the BM: Shiela Marie Baniqued",
+      "Eastern Pangasinan District Hospital"
     ],
     "position": [
       "Nurse",
@@ -80827,7 +80843,8 @@
       "Senior Administrative Assistant I",
       "Local Legislative Staff Officer II",
       "Board Secretary II",
-      "Local Legislative Staff Officer V"
+      "Local Legislative Staff Officer V",
+      "Nurse-Cos"
     ],
     "learningNeed": [
       "Direct Sputum Smear Microscopy (DSSM)",
@@ -81313,7 +81330,8 @@
       "Quarter 2025",
       "4th Quarter 2024",
       "1st Quarter 2025",
-      "Transport and Referal"
+      "Transport and Referal",
+      "CY-2029"
     ]
   }
 }
