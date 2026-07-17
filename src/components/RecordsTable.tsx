@@ -299,7 +299,7 @@ export default function RecordsTable({
       }
       
       const emp = map.get(rec.EmployeeID)!;
-      if (!emp.Needs.some(n => n.LearningNeedID === rec.LearningNeedID)) {
+      if (rec.LearningNeedID !== null && !emp.Needs.some(n => n.LearningNeedID === rec.LearningNeedID)) {
         emp.Needs.push({
           LearningNeedID: rec.LearningNeedID,
           LearningNeed: rec.LearningNeed,
