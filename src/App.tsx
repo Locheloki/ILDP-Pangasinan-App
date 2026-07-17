@@ -4,6 +4,8 @@ import {
   UserPlus, 
   Database, 
   LogOut, 
+  Camera,
+  Zap,
   Users, 
   ClipboardList, 
   Calendar, 
@@ -41,6 +43,7 @@ import DashboardStatsCard from "./components/DashboardStatsCard";
 import EmployeeForm from "./components/EmployeeForm";
 import RecordsTable from "./components/RecordsTable";
 import SaveConfirmDialog from "./components/SaveConfirmDialog";
+import RapidEncoding from "./components/RapidEncoding";
 
 export default function App() {
   // Theme State: 'light' | 'dark' | 'sunset'
@@ -72,11 +75,11 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
-  // Active View Tab State: home, add, view
-  const [activeTab, setActiveTab] = useState<"home" | "add" | "view">("home");
-  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view">("view");
+  // Active View Tab State: home, add, view, rapid
+  const [activeTab, setActiveTab] = useState<"home" | "add" | "view" | "rapid">("home");
+  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view" | "rapid">("view");
 
-  const changeTab = (tab: "home" | "add" | "view") => {
+  const changeTab = (tab: "home" | "add" | "view" | "rapid") => {
     if (tab === "add" && activeTab !== "add") {
       setTabBeforeEdit(activeTab);
     }
@@ -113,6 +116,43 @@ export default function App() {
   const [customOptionsVersion, setCustomOptionsVersion] = useState(0);
   const handleCustomOptionsChange = () => {
     setCustomOptionsVersion((prev) => prev + 1);
+  };
+
+  const profileFileInputRef = React.useRef<HTMLInputElement>(null);
+
+  const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!currentUser) return;
+
+    const reader = new FileReader();
+    reader.onloadend = async () => {
+      const base64String = reader.result as string;
+
+      try {
+        const response = await fetch("/api/users/profile-pic", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ userId: currentUser.id, profilePic: base64String }),
+        });
+
+        if (!response.ok) {
+          throw new Error("Failed to upload profile picture");
+        }
+
+        const updatedUser = { ...currentUser, profilePic: base64String };
+        setCurrentUser(updatedUser);
+        sessionStorage.setItem("ildp_user", JSON.stringify(updatedUser));
+        
+        setToastType("success");
+        setToastMessage("Profile picture updated successfully!");
+      } catch (err: any) {
+        setToastType("error");
+        setToastMessage(err.message || "Failed to upload profile picture");
+      }
+    };
+    reader.readAsDataURL(file);
   };
 
   // Load session or credentials if any, otherwise fetch stats on load
@@ -223,8 +263,11 @@ export default function App() {
         lastName: empData.LastName,
         office: empData.Office,
         position: empData.Position,
-        employmentType: empData.EmploymentType,
+        employmentType: empData.EmploymentStatus || empData.EmploymentType,
         employmentStatus: empData.EmploymentStatus,
+        gender: empData.Gender,
+        dateOfAssumption: empData.DateOfAssumption,
+        newlyHired: empData.NewlyHired,
         needs: needsData,
         username: currentUser?.username || "system",
       };
@@ -257,8 +300,11 @@ export default function App() {
               lastName: newEmp.LastName,
               office: newEmp.Office,
               position: newEmp.Position,
-              employmentType: newEmp.EmploymentType,
+              employmentType: newEmp.EmploymentStatus || newEmp.EmploymentType,
               employmentStatus: newEmp.EmploymentStatus,
+              gender: newEmp.Gender,
+              dateOfAssumption: newEmp.DateOfAssumption,
+              newlyHired: newEmp.NewlyHired,
               needs: needsData,
               username: currentUser?.username || "system",
             }),
@@ -368,7 +414,7 @@ export default function App() {
 
       {/* 1. Left Sidebar Component - Floating Liquid Glass Panel */}
       <aside
-        className={`fixed inset-y-0 left-0 z-50 bg-slate-900/75 dark:bg-slate-900/55 backdrop-blur-xl text-slate-200 flex flex-col shrink-0 transform transition-all duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 sidebar-contrast-bg backdrop-blur-xl text-slate-200 flex flex-col shrink-0 transform transition-all duration-300 ease-in-out ${
           isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
         } md:static md:translate-x-0 ${
           isSidebarCollapsed 
@@ -457,6 +503,19 @@ export default function App() {
                 <Database className="w-5 h-5 mr-3 shrink-0" />
                 <span className="menu-link" data-text="View Records">View Records</span>
               </button>
+
+              <button
+                style={{ "--active-color": "#f59e0b" } as React.CSSProperties}
+                onClick={() => { changeTab("rapid"); setIsSidebarOpen(false); }}
+                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
+                  activeTab === "rapid" 
+                    ? "bg-white/10 text-white" 
+                    : "text-slate-300 hover:text-white hover:bg-white/5"
+                }`}
+              >
+                <Zap className="w-5 h-5 mr-3 shrink-0 text-amber-500 fill-amber-500/10" />
+                <span className="menu-link" data-text="Rapid Encoding">Rapid Encoding</span>
+              </button>
             </div>
           </div>
 
@@ -480,9 +539,27 @@ export default function App() {
         {/* Sidebar bottom logged-in section (floating overlay styling) */}
         <div className="mt-auto p-6 flex items-center justify-between bg-transparent">
           <div className="flex items-center space-x-3 overflow-hidden">
-            <div className="w-9 h-9 rounded-full bg-slate-800 border border-white/10 text-white font-bold flex items-center justify-center shrink-0 uppercase text-sm shadow-md">
-              {currentUser.name.charAt(0)}
+            <div 
+              onClick={() => profileFileInputRef.current?.click()}
+              className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-white font-bold flex items-center justify-center shrink-0 uppercase text-sm shadow-md cursor-pointer overflow-hidden group relative transition-colors duration-200"
+              title="Upload Profile Picture"
+            >
+              {currentUser.profilePic ? (
+                <img src={currentUser.profilePic} alt="Profile" className="w-full h-full object-cover tab-pane-animate" />
+              ) : (
+                <span>{currentUser.name.charAt(0)}</span>
+              )}
+              <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
+                <Camera className="h-4 w-4 text-white" />
+              </div>
             </div>
+            <input 
+              type="file"
+              ref={profileFileInputRef}
+              accept="image/*"
+              className="hidden"
+              onChange={handleProfilePicUpload}
+            />
             <div className="min-w-0">
               <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
               <p className="text-[10px] text-slate-400 truncate font-medium">{currentUser.role}</p>
@@ -536,6 +613,7 @@ export default function App() {
                 {activeTab === "home" && "Home Dashboard"}
                 {activeTab === "add" && (editingEmployee ? "Modify Employee Record" : "New Entry Wizard")}
                 {activeTab === "view" && "Registered Learning Needs Directory"}
+                {activeTab === "rapid" && "Ingestion Panel"}
               </h2>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 {formatHeaderDate()}
@@ -563,7 +641,7 @@ export default function App() {
             {/* Render Page 1: Home Dashboard */}
             <div className={`space-y-6 tab-pane-animate ${activeTab === "home" ? "" : "hidden"}`}>
                 {/* Welcome banner */}
-                <div className="bg-gradient-to-br from-slate-800 via-slate-900 to-slate-950 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="sidebar-contrast-bg border border-slate-200/50 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
                   <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
                   <div className="absolute -bottom-10 -left-10 w-80 h-80 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none"></div>
 
@@ -571,6 +649,8 @@ export default function App() {
                     <span className="bg-blue-600/30 text-blue-300 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-blue-500/20 backdrop-blur-md">
                       Pangasinan Provincial Portal
                     </span>
+                    <h1>
+                    </h1>
                     <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight font-display">
                       ILDP Learning Needs Encoding Portal
                     </h2>
@@ -580,7 +660,7 @@ export default function App() {
                   </div>
 
                   <div className="relative z-10 shrink-0 hidden md:block">
-                    <div className="bg-white/10 backdrop-blur-xs p-3 rounded-full border border-white/15 shadow-2xl">
+                    <div className="logo-glass p-4 rounded-full flex items-center justify-center">
                       <img
                         src="/pangasinan-logo.svg"
                         alt="Pangasinan Seal Logo"
@@ -876,6 +956,17 @@ export default function App() {
                 customOptionsVersion={customOptionsVersion}
                 onCustomOptionsChange={handleCustomOptionsChange}
               />
+            </div>
+
+            {/* Render Page 4: Rapid Encoding Mode */}
+            <div className={`tab-pane-animate ${activeTab === "rapid" ? "" : "hidden"}`}>
+              {currentUser && (
+                <RapidEncoding
+                  currentUser={currentUser}
+                  onSaveSuccess={fetchStats}
+                  customOptionsVersion={customOptionsVersion}
+                />
+              )}
             </div>
 
           </div>

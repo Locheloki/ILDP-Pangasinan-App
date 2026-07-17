@@ -12,12 +12,21 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
   const [error, setError] = React.useState("");
   const [loading, setLoading] = React.useState(false);
 
-  // Forgot password states
-  const [isForgotPassword, setIsForgotPassword] = React.useState(false);
+  // Screen modes: "login" | "signup" | "forgot"
+  const [screenMode, setScreenMode] = React.useState<"login" | "signup" | "forgot">("login");
   const [devCode, setDevCode] = React.useState("");
   const [newPassword, setNewPassword] = React.useState("");
   const [confirmPassword, setConfirmPassword] = React.useState("");
   const [successMessage, setSuccessMessage] = React.useState("");
+  const [isFadingOut, setIsFadingOut] = React.useState(false);
+
+  const changeScreenMode = (newMode: "login" | "signup" | "forgot") => {
+    setIsFadingOut(true);
+    setTimeout(() => {
+      setScreenMode(newMode);
+      setIsFadingOut(false);
+    }, 150);
+  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -82,6 +91,43 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
     }
   };
 
+  const handleSignUp = async (e: any) => {
+    e.preventDefault();
+    setError("");
+    setSuccessMessage("");
+
+    if (password !== confirmPassword) {
+      setError("Passwords do not match.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ username, password, devCode }),
+      });
+
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.message || "Failed to sign up.");
+      }
+
+      setSuccessMessage("Account created successfully! You can now sign in.");
+      changeScreenMode("login");
+      // Clear password and devCode
+      setPassword("");
+      setConfirmPassword("");
+      setDevCode("");
+    } catch (err: any) {
+      setError(err.message || "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50/20 to-slate-200 dark:from-slate-950 dark:via-blue-950/10 dark:to-slate-900 flex items-center justify-center p-4 transition-colors duration-200">
       <div className="w-full max-w-md bg-white/60 dark:bg-slate-900/40 backdrop-blur-xl rounded-2xl shadow-2xl border border-slate-200/60 dark:border-white/10 overflow-hidden transition-colors duration-200">
@@ -106,19 +152,19 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
         {/* Form Body */}
         <div className="p-8">
           {error && (
-            <div className="mb-6 p-3 bg-red-50 border-l-4 border-red-500 rounded-r-lg text-xs text-red-700 flex items-start gap-2">
-              <span className="font-semibold">Error:</span> {error}
+            <div className="mb-6 p-3.5 bg-red-500/10 border border-red-500/20 text-red-600 dark:text-red-400 rounded-xl text-[10px] flex items-center justify-center gap-2 backdrop-blur-sm tab-pane-animate">
+              <span className="font-bold shrink-0">Error:</span> <span className="text-center">{error}</span>
             </div>
           )}
 
           {successMessage && (
-            <div className="mb-6 p-3 bg-emerald-50 border-l-4 border-emerald-500 rounded-r-lg text-xs text-emerald-700 flex items-start gap-2">
-              <span className="font-semibold">Success:</span> {successMessage}
+            <div className="mb-6 p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl text-[10px] flex items-center justify-center gap-2 backdrop-blur-sm tab-pane-animate">
+              <span className="font-bold shrink-0">Success:</span> <span className="text-center">{successMessage}</span>
             </div>
           )}
 
-          {!isForgotPassword ? (
-            <form onSubmit={handleSubmit} className="space-y-5">
+          {screenMode === "login" ? (
+            <form onSubmit={handleSubmit} className={`space-y-5 transition-all duration-150 ease-in-out ${isFadingOut ? "opacity-0 -translate-y-2 scale-95" : "opacity-100 translate-y-0 scale-100 tab-pane-animate"}`}>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                   Username
@@ -143,16 +189,31 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                     Password
                   </label>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setError("");
-                      setIsForgotPassword(true);
-                    }}
-                    className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
-                  >
-                    Forgot Password?
-                  </button>
+                  <div className="flex gap-2.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError("");
+                        setSuccessMessage("");
+                        changeScreenMode("signup");
+                      }}
+                      className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
+                    >
+                      Sign Up
+                    </button>
+                    <span className="text-[10px] text-slate-300 dark:text-slate-700">|</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setError("");
+                        setSuccessMessage("");
+                        changeScreenMode("forgot");
+                      }}
+                      className="text-[10px] text-blue-600 dark:text-blue-400 hover:underline font-semibold cursor-pointer"
+                    >
+                      Forgot Password?
+                    </button>
+                  </div>
                 </div>
                 <div className="relative">
                   <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
@@ -181,8 +242,107 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                 )}
               </button>
             </form>
+          ) : screenMode === "signup" ? (
+            <form onSubmit={handleSignUp} className={`space-y-5 transition-all duration-150 ease-in-out ${isFadingOut ? "opacity-0 -translate-y-2 scale-95" : "opacity-100 translate-y-0 scale-100 tab-pane-animate"}`}>
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Developer Code
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={devCode}
+                    onChange={(e: any) => setDevCode(e.target.value)}
+                    className="block w-full pl-10 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-xs transition-colors duration-200 font-mono"
+                    placeholder="Enter developer code"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Username
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <UserIcon className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="text"
+                    required
+                    value={username}
+                    onChange={(e: any) => setUsername(e.target.value)}
+                    className="block w-full pl-10 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-xs transition-colors duration-200"
+                    placeholder="e.g. encoder"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    value={password}
+                    onChange={(e: any) => setPassword(e.target.value)}
+                    className="block w-full pl-10 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-xs transition-colors duration-200"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+                  Confirm Password
+                </label>
+                <div className="relative">
+                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
+                    <Lock className="h-4 w-4 text-slate-400" />
+                  </div>
+                  <input
+                    type="password"
+                    required
+                    value={confirmPassword}
+                    onChange={(e: any) => setConfirmPassword(e.target.value)}
+                    className="block w-full pl-10 pr-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 text-xs transition-colors duration-200"
+                    placeholder="••••••••"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setError("");
+                    setSuccessMessage("");
+                    changeScreenMode("login");
+                  }}
+                  className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
+                >
+                  Back to Sign In
+                </button>
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 cursor-pointer font-bold"
+                >
+                  {loading ? "Signing up..." : "Sign Up"}
+                </button>
+              </div>
+            </form>
           ) : (
-            <form onSubmit={handleResetPassword} className="space-y-5">
+            <form onSubmit={handleResetPassword} className={`space-y-5 transition-all duration-150 ease-in-out ${isFadingOut ? "opacity-0 -translate-y-2 scale-95" : "opacity-100 translate-y-0 scale-100 tab-pane-animate"}`}>
               <div>
                 <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
                   Username
@@ -268,7 +428,7 @@ export default function LoginScreen({ onLoginSuccess }: LoginScreenProps) {
                   onClick={() => {
                     setError("");
                     setSuccessMessage("");
-                    setIsForgotPassword(false);
+                    changeScreenMode("login");
                   }}
                   className="text-xs font-semibold text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-200 cursor-pointer"
                 >

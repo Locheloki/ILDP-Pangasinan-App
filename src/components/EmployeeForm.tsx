@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash, Search, ArrowRight, UserCheck, AlertTriangle, Eye, ChevronDown } from "lucide-react";
 import { Employee, LearningNeed, User } from "../types";
 import { OFFICES, POSITIONS, LEARNING_NEEDS, BASES, METHODOLOGIES, SCHEDULES } from "../constants";
+import { getStoredLearningNeedsClipboard, getStoredLearningNeedsClipboardCount, setStoredLearningNeedsClipboard } from "../utils/learningNeedClipboard";
 import SearchableSelect from "./SearchableSelect";
 
 // ----------------------------------------------------
@@ -31,11 +32,31 @@ export default function EmployeeForm({
   const [lastName, setLastName] = useState("");
   const [office, setOffice] = useState("");
   const [position, setPosition] = useState("");
-  const [employmentType, setEmploymentType] = useState("Unidentified (Pending Review)");
-  const [employmentStatus, setEmploymentStatus] = useState("Unidentified (Pending Review)");
+  const [employmentType, setEmploymentType] = useState("Undefined (Pending Review)");
+  const [employmentStatus, setEmploymentStatus] = useState("Undefined (Pending Review)");
+  const [gender, setGender] = useState("Undefined (Pending Review)");
+  const [dateOfAssumption, setDateOfAssumption] = useState("");
+  const [newlyHired, setNewlyHired] = useState("N/A");
+
+  useEffect(() => {
+    if (dateOfAssumption) {
+      const date = new Date(dateOfAssumption);
+      const startOf2026 = new Date("2026-01-01");
+      if (date >= startOf2026) {
+        setNewlyHired("Newly Hired");
+      } else {
+        setNewlyHired("N/A");
+      }
+    } else {
+      setNewlyHired("N/A");
+    }
+  }, [dateOfAssumption]);
 
   // Learning Needs List
   const [needs, setNeeds] = useState<LearningNeed[]>([]);
+  const [clipboardCount, setClipboardCount] = useState(() => getStoredLearningNeedsClipboardCount());
+  const [clipboardStatus, setClipboardStatus] = useState<string>("");
+  const [clipboardFeedback, setClipboardFeedback] = useState<"copy" | "paste" | null>(null);
   
   // Custom Options State
   const [basisOptions, setBasisOptions] = useState<string[]>(BASES);
@@ -103,8 +124,12 @@ export default function EmployeeForm({
       setLastName(employee.LastName);
       setOffice(employee.Office);
       setPosition(employee.Position);
-      setEmploymentType(employee.EmploymentType || "Unidentified (Pending Review)");
-      setEmploymentStatus(employee.EmploymentStatus || "Unidentified (Pending Review)");
+      setEmploymentType(employee.EmploymentType || "Undefined (Pending Review)");
+      setEmploymentStatus(employee.EmploymentStatus || "Undefined (Pending Review)");
+      setGender(employee.Gender || "Undefined (Pending Review)");
+      const assumptionDate = employee.DateOfAssumption ? employee.DateOfAssumption.substring(0, 10) : "";
+      setDateOfAssumption(assumptionDate);
+      setNewlyHired((employee as any).NewlyHired || "N/A");
 
       // Fetch employee's learning needs from backend
       fetch(`/api/employees/${employee.EmployeeID}`)
@@ -125,8 +150,11 @@ export default function EmployeeForm({
       setLastName("");
       setOffice("");
       setPosition("");
-      setEmploymentType("Unidentified (Pending Review)");
-      setEmploymentStatus("Unidentified (Pending Review)");
+      setEmploymentType("Undefined (Pending Review)");
+      setEmploymentStatus("Undefined (Pending Review)");
+      setGender("Undefined (Pending Review)");
+      setDateOfAssumption("");
+      setNewlyHired("N/A");
       setNeeds([createEmptyNeed()]);
     }
     setSimilarEmployees([]);
@@ -152,8 +180,12 @@ export default function EmployeeForm({
         setLastName(employee.LastName);
         setOffice(employee.Office);
         setPosition(employee.Position);
-        setEmploymentType(employee.EmploymentType || "Unidentified (Pending Review)");
-        setEmploymentStatus(employee.EmploymentStatus || "Unidentified (Pending Review)");
+        setEmploymentType(employee.EmploymentType || "Undefined (Pending Review)");
+        setEmploymentStatus(employee.EmploymentStatus || "Undefined (Pending Review)");
+        setGender(employee.Gender || "Undefined (Pending Review)");
+        const assumptionDate = employee.DateOfAssumption ? employee.DateOfAssumption.substring(0, 10) : "";
+        setDateOfAssumption(assumptionDate);
+        setNewlyHired((employee as any).NewlyHired || "N/A");
         
         fetch(`/api/employees/${employee.EmployeeID}`)
           .then((res) => res.json())
@@ -172,8 +204,11 @@ export default function EmployeeForm({
         setLastName("");
         setOffice("");
         setPosition("");
-        setEmploymentType("Unidentified (Pending Review)");
-        setEmploymentStatus("Unidentified (Pending Review)");
+        setEmploymentType("Undefined (Pending Review)");
+        setEmploymentStatus("Undefined (Pending Review)");
+        setGender("Undefined (Pending Review)");
+        setDateOfAssumption("");
+        setNewlyHired("N/A");
         setNeeds([createEmptyNeed()]);
       }
       setSimilarEmployees([]);
@@ -418,18 +453,15 @@ export default function EmployeeForm({
       .catch(err => console.error(err));
   };
 
-  // Auto-focus the first dropdown of newly added learning need card
+  // Bring newly added learning need cards into view; the target selector handles its own autofocus.
   useEffect(() => {
     if (isAddingCard && needs.length > 0) {
       setIsAddingCard(false);
       setTimeout(() => {
-        const elements = document.querySelectorAll('[role="combobox"]');
-        const targetIndex = 2 + 4 * (needs.length - 1);
-        const targetEl = elements[targetIndex] as HTMLElement;
-        if (targetEl) {
-          targetEl.focus();
-          targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
-        }
+        const targetCard = formRef.current?.querySelector(
+          `[data-need-card-index="${needs.length - 1}"]`
+        ) as HTMLElement | null;
+        targetCard?.scrollIntoView({ behavior: "smooth", block: "end" });
       }, 100);
     }
   }, [needs.length, isAddingCard]);
@@ -463,6 +495,48 @@ export default function EmployeeForm({
     setNeeds(newNeeds.length === 0 ? [createEmptyNeed()] : newNeeds);
   };
 
+  useEffect(() => {
+    if (!clipboardFeedback) return;
+    const timer = window.setTimeout(() => {
+      setClipboardFeedback(null);
+      setClipboardStatus("");
+    }, 1400);
+    return () => window.clearTimeout(timer);
+  }, [clipboardFeedback]);
+
+  const handleCopyNeedsToClipboard = () => {
+    const cleanNeeds = needs.filter((need) => need.LearningNeed.trim() !== "");
+    if (cleanNeeds.length === 0) {
+      setClipboardFeedback(null);
+      setClipboardStatus("No learning needs to copy yet.");
+      return;
+    }
+
+    setStoredLearningNeedsClipboard(cleanNeeds);
+    setClipboardCount(cleanNeeds.length);
+    setClipboardFeedback("copy");
+    setClipboardStatus(`Copied ${cleanNeeds.length} learning need${cleanNeeds.length === 1 ? "" : "s"}.`);
+  };
+
+  const handlePasteNeedsFromClipboard = () => {
+    const storedNeeds = getStoredLearningNeedsClipboard();
+    if (storedNeeds.length === 0) {
+      setClipboardStatus("Clipboard is empty. Copy a set of learning needs first.");
+      return;
+    }
+
+    const pastedNeeds = storedNeeds.map((need) => ({
+      ...need,
+      Basis: Array.isArray(need.Basis) ? [...need.Basis] : [need.Basis || "Advanced Knowledge"],
+      Methodology: Array.isArray(need.Methodology) ? [...need.Methodology] : [need.Methodology || "Seminar/Training"],
+    }));
+
+    setNeeds(pastedNeeds.length > 0 ? pastedNeeds : [createEmptyNeed()]);
+    setClipboardCount(pastedNeeds.length);
+    setClipboardFeedback("paste");
+    setClipboardStatus(`Pasted ${pastedNeeds.length} learning need${pastedNeeds.length === 1 ? "" : "s"}.`);
+  };
+
   const handleNeedChange = (index: number, field: keyof LearningNeed, value: string | string[]) => {
     const newNeeds = [...needs];
     newNeeds[index] = {
@@ -482,17 +556,13 @@ export default function EmployeeForm({
       return;
     }
 
-    // Validate learning needs
-    const invalidNeed = needs.find((n) => !n.LearningNeed.trim());
-    if (invalidNeed) {
-      alert("All learning needs cards must have a learning need / competency value filled.");
-      return;
-    }
+    // Filter out completely empty learning needs (submitting employees with no learning needs is now allowed)
+    const cleanNeeds = needs.filter((n) => n.LearningNeed.trim() !== "");
 
     // Prevent duplicates within the same list
     const seenNeeds = new Set();
     let hasDuplicateNeed = false;
-    needs.forEach((n) => {
+    cleanNeeds.forEach((n) => {
       const uniqueKey = n.LearningNeed.trim().toLowerCase();
       if (seenNeeds.has(uniqueKey)) {
         hasDuplicateNeed = true;
@@ -513,11 +583,14 @@ export default function EmployeeForm({
       LastName: lastName.trim(),
       Office: office,
       Position: position,
-      EmploymentType: employmentType,
+      EmploymentType: employmentStatus,
       EmploymentStatus: employmentStatus,
+      Gender: gender,
+      DateOfAssumption: dateOfAssumption ? new Date(dateOfAssumption).toISOString() : null as any,
+      NewlyHired: newlyHired,
     };
 
-    onSave(empData, needs);
+    onSave(empData, cleanNeeds);
   };
 
   return (
@@ -697,12 +770,12 @@ export default function EmployeeForm({
               label="Office / Department"
               value={office}
               onChange={(val) => {
-                if (!officeOptions.includes(val)) {
+                if (val !== "Undefined (Pending Review)" && !officeOptions.includes(val)) {
                   handleAddCustomOption("office", val);
                 }
                 setOffice(val);
               }}
-              options={officeOptions}
+              options={["Undefined (Pending Review)", ...officeOptions]}
               placeholder="Select or Search Office..."
               required
               allowCustom
@@ -718,12 +791,12 @@ export default function EmployeeForm({
               label="Official Position"
               value={position}
               onChange={(val) => {
-                if (!positionOptions.includes(val)) {
+                if (val !== "Undefined (Pending Review)" && !positionOptions.includes(val)) {
                   handleAddCustomOption("position", val);
                 }
                 setPosition(val);
               }}
-              options={positionOptions}
+              options={["Undefined (Pending Review)", ...positionOptions]}
               placeholder="Select or specify position..."
               required
               allowCustom
@@ -733,65 +806,107 @@ export default function EmployeeForm({
             />
           </div>
 
-          {/* Employment Type */}
-          <div className="md:col-span-3">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              Employment Type <span className="text-red-500">*</span>
-            </label>
-            <select
-              value={employmentType}
-              onChange={(e) => setEmploymentType(e.target.value)}
-              required
-              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200 cursor-pointer"
-            >
-              <option value="Unidentified (Pending Review)">Unidentified (Pending Review)</option>
-              <option value="Job Order">Job Order</option>
-              <option value="Casual">Casual</option>
-              <option value="Consultant">Consultant</option>
-              <option value="Permanent">Permanent</option>
-            </select>
-          </div>
-
           {/* Employment Status */}
-          <div className="md:col-span-3">
+          <div className="md:col-span-6">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Employment Status <span className="text-red-500">*</span>
             </label>
-            <select
+            <SearchableSelect
               value={employmentStatus}
-              onChange={(e) => setEmploymentStatus(e.target.value)}
-              required
-              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200 cursor-pointer"
-            >
-              <option value="Unidentified (Pending Review)">Unidentified (Pending Review)</option>
-              <option value="Newly Hired">Newly Hired</option>
-              <option value="Re-employed">Re-employed</option>
-              <option value="Casual">Casual</option>
-              <option value="Permanent">Permanent</option>
-            </select>
+              onChange={setEmploymentStatus}
+              options={["Undefined (Pending Review)", "Newly Hired", "Re-employed", "Casual", "Permanent", "Co-Terminous", "Elective Official", "Job Order", "Consultant"]}
+              placeholder="Select employment status..."
+              allowCustom={false}
+            />
+          </div>
+
+          {/* Gender */}
+          <div className="md:col-span-6">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Gender <span className="text-red-500">*</span>
+            </label>
+            <SearchableSelect
+              value={gender}
+              onChange={setGender}
+              options={["Undefined (Pending Review)", "Female", "Male"]}
+              placeholder="Select gender..."
+              allowCustom={false}
+            />
+          </div>
+
+          {/* Date of Assumption */}
+          <div className="md:col-span-6">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Date of Assumption
+            </label>
+            <input
+              type="date"
+              value={dateOfAssumption}
+              onChange={(e: any) => setDateOfAssumption(e.target.value)}
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
+            />
+          </div>
+
+          {/* Newly Hired Status */}
+          <div className="md:col-span-6">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Newly Hired Status
+            </label>
+            <SearchableSelect
+              value={newlyHired}
+              onChange={setNewlyHired}
+              options={["Newly Hired", "N/A"]}
+              placeholder="Select status..."
+              allowCustom={false}
+            />
           </div>
         </div>
       </div>
 
       {/* Learning Needs Block */}
       <div className="space-y-5">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display">
               Target Learning Needs ({needs.length})
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">Provide one or more learning needs / target schedules</p>
           </div>
-          
-          <button
-            type="button"
-            onClick={handleAddNeed}
-            className="btn-glass hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Add Need Card</span>
-            <span className="text-[9px] bg-blue-200/50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-1.5 py-0.5 rounded font-mono ml-1">Alt+N</span>
-          </button>
+
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={handleCopyNeedsToClipboard}
+              className={`btn-glass transition-all duration-200 hover:-translate-y-0.5 active:scale-95 text-xs py-2 px-3 cursor-pointer ${clipboardFeedback === "copy" ? "bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-300/60 dark:border-emerald-700/60 shadow-sm" : ""}`}
+            >
+              {clipboardFeedback === "copy" ? "✓ Copied" : "Copy Needs"}
+            </button>
+            <button
+              type="button"
+              onClick={handlePasteNeedsFromClipboard}
+              className={`btn-glass transition-all duration-200 hover:-translate-y-0.5 active:scale-95 text-xs py-2 px-3 cursor-pointer ${clipboardFeedback === "paste" ? "bg-blue-500/15 text-blue-700 dark:text-blue-300 border-blue-300/60 dark:border-blue-700/60 shadow-sm" : ""}`}
+            >
+              {clipboardFeedback === "paste" ? "✓ Pasted" : "Paste Needs"}
+            </button>
+            <button
+              type="button"
+              onClick={handleAddNeed}
+              className="btn-glass hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Need Card</span>
+              <span className="text-[9px] bg-blue-200/50 dark:bg-blue-900/50 text-blue-800 dark:text-blue-300 px-1.5 py-0.5 rounded font-mono ml-1">Alt+N</span>
+            </button>
+          </div>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 dark:text-slate-400">
+          <span className="rounded-full bg-slate-100 dark:bg-slate-800 px-2.5 py-1">Clipboard: {clipboardCount} need{clipboardCount === 1 ? "" : "s"}</span>
+          {clipboardStatus && (
+            <span className={`rounded-full px-2.5 py-1 transition-all duration-300 ${clipboardFeedback ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300" : "bg-blue-50 dark:bg-blue-950/40 text-blue-700 dark:text-blue-300"}`}>
+              {clipboardStatus}
+            </span>
+          )}
         </div>
 
         {/* Needs Grid Card Layout */}
@@ -799,6 +914,7 @@ export default function EmployeeForm({
           {needs.map((need, index) => (
             <div
               key={index}
+              data-need-card-index={index}
               onFocus={(e) => {
                 const card = e.currentTarget;
                 if (!card.contains(e.relatedTarget as Node)) {
@@ -833,17 +949,18 @@ export default function EmployeeForm({
                 label="Learning Need / Competency Area"
                 value={need.LearningNeed}
                 onChange={(val) => {
-                  if (!learningNeedOptions.includes(val)) {
+                  if (val !== "Undefined (Pending Review)" && !learningNeedOptions.includes(val)) {
                     handleAddCustomOption("learningNeed", val);
                   }
                   handleNeedChange(index, "LearningNeed", val);
                 }}
-                options={learningNeedOptions}
+                options={["Undefined (Pending Review)", ...learningNeedOptions]}
                 placeholder="Search or specify need..."
                 required
                 allowCustom
                 onDeleteCustom={(val) => handleDeleteCustomOption("learningNeed", val)}
                 isCustom={() => true}
+                autoFocus={isAddingCard && index === needs.length - 1}
               />
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

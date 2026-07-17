@@ -168,7 +168,13 @@ export default function SearchableSelect({
             : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
         }`}
       >
-        <span className={value ? "text-slate-800 dark:text-slate-100 font-medium" : "text-slate-400 dark:text-slate-500"}>
+        <span className={
+          value === "Undefined (Pending Review)"
+            ? "text-red-600 dark:text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded-full border border-red-200/50 dark:border-red-900/30 text-[10px]"
+            : value 
+              ? "text-slate-800 dark:text-slate-100 font-medium" 
+              : "text-slate-400 dark:text-slate-500"
+        }>
           {value || placeholder}
         </span>
         <ChevronDown className={`h-4 w-4 transition-transform duration-200 text-slate-400 ${isOpen ? "rotate-180" : ""}`} />
@@ -194,7 +200,7 @@ export default function SearchableSelect({
               const isCustomOption = showCustomOption && idx === 0;
               const isHighlighted = idx === highlightedIndex;
               const isSelected = opt === value;
-              const isDeletable = !isCustomOption && onDeleteCustom && isCustom(opt);
+              const isDeletable = !isCustomOption && opt !== "Undefined (Pending Review)" && typeof onDeleteCustom === "function" && isCustom(opt);
 
               return (
                 <div
@@ -217,6 +223,10 @@ export default function SearchableSelect({
                           Add custom: "{opt}"
                         </span>
                       </>
+                    ) : opt === "Undefined (Pending Review)" ? (
+                      <span className="inline-flex items-center text-red-600 dark:text-red-400 font-semibold bg-red-500/10 px-2 py-0.5 rounded-full border border-red-200/50 dark:border-red-900/30 text-[10px]">
+                        {opt}
+                      </span>
                     ) : (
                       <span>{opt}</span>
                     )}
@@ -224,9 +234,14 @@ export default function SearchableSelect({
                   {isDeletable && (
                     <button
                       type="button"
-                      onClick={(e) => {
+                      onMouseDown={(e) => {
+                        e.preventDefault();
                         e.stopPropagation();
                         onDeleteCustom!(opt);
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
                       }}
                       className="p-1 hover:bg-red-100 dark:hover:bg-red-950/40 rounded-md text-red-500 transition-colors shrink-0"
                       title="Delete custom option"

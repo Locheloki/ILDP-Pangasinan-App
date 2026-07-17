@@ -8,8 +8,8 @@ const app = express();
 const PORT = 3000;
 const DB_FILE = path.join(process.cwd(), "database", "db.json");
 
-// Middleware
-app.use(express.json());
+app.use(express.json({ limit: "15mb" }));
+app.use(express.urlencoded({ limit: "15mb", extended: true }));
 
 const DEFAULT_OFFICES = [
   "Mapandan Community Hospital",
@@ -284,19 +284,23 @@ function ensureCustomOptionsExist(employee: any, needs: any[], db: any) {
 
 // Check for similarity helper
 function findSimilarEmployees(firstName: string, lastName: string, db: any) {
-  const normFirst = firstName.trim().toLowerCase();
-  const normLast = lastName.trim().toLowerCase();
+  const normFirst = firstName.trim().toLowerCase().replace(/\s+/g, " ");
+  const normLast = lastName.trim().toLowerCase().replace(/\s+/g, " ");
+
+  if (normFirst.length < 2 || normLast.length < 2) {
+    return [];
+  }
 
   return db.employees.filter((emp: any) => {
-    const dbFirst = emp.FirstName.trim().toLowerCase();
-    const dbLast = emp.LastName.trim().toLowerCase();
+    const dbFirst = emp.FirstName.trim().toLowerCase().replace(/\s+/g, " ");
+    const dbLast = emp.LastName.trim().toLowerCase().replace(/\s+/g, " ");
 
-    // Check if either last name matches exactly and first name is very similar (or vice versa)
-    return (
-      (dbLast === normLast && dbFirst.includes(normFirst)) ||
-      (dbFirst === normFirst && dbLast.includes(normLast)) ||
-      (dbFirst.includes(normFirst) && dbLast.includes(normLast))
-    );
+    const firstMatches =
+      dbFirst === normFirst ||
+      dbFirst.startsWith(`${normFirst} `) ||
+      normFirst.startsWith(`${dbFirst} `);
+
+    return dbLast === normLast && firstMatches;
   });
 }
 
@@ -418,6 +422,66 @@ app.post("/api/auth/reset-password", (req, res) => {
   return res.json({ message: "Password reset successfully" });
 });
 
+// 1d. Sign Up / Register New User Endpoint
+app.post("/api/auth/signup", (req, res) => {
+  const { username, password, devCode } = req.body;
+  if (!username || !password || !devCode) {
+    return res.status(400).json({ message: "Username, password, and developer code are required" });
+  }
+
+  if (devCode.trim() !== "101819") {
+    return res.status(403).json({ message: "Invalid developer code. Contact developer." });
+  }
+
+  const db = readDatabase();
+  const exists = db.users.some(
+    (u: any) => u.username.toLowerCase() === username.trim().toLowerCase()
+  );
+
+  if (exists) {
+    return res.status(400).json({ message: "Username already exists" });
+  }
+
+  const maxId = db.users.reduce((max: number, u: any) => (u.id > max ? u.id : max), 0);
+  const newUser = {
+    id: maxId + 1,
+    username: username.trim(),
+    password: password,
+    name: username.trim(),
+    role: "Encoder",
+  };
+
+  db.users.push(newUser);
+  writeDatabase(db);
+
+  return res.status(201).json({
+    id: newUser.id,
+    username: newUser.username,
+    name: newUser.name,
+    role: newUser.role,
+  });
+});
+
+// 1e. Upload Profile Picture Endpoint
+app.post("/api/users/profile-pic", (req, res) => {
+  const { userId, profilePic } = req.body;
+  if (!userId || !profilePic) {
+    return res.status(400).json({ message: "userId and profilePic are required" });
+  }
+
+  const db = readDatabase();
+  const userIndex = db.users.findIndex((u: any) => String(u.id) === String(userId));
+
+  if (userIndex === -1) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  db.users[userIndex].profilePic = profilePic;
+  writeDatabase(db);
+
+  return res.json({ message: "Profile picture updated successfully" });
+});
+
 // 2. Get Dashboard Stats
 app.get("/api/dashboard/stats", (req, res) => {
   const db = readDatabase();
@@ -447,7 +511,7 @@ app.get("/api/dashboard/stats", (req, res) => {
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
   db.employees.forEach((emp: any) => {
-    const status = emp.EmploymentStatus || "Unidentified (Pending Review)";
+    const status = emp.EmploymentStatus || "Undefined (Pending Review)";
     const changedAt = emp.StatusChangedAt;
     if (!changedAt) return;
 
@@ -525,6 +589,62 @@ app.get("/api/employees", (req, res) => {
   return res.json(resultsWithCount);
 });
 
+// 4. Get Employees with custom filters (pending/custom encoding queue)
+app.get("/api/employees/pending", (req, res) => {
+  const db = readDatabase();
+  const search = req.query.search ? (req.query.search as string).toLowerCase() : "";
+  const office = req.query.office ? (req.query.office as string).toLowerCase() : "";
+  const employmentType = req.query.employmentType ? (req.query.employmentType as string).toLowerCase() : "";
+  const employmentStatus = req.query.employmentStatus ? (req.query.employmentStatus as string).toLowerCase() : "";
+  const newlyHired = req.query.newlyHired ? (req.query.newlyHired as string).toLowerCase() : "";
+  const mode = req.query.mode ? (req.query.mode as string) : "no_needs";
+
+  // Find IDs of all employees who have at least one learning need
+  const hasNeedsIds = new Set(db.learningNeeds.map((ln: any) => ln.EmployeeID));
+  
+  // Apply base queue mode filter
+  let pending = db.employees;
+  if (mode === "no_needs") {
+    pending = db.employees.filter((emp: any) => !hasNeedsIds.has(emp.EmployeeID));
+  } else if (mode === "has_needs") {
+    pending = db.employees.filter((emp: any) => hasNeedsIds.has(emp.EmployeeID));
+  }
+
+  // Apply search
+  if (search) {
+    const terms = search.split(/\s+/).filter(t => t.length > 0);
+    if (terms.length > 0) {
+      pending = pending.filter((emp: any) => {
+        const searchString = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName} ${emp.Office || ""} ${emp.Position || ""}`.toLowerCase();
+        const commaName = `${emp.LastName}, ${emp.FirstName}`.toLowerCase();
+        return terms.every(term => searchString.includes(term) || commaName.includes(term));
+      });
+    }
+  }
+
+  // Apply custom filters
+  if (office) {
+    pending = pending.filter((emp: any) => emp.Office && emp.Office.toLowerCase() === office);
+  }
+  if (employmentType) {
+    pending = pending.filter((emp: any) => emp.EmploymentType && emp.EmploymentType.toLowerCase() === employmentType);
+  }
+  if (employmentStatus) {
+    pending = pending.filter((emp: any) => emp.EmploymentStatus && emp.EmploymentStatus.toLowerCase() === employmentStatus);
+  }
+  if (newlyHired) {
+    pending = pending.filter((emp: any) => emp.NewlyHired && emp.NewlyHired.toLowerCase() === newlyHired);
+  }
+
+  // Sort alphabetically by last name
+  pending.sort((a: any, b: any) => a.LastName.localeCompare(b.LastName));
+
+  return res.json({
+    total: pending.length,
+    employees: pending.slice(0, 100),
+  });
+});
+
 // 5. Get Single Employee and their learning needs
 app.get("/api/employees/:id", (req, res) => {
   const id = parseInt(req.params.id);
@@ -544,7 +664,7 @@ app.get("/api/employees/:id", (req, res) => {
 
 // 6. Create New Employee
 app.post("/api/employees", (req, res) => {
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -558,12 +678,12 @@ app.post("/api/employees", (req, res) => {
   const cleanLast = formatName(lastName);
   const cleanOffice = office.trim();
   const cleanPosition = position.trim();
-  const type = employmentType || "Unidentified (Pending Review)";
-  const status = employmentStatus || "Unidentified (Pending Review)";
+  const type = employmentType || "Undefined (Pending Review)";
+  const status = employmentStatus || "Undefined (Pending Review)";
 
   // Create employee ID
   const maxId = db.employees.reduce((max: number, emp: any) => (emp.EmployeeID > max ? emp.EmployeeID : max), 0);
-  const newEmployee = {
+  const newEmployee: any = {
     EmployeeID: maxId + 1,
     FirstName: cleanFirst,
     MiddleInitial: cleanMiddle,
@@ -573,11 +693,17 @@ app.post("/api/employees", (req, res) => {
     EmploymentType: type,
     EmploymentStatus: status,
     StatusChangedAt: ["Newly Hired", "Re-employed", "Casual"].includes(status) ? new Date().toISOString() : null,
+    Gender: gender || "Undefined (Pending Review)",
+    NewlyHired: newlyHired || "N/A",
     CreatedAt: new Date().toISOString(),
     UpdatedAt: new Date().toISOString(),
     CreatedBy: username,
     UpdatedBy: username,
   };
+
+  if (dateOfAssumption) {
+    newEmployee.DateOfAssumption = dateOfAssumption;
+  }
 
   db.employees.push(newEmployee);
   ensureCustomOptionsExist(newEmployee, [], db);
@@ -589,7 +715,7 @@ app.post("/api/employees", (req, res) => {
 // 7. Update Employee and Learning Needs in one transaction (Sync)
 app.put("/api/employees/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, needs = [], username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, needs = [], username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -603,48 +729,71 @@ app.put("/api/employees/:id", (req, res) => {
   }
 
   const oldEmp = db.employees[employeeIndex];
-  const oldStatus = oldEmp.EmploymentStatus || "Unidentified (Pending Review)";
-  const newStatus = employmentStatus || "Unidentified (Pending Review)";
+  const oldStatus = oldEmp.EmploymentStatus || "Undefined (Pending Review)";
+  const newStatus = employmentStatus || "Undefined (Pending Review)";
   let statusChangedAt = oldEmp.StatusChangedAt;
 
   if (oldStatus !== newStatus) {
     statusChangedAt = ["Newly Hired", "Re-employed", "Casual"].includes(newStatus) ? new Date().toISOString() : null;
   }
 
+  const hasDateOfAssumption = Object.prototype.hasOwnProperty.call(req.body, "dateOfAssumption");
+
   // Update employee info
-  db.employees[employeeIndex] = {
+  const updatedEmployee: any = {
     ...oldEmp,
     FirstName: formatName(firstName),
     MiddleInitial: formatMiddleInitial(middleInitial),
     LastName: formatName(lastName),
     Office: office.trim(),
     Position: position.trim(),
-    EmploymentType: employmentType || "Unidentified (Pending Review)",
+    EmploymentType: employmentType || "Undefined (Pending Review)",
     EmploymentStatus: newStatus,
     StatusChangedAt: statusChangedAt,
+    Gender: gender || oldEmp.Gender || "Undefined (Pending Review)",
+    NewlyHired: newlyHired || oldEmp.NewlyHired || "N/A",
     UpdatedAt: new Date().toISOString(),
     UpdatedBy: username,
+    CreatedBy: oldEmp.CreatedBy || username,
   };
 
+  if (hasDateOfAssumption) {
+    if (dateOfAssumption) {
+      updatedEmployee.DateOfAssumption = dateOfAssumption;
+    } else {
+      delete updatedEmployee.DateOfAssumption;
+    }
+  }
+
+  db.employees[employeeIndex] = updatedEmployee;
+
   // Sync learning needs
+  const previousNeedsById = new Map<number, any>(
+    db.learningNeeds
+      .filter((ln: any) => ln.EmployeeID === id && ln.LearningNeedID)
+      .map((ln: any) => [ln.LearningNeedID, ln])
+  );
+
   // First, remove existing learning needs for this employee
   db.learningNeeds = db.learningNeeds.filter((ln: any) => ln.EmployeeID !== id);
 
   // Then, insert new learning needs
-  let maxLNId = db.learningNeeds.reduce((max: number, ln: any) => (ln.LearningNeedID > max ? ln.LearningNeedID : max), 0);
+  let maxLNId = [...db.learningNeeds, ...previousNeedsById.values()].reduce((max: number, ln: any) => (ln.LearningNeedID > max ? ln.LearningNeedID : max), 0);
 
   needs.forEach((need: any) => {
-    maxLNId++;
+    const existingNeed = need.LearningNeedID ? previousNeedsById.get(need.LearningNeedID) : null;
+    const learningNeedId = existingNeed ? existingNeed.LearningNeedID : ++maxLNId;
+
     db.learningNeeds.push({
-      LearningNeedID: maxLNId,
+      LearningNeedID: learningNeedId,
       EmployeeID: id,
       LearningNeed: need.LearningNeed.trim(),
       Basis: Array.isArray(need.Basis) ? need.Basis.filter(item => item && item.trim() !== "").join(", ").trim() : (need.Basis || "N/A").trim(),
       Methodology: Array.isArray(need.Methodology) ? need.Methodology.filter(item => item && item.trim() !== "").join(", ").trim() : (need.Methodology || "N/A").trim(),
       TargetSchedule: (need.TargetSchedule || "N/A").trim(),
-      CreatedAt: need.CreatedAt || new Date().toISOString(),
+      CreatedAt: existingNeed?.CreatedAt || need.CreatedAt || new Date().toISOString(),
       UpdatedAt: new Date().toISOString(),
-      CreatedBy: need.CreatedBy || username,
+      CreatedBy: existingNeed?.CreatedBy || need.CreatedBy || username,
       UpdatedBy: username,
     });
   });
@@ -712,47 +861,83 @@ app.post("/api/employees/:id/learning-needs", (req, res) => {
 // 10. Get All Learning Need Records in tabular format (joined with Employee details)
 app.get("/api/learning-needs", (req, res) => {
   const db = readDatabase();
-  const { search = "", office = "", learningNeed = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
+  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", newlyHired = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
 
   let results: any[] = [];
 
-  // Re-create the View: Join Employee + Learning Needs
-  db.learningNeeds.forEach((ln: any) => {
-    const emp = db.employees.find((e: any) => e.EmployeeID === ln.EmployeeID);
-    if (emp) {
+  // Re-create the View: Left Join Employee + Learning Needs
+  db.employees.forEach((emp: any) => {
+    const empNeeds = db.learningNeeds.filter((ln: any) => ln.EmployeeID === emp.EmployeeID);
+    if (empNeeds.length > 0) {
+      empNeeds.forEach((ln: any) => {
+        results.push({
+          LearningNeedID: ln.LearningNeedID,
+          EmployeeID: emp.EmployeeID,
+          FirstName: emp.FirstName,
+          MiddleInitial: emp.MiddleInitial,
+          LastName: emp.LastName,
+          Office: emp.Office,
+          Position: emp.Position,
+          EmploymentType: emp.EmploymentType || "Undefined (Pending Review)",
+          EmploymentStatus: emp.EmploymentStatus || "Undefined (Pending Review)",
+          StatusChangedAt: emp.StatusChangedAt,
+          LearningNeed: ln.LearningNeed,
+          Basis: ln.Basis,
+          Methodology: ln.Methodology,
+          TargetSchedule: ln.TargetSchedule,
+          CreatedAt: ln.CreatedAt,
+          UpdatedAt: ln.UpdatedAt,
+          CreatedBy: ln.CreatedBy,
+          UpdatedBy: ln.UpdatedBy,
+          EmployeeCreatedBy: emp.CreatedBy,
+          EmployeeCreatedAt: emp.CreatedAt,
+          EmployeeUpdatedBy: emp.UpdatedBy,
+          Gender: emp.Gender,
+          DateOfAssumption: emp.DateOfAssumption,
+          NewlyHired: emp.NewlyHired || "N/A",
+        });
+      });
+    } else {
+      // Add employee with no learning needs
       results.push({
-        LearningNeedID: ln.LearningNeedID,
+        LearningNeedID: null,
         EmployeeID: emp.EmployeeID,
         FirstName: emp.FirstName,
         MiddleInitial: emp.MiddleInitial,
         LastName: emp.LastName,
         Office: emp.Office,
         Position: emp.Position,
-        EmploymentType: emp.EmploymentType || "Unidentified (Pending Review)",
-        EmploymentStatus: emp.EmploymentStatus || "Unidentified (Pending Review)",
+        EmploymentType: emp.EmploymentType || "Undefined (Pending Review)",
+        EmploymentStatus: emp.EmploymentStatus || "Undefined (Pending Review)",
         StatusChangedAt: emp.StatusChangedAt,
-        LearningNeed: ln.LearningNeed,
-        Basis: ln.Basis,
-        Methodology: ln.Methodology,
-        TargetSchedule: ln.TargetSchedule,
-        CreatedAt: ln.CreatedAt,
-        UpdatedAt: ln.UpdatedAt,
-        CreatedBy: ln.CreatedBy,
-        UpdatedBy: ln.UpdatedBy,
+        LearningNeed: null,
+        Basis: null,
+        Methodology: null,
+        TargetSchedule: null,
+        CreatedAt: emp.CreatedAt,
+        UpdatedAt: emp.UpdatedAt,
+        CreatedBy: null,
+        UpdatedBy: null,
         EmployeeCreatedBy: emp.CreatedBy,
         EmployeeCreatedAt: emp.CreatedAt,
+        EmployeeUpdatedBy: emp.UpdatedBy,
+        Gender: emp.Gender,
+        DateOfAssumption: emp.DateOfAssumption,
+        NewlyHired: emp.NewlyHired || "N/A",
       });
     }
   });
 
   // Apply searching/filtering
   if (search) {
-    const q = (search as string).toLowerCase();
-    results = results.filter(
-      (item) =>
-        `${item.FirstName} ${item.LastName}`.toLowerCase().includes(q) ||
-        item.Position.toLowerCase().includes(q)
-    );
+    const terms = (search as string).toLowerCase().split(/\s+/).filter(t => t.length > 0);
+    if (terms.length > 0) {
+      results = results.filter((item) => {
+        const searchString = `${item.FirstName} ${item.MiddleInitial || ""} ${item.LastName} ${item.Office || ""} ${item.Position || ""}`.toLowerCase();
+        const commaName = `${item.LastName}, ${item.FirstName}`.toLowerCase();
+        return terms.every(term => searchString.includes(term) || commaName.includes(term));
+      });
+    }
   }
 
   if (office) {
@@ -762,7 +947,26 @@ app.get("/api/learning-needs", (req, res) => {
 
   if (learningNeed) {
     const lnVal = (learningNeed as string).toLowerCase();
-    results = results.filter((item) => item.LearningNeed.toLowerCase().includes(lnVal));
+    if (lnVal === "undefined (pending review)") {
+      results = results.filter((item) => !item.LearningNeed || item.LearningNeed.toLowerCase().includes(lnVal));
+    } else {
+      results = results.filter((item) => item.LearningNeed && item.LearningNeed.toLowerCase().includes(lnVal));
+    }
+  }
+
+  if (employmentType) {
+    const et = (employmentType as string).toLowerCase();
+    results = results.filter((item) => item.EmploymentType && item.EmploymentType.toLowerCase() === et);
+  }
+
+  if (employmentStatus) {
+    const es = (employmentStatus as string).toLowerCase();
+    results = results.filter((item) => item.EmploymentStatus && item.EmploymentStatus.toLowerCase() === es);
+  }
+
+  if (newlyHired) {
+    const nh = (newlyHired as string).toLowerCase();
+    results = results.filter((item) => item.NewlyHired && item.NewlyHired.toLowerCase() === nh);
   }
 
   // Sorting
@@ -798,15 +1002,36 @@ app.delete("/api/learning-needs/:id", (req, res) => {
 
 // 12. Excel Export using ExcelJS
 app.get("/api/export/excel", async (req, res) => {
-  const { employeeId, office, startDate, endDate } = req.query;
+  const { employeeId, office, startDate, endDate, employmentType, employmentStatus, newlyHired } = req.query;
   const db = readDatabase();
 
   let results: any[] = [];
 
-  // Fetch flat joined data
-  db.learningNeeds.forEach((ln: any) => {
-    const emp = db.employees.find((e: any) => e.EmployeeID === ln.EmployeeID);
-    if (emp) {
+  // Fetch flat joined data using LEFT JOIN
+  db.employees.forEach((emp: any) => {
+    const empNeeds = db.learningNeeds.filter((ln: any) => ln.EmployeeID === emp.EmployeeID);
+    if (empNeeds.length > 0) {
+      empNeeds.forEach((ln: any) => {
+        results.push({
+          EmployeeID: emp.EmployeeID,
+          FirstName: emp.FirstName,
+          MiddleInitial: emp.MiddleInitial,
+          LastName: emp.LastName,
+          Office: emp.Office,
+          Position: emp.Position,
+          EmploymentType: emp.EmploymentType || "Undefined (Pending Review)",
+          EmploymentStatus: emp.EmploymentStatus || "Undefined (Pending Review)",
+          LearningNeed: ln.LearningNeed,
+          Basis: ln.Basis,
+          Methodology: ln.Methodology,
+          TargetSchedule: ln.TargetSchedule,
+          CreatedAt: ln.CreatedAt,
+          Gender: emp.Gender,
+          DateOfAssumption: emp.DateOfAssumption,
+          NewlyHired: emp.NewlyHired || "N/A",
+        });
+      });
+    } else {
       results.push({
         EmployeeID: emp.EmployeeID,
         FirstName: emp.FirstName,
@@ -814,13 +1039,16 @@ app.get("/api/export/excel", async (req, res) => {
         LastName: emp.LastName,
         Office: emp.Office,
         Position: emp.Position,
-        EmploymentType: emp.EmploymentType || "Unidentified (Pending Review)",
-        EmploymentStatus: emp.EmploymentStatus || "Unidentified (Pending Review)",
-        LearningNeed: ln.LearningNeed,
-        Basis: ln.Basis,
-        Methodology: ln.Methodology,
-        TargetSchedule: ln.TargetSchedule,
-        CreatedAt: ln.CreatedAt,
+        EmploymentType: emp.EmploymentType || "Undefined (Pending Review)",
+        EmploymentStatus: emp.EmploymentStatus || "Undefined (Pending Review)",
+        LearningNeed: "N/A",
+        Basis: "N/A",
+        Methodology: "N/A",
+        TargetSchedule: "N/A",
+        CreatedAt: emp.CreatedAt,
+        Gender: emp.Gender,
+        DateOfAssumption: emp.DateOfAssumption,
+        NewlyHired: emp.NewlyHired || "N/A",
       });
     }
   });
@@ -834,6 +1062,21 @@ app.get("/api/export/excel", async (req, res) => {
   if (office) {
     const o = (office as string).toLowerCase();
     results = results.filter((item) => item.Office && item.Office.toLowerCase().includes(o));
+  }
+
+  if (employmentType) {
+    const et = (employmentType as string).toLowerCase();
+    results = results.filter((item) => item.EmploymentType && item.EmploymentType.toLowerCase() === et);
+  }
+
+  if (employmentStatus) {
+    const es = (employmentStatus as string).toLowerCase();
+    results = results.filter((item) => item.EmploymentStatus && item.EmploymentStatus.toLowerCase() === es);
+  }
+
+  if (newlyHired) {
+    const nh = (newlyHired as string).toLowerCase();
+    results = results.filter((item) => item.NewlyHired && item.NewlyHired.toLowerCase() === nh);
   }
 
   if (startDate) {
@@ -853,7 +1096,7 @@ app.get("/api/export/excel", async (req, res) => {
   const worksheet = workbook.addWorksheet("Learning Needs Summary");
 
   // Title Row
-  worksheet.mergeCells("A1", "J1");
+  worksheet.mergeCells("A1", "M1");
   const titleCell = worksheet.getCell("A1");
   titleCell.value = "INDIVIDUAL LEARNING AND DEVELOPMENT PLAN (ILDP) LEARNING NEEDS SUMMARY";
   titleCell.font = { name: "Arial", size: 14, bold: true, color: { argb: "FFFFFFFF" } };
@@ -866,7 +1109,7 @@ app.get("/api/export/excel", async (req, res) => {
   worksheet.getRow(1).height = 40;
 
   // Subtitle / Meta Row
-  worksheet.mergeCells("A2", "J2");
+  worksheet.mergeCells("A2", "M2");
   const subCell = worksheet.getCell("A2");
   subCell.value = `Exported on: ${new Date().toLocaleDateString()} | Total Records: ${results.length}`;
   subCell.font = { name: "Arial", size: 10, italic: true };
@@ -879,6 +1122,9 @@ app.get("/api/export/excel", async (req, res) => {
   const headerRow = worksheet.addRow([
     "ID",
     "Employee Name",
+    "Gender",
+    "Date of Assumption",
+    "Newly Hired?",
     "Office/Department",
     "Position",
     "Employment Type",
@@ -909,9 +1155,13 @@ app.get("/api/export/excel", async (req, res) => {
   // Data rows
   results.forEach((item, index) => {
     const fullName = `${item.LastName}, ${item.FirstName} ${item.MiddleInitial || ""}`.trim();
+    const formattedDoa = item.DateOfAssumption ? new Date(item.DateOfAssumption).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "N/A";
     const row = worksheet.addRow([
       index + 1,
       fullName,
+      item.Gender || "N/A",
+      formattedDoa,
+      item.NewlyHired || "N/A",
       item.Office,
       item.Position,
       item.EmploymentType,

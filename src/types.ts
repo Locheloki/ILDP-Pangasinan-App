@@ -5,6 +5,7 @@ export interface User {
   username: string;
   name: string;
   role: UserRole;
+  profilePic?: string;
 }
 
 export interface Employee {
@@ -22,6 +23,9 @@ export interface Employee {
   CreatedBy: string;
   UpdatedBy: string;
   needsCount?: number;
+  Gender?: string;
+  DateOfAssumption?: string;
+  NewlyHired?: string;
 }
 
 export interface LearningNeed {
