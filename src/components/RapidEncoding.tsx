@@ -24,14 +24,28 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
 
   // Custom Spotify-like playlist queue states
   const [queueType, setQueueType] = useState<"smart" | "playlist">("playlist");
-  const [playlistQueue, setPlaylistQueue] = useState<Employee[]>([]);
+  const [playlistQueue, setPlaylistQueue] = useState<Employee[]>(() => {
+    try {
+      const saved = localStorage.getItem("rapidEncoding_queue");
+      return saved ? JSON.parse(saved) : [];
+    } catch { return []; }
+  });
   const [playlistSearchQuery, setPlaylistSearchQuery] = useState("");
   const [playlistSearchResults, setPlaylistSearchResults] = useState<Employee[]>([]);
   const [loadingPlaylistSearch, setLoadingPlaylistSearch] = useState(false);
   const [queueSearchHighlightIndex, setQueueSearchHighlightIndex] = useState(0);
 
   // Active encoding states
-  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
+  const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(() => {
+    try {
+      const savedId = localStorage.getItem("rapidEncoding_selectedId");
+      if (savedId) {
+        const queue = JSON.parse(localStorage.getItem("rapidEncoding_queue") || "[]");
+        return queue.find((e: Employee) => e.EmployeeID === parseInt(savedId)) || null;
+      }
+    } catch {}
+    return null;
+  });
   const [firstName, setFirstName] = useState("");
   const [middleInitial, setMiddleInitial] = useState("");
   const [lastName, setLastName] = useState("");
@@ -102,6 +116,19 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
   useEffect(() => {
     setQueueSearchHighlightIndex(0);
   }, [searchQuery, employees.length]);
+
+  // Persist queue & selected employee to localStorage
+  useEffect(() => {
+    localStorage.setItem("rapidEncoding_queue", JSON.stringify(playlistQueue));
+  }, [playlistQueue]);
+
+  useEffect(() => {
+    if (selectedEmployee) {
+      localStorage.setItem("rapidEncoding_selectedId", selectedEmployee.EmployeeID.toString());
+    } else {
+      localStorage.removeItem("rapidEncoding_selectedId");
+    }
+  }, [selectedEmployee]);
 
   useEffect(() => {
     const list = searchResultsListRef.current;
@@ -402,7 +429,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
       lastName: lastName.trim(),
       office: office,
       position: position,
-      employmentType: employmentStatus,
+      employmentType: employmentType,
       employmentStatus: employmentStatus,
       gender: gender,
       dateOfAssumption: dateOfAssumption ? new Date(dateOfAssumption).toISOString() : null,
