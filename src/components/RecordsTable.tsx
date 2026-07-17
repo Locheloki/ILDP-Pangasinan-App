@@ -178,44 +178,63 @@ export default function RecordsTable({
       });
   };
 
-  // Trigger Excel Export Download (POST filtered data to server for styled Excel)
-  const handleExportExcel = async () => {
-    const records = groupedRecords.map((emp) => ({
-      name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
-      firstName: emp.FirstName,
-      middleInitial: emp.MiddleInitial,
-      lastName: emp.LastName,
-      office: emp.Office,
-      position: emp.Position,
-      employmentType: emp.EmploymentType,
-      employmentStatus: emp.EmploymentStatus,
-      gender: emp.Gender,
-      dateOfAssumption: emp.DateOfAssumption,
-      needs: emp.Needs.map((n) => ({
-        learningNeed: n.LearningNeed,
-        basis: n.Basis,
-        methodology: n.Methodology,
-        targetSchedule: n.TargetSchedule,
-      })),
-    }));
+  // Trigger Excel Export Download (pure client-side HTML-to-Excel)
+  const handleExportExcel = () => {
+    const dateStr = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+    const totalNeeds = groupedRecords.reduce((sum, emp) => sum + emp.Needs.length, 0);
 
-    try {
-      const res = await fetch("/api/export/excel-custom", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ records }),
+    let html = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40">
+<head><meta charset="utf-8">
+<style>
+  table { border-collapse: collapse; font-family: Arial, sans-serif; }
+  .title { background: #1E3A8A; color: white; font-size: 14pt; font-weight: bold; text-align: center; padding: 12px; }
+  .subtitle { background: #F1F5F9; color: #64748B; font-size: 10pt; font-style: italic; text-align: center; padding: 6px; }
+  th { background: #3B82F6; color: white; font-size: 10pt; font-weight: bold; text-align: left; padding: 8px; border: 1px solid #CBD5E1; }
+  td { font-size: 10pt; padding: 6px 8px; border: 1px solid #E2E8F0; }
+  tr:nth-child(even) td { background: #F8FAFC; }
+</style></head><body>
+<table>
+<tr><td class="title" colspan="12">INDIVIDUAL LEARNING AND DEVELOPMENT PLAN (ILDP) RECORDS</td></tr>
+<tr><td class="subtitle" colspan="12">Exported on: ${dateStr} | Employees: ${groupedRecords.length} | Total Learning Needs: ${totalNeeds}</td></tr>
+<tr><td colspan="12" style="height:8px; border:none;"></td></tr>
+<tr>
+  <th>No.</th><th>Employee Name</th><th>Office/Department</th><th>Position</th>
+  <th>Employment Type</th><th>Employment Status</th><th>Gender</th><th>Date of Assumption</th>
+  <th>Learning Need</th><th>Basis</th><th>Methodology</th><th>Target Schedule</th>
+</tr>`;
+
+    let rowNum = 0;
+    groupedRecords.forEach((emp) => {
+      const fullName = `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim();
+      const needs = emp.Needs.length > 0 ? emp.Needs : [null];
+      needs.forEach((need) => {
+        rowNum++;
+        html += `<tr>
+          <td style="text-align:center;">${rowNum}</td>
+          <td>${fullName}</td>
+          <td>${emp.Office || ""}</td>
+          <td>${emp.Position || ""}</td>
+          <td>${emp.EmploymentType || ""}</td>
+          <td>${emp.EmploymentStatus || ""}</td>
+          <td>${emp.Gender || ""}</td>
+          <td>${emp.DateOfAssumption || ""}</td>
+          <td>${need?.LearningNeed || ""}</td>
+          <td>${need?.Basis || ""}</td>
+          <td>${need?.Methodology || ""}</td>
+          <td>${need?.TargetSchedule || ""}</td>
+        </tr>`;
       });
-      if (!res.ok) throw new Error("Export failed");
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `ILDP_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
-      a.click();
-      URL.revokeObjectURL(url);
-    } catch (err) {
-      console.error("Excel export error:", err);
-    }
+    });
+
+    html += `</table></body></html>`;
+
+    const blob = new Blob([html], { type: "application/vnd.ms-excel" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `ILDP_Export_${new Date().toISOString().slice(0, 10)}.xls`;
+    a.click();
+    URL.revokeObjectURL(url);
   };
 
   // Show details of specific employee
