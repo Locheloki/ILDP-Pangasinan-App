@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye, AlertTriangle } from "lucide-react";
-import * as XLSX from "xlsx";
 import { Employee, LearningNeed } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
 import SearchableSelect from "./SearchableSelect";
@@ -179,47 +178,44 @@ export default function RecordsTable({
       });
   };
 
-  // Trigger Excel Export Download (client-side from filtered data)
-  const handleExportExcel = () => {
-    const rows = groupedRecords.flatMap((emp) => {
-      if (emp.Needs.length === 0) {
-        return [{
-          "Employee ID": emp.EmployeeID,
-          "Employee Name": `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
-          "Office/Department": emp.Office || "",
-          "Position": emp.Position || "",
-          "Employment Type": emp.EmploymentType || "",
-          "Employment Status": emp.EmploymentStatus || "",
-          "Gender": emp.Gender || "",
-          "Date of Assumption": emp.DateOfAssumption ? formatShortDate(emp.DateOfAssumption) : "",
-          "Learning Need": "",
-          "Basis": "",
-          "Methodology": "",
-          "Target Schedule": "",
-          "Record Date": emp.CreatedAt ? formatShortDate(emp.CreatedAt) : "",
-        }];
-      }
-      return emp.Needs.map((need) => ({
-        "Employee ID": emp.EmployeeID,
-        "Employee Name": `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
-        "Office/Department": emp.Office || "",
-        "Position": emp.Position || "",
-        "Employment Type": emp.EmploymentType || "",
-        "Employment Status": emp.EmploymentStatus || "",
-        "Gender": emp.Gender || "",
-        "Date of Assumption": emp.DateOfAssumption ? formatShortDate(emp.DateOfAssumption) : "",
-        "Learning Need": need.LearningNeed || "",
-        "Basis": need.Basis || "",
-        "Methodology": need.Methodology || "",
-        "Target Schedule": need.TargetSchedule || "",
-        "Record Date": need.CreatedAt ? formatShortDate(need.CreatedAt) : "",
-      }));
-    });
+  // Trigger Excel Export Download (POST filtered data to server for styled Excel)
+  const handleExportExcel = async () => {
+    const records = groupedRecords.map((emp) => ({
+      name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+      firstName: emp.FirstName,
+      middleInitial: emp.MiddleInitial,
+      lastName: emp.LastName,
+      office: emp.Office,
+      position: emp.Position,
+      employmentType: emp.EmploymentType,
+      employmentStatus: emp.EmploymentStatus,
+      gender: emp.Gender,
+      dateOfAssumption: emp.DateOfAssumption,
+      needs: emp.Needs.map((n) => ({
+        learningNeed: n.LearningNeed,
+        basis: n.Basis,
+        methodology: n.Methodology,
+        targetSchedule: n.TargetSchedule,
+      })),
+    }));
 
-    const ws = XLSX.utils.json_to_sheet(rows);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "ILDP Records");
-    XLSX.writeFile(wb, `ILDP_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+    try {
+      const res = await fetch("/api/export/excel-custom", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ records }),
+      });
+      if (!res.ok) throw new Error("Export failed");
+      const blob = await res.blob();
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `ILDP_Export_${new Date().toISOString().slice(0, 10)}.xlsx`;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error("Excel export error:", err);
+    }
   };
 
   // Show details of specific employee

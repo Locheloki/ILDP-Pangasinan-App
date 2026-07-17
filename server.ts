@@ -1250,6 +1250,140 @@ app.get("/api/export/excel", async (req, res) => {
   res.end();
 });
 
+// 13. Styled Excel Export (client sends filtered data, server formats it)
+app.post("/api/export/excel-custom", async (req, res) => {
+  const { records, title } = req.body;
+  if (!Array.isArray(records) || records.length === 0) {
+    return res.status(400).json({ error: "No records provided" });
+  }
+
+  const workbook = new ExcelJS.Workbook();
+  workbook.creator = "ILDP Pangasinan";
+  workbook.created = new Date();
+  const worksheet = workbook.addWorksheet("ILDP Records", {
+    views: [{ state: "frozen", ySplit: 4 }],
+  });
+
+  // --- TITLE ROW ---
+  const numCols = 12;
+  const lastCol = String.fromCharCode(64 + numCols); // L for 12 cols
+  worksheet.mergeCells(`A1`, `${lastCol}1`);
+  const titleCell = worksheet.getCell("A1");
+  titleCell.value = title || "INDIVIDUAL LEARNING AND DEVELOPMENT PLAN (ILDP) RECORDS";
+  titleCell.font = { name: "Arial", size: 14, bold: true, color: { argb: "FFFFFFFF" } };
+  titleCell.alignment = { horizontal: "center", vertical: "middle" };
+  titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF1E3A8A" } };
+  worksheet.getRow(1).height = 40;
+
+  // --- SUBTITLE ROW ---
+  worksheet.mergeCells(`A2`, `${lastCol}2`);
+  const subCell = worksheet.getCell("A2");
+  const totalNeeds = records.reduce((sum: number, r: any) => sum + (r.needs?.length || (r.learningNeed ? 1 : 0)), 0);
+  subCell.value = `Exported on: ${new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })} | Employees: ${records.length} | Total Learning Needs: ${totalNeeds}`;
+  subCell.font = { name: "Arial", size: 10, italic: true, color: { argb: "FF64748B" } };
+  subCell.alignment = { horizontal: "center", vertical: "middle" };
+  subCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF1F5F9" } };
+  worksheet.getRow(2).height = 24;
+
+  // --- SPACER ---
+  worksheet.getRow(3).height = 6;
+
+  // --- HEADER ROW ---
+  const headers = [
+    "No.", "Employee Name", "Office/Department", "Position",
+    "Employment Type", "Employment Status", "Gender",
+    "Date of Assumption", "Learning Need", "Basis",
+    "Methodology", "Target Schedule",
+  ];
+  const headerRow = worksheet.addRow(headers);
+  headerRow.height = 28;
+  headerRow.eachCell((cell) => {
+    cell.font = { name: "Arial", size: 11, bold: true, color: { argb: "FFFFFFFF" } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF3B82F6" } };
+    cell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+    cell.border = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "medium" },
+      right: { style: "thin" },
+    };
+  });
+
+  // --- DATA ROWS ---
+  let rowNum = 0;
+  records.forEach((emp: any) => {
+    const fullName = emp.name || `${emp.lastName || ""}, ${emp.firstName || ""} ${emp.middleInitial || ""}`.trim();
+    const needs = emp.needs || (emp.learningNeed ? [{ learningNeed: emp.learningNeed, basis: emp.basis, methodology: emp.methodology, targetSchedule: emp.targetSchedule }] : []);
+
+    if (needs.length === 0) {
+      rowNum++;
+      const row = worksheet.addRow([
+        rowNum, fullName, emp.office || "", emp.position || "",
+        emp.employmentType || "", emp.employmentStatus || "",
+        emp.gender || "", emp.dateOfAssumption || "",
+        "", "", "", "",
+      ]);
+      styleRow(row, rowNum);
+    } else {
+      needs.forEach((need: any) => {
+        rowNum++;
+        const row = worksheet.addRow([
+          rowNum, fullName, emp.office || "", emp.position || "",
+          emp.employmentType || "", emp.employmentStatus || "",
+          emp.gender || "", emp.dateOfAssumption || "",
+          need.learningNeed || "", need.basis || "",
+          need.methodology || "", need.targetSchedule || "",
+        ]);
+        styleRow(row, rowNum);
+      });
+    }
+  });
+
+  function styleRow(row: ExcelJS.Row, idx: number) {
+    row.height = 22;
+    row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+      cell.font = { name: "Arial", size: 10 };
+      cell.border = {
+        top: { style: "thin", color: { argb: "FFE2E8F0" } },
+        left: { style: "thin", color: { argb: "FFE2E8F0" } },
+        bottom: { style: "thin", color: { argb: "FFE2E8F0" } },
+        right: { style: "thin", color: { argb: "FFE2E8F0" } },
+      };
+      cell.alignment = {
+        horizontal: colNumber === 1 ? "center" : "left",
+        vertical: "middle",
+        wrapText: true,
+      };
+      if (idx % 2 === 0) {
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFF8FAFC" } };
+      }
+    });
+  }
+
+  // --- COLUMN WIDTHS ---
+  worksheet.getColumn(1).width = 6;   // No.
+  worksheet.getColumn(2).width = 30;  // Name
+  worksheet.getColumn(3).width = 32;  // Office
+  worksheet.getColumn(4).width = 28;  // Position
+  worksheet.getColumn(5).width = 18;  // Employment Type
+  worksheet.getColumn(6).width = 18;  // Employment Status
+  worksheet.getColumn(7).width = 10;  // Gender
+  worksheet.getColumn(8).width = 18;  // Date of Assumption
+  worksheet.getColumn(9).width = 40;  // Learning Need
+  worksheet.getColumn(10).width = 30; // Basis
+  worksheet.getColumn(11).width = 30; // Methodology
+  worksheet.getColumn(12).width = 22; // Target Schedule
+
+  // --- AUTO-FILTER ---
+  worksheet.autoFilter = { from: "A4", to: `${lastCol}4` };
+
+  // Send file
+  res.setHeader("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
+  res.setHeader("Content-Disposition", `attachment; filename=ILDP_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  await workbook.xlsx.write(res);
+  res.end();
+});
+
 // ----------------------------------------------------
 // EXCEL IMPORT ENDPOINTS
 // ----------------------------------------------------
