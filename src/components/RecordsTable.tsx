@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye, AlertTriangle } from "lucide-react";
+import * as XLSX from "xlsx";
 import { Employee, LearningNeed } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
 import SearchableSelect from "./SearchableSelect";
@@ -178,21 +179,47 @@ export default function RecordsTable({
       });
   };
 
-  // Trigger Excel Export Download
+  // Trigger Excel Export Download (client-side from filtered data)
   const handleExportExcel = () => {
-    let url = `/api/export/excel?`;
-    if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
-    if (officeFilter) url += `office=${encodeURIComponent(officeFilter)}&`;
-    if (needFilter) url += `learningNeed=${encodeURIComponent(needFilter)}&`;
-    if (employmentTypeFilter) url += `employmentType=${encodeURIComponent(employmentTypeFilter)}&`;
-    if (employmentStatusFilter) url += `employmentStatus=${encodeURIComponent(employmentStatusFilter)}&`;
-    if (newlyHiredFilter) url += `newlyHired=${encodeURIComponent(newlyHiredFilter)}&`;
-    if (hideNoNeeds) url += `hasNeeds=true&`;
-    if (startDate) url += `startDate=${startDate}&`;
-    if (endDate) url += `endDate=${endDate}&`;
-    
-    // Download File
-    window.open(url, "_blank");
+    const rows = groupedRecords.flatMap((emp) => {
+      if (emp.Needs.length === 0) {
+        return [{
+          "Employee ID": emp.EmployeeID,
+          "Employee Name": `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+          "Office/Department": emp.Office || "",
+          "Position": emp.Position || "",
+          "Employment Type": emp.EmploymentType || "",
+          "Employment Status": emp.EmploymentStatus || "",
+          "Gender": emp.Gender || "",
+          "Date of Assumption": emp.DateOfAssumption ? formatShortDate(emp.DateOfAssumption) : "",
+          "Learning Need": "",
+          "Basis": "",
+          "Methodology": "",
+          "Target Schedule": "",
+          "Record Date": emp.CreatedAt ? formatShortDate(emp.CreatedAt) : "",
+        }];
+      }
+      return emp.Needs.map((need) => ({
+        "Employee ID": emp.EmployeeID,
+        "Employee Name": `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+        "Office/Department": emp.Office || "",
+        "Position": emp.Position || "",
+        "Employment Type": emp.EmploymentType || "",
+        "Employment Status": emp.EmploymentStatus || "",
+        "Gender": emp.Gender || "",
+        "Date of Assumption": emp.DateOfAssumption ? formatShortDate(emp.DateOfAssumption) : "",
+        "Learning Need": need.LearningNeed || "",
+        "Basis": need.Basis || "",
+        "Methodology": need.Methodology || "",
+        "Target Schedule": need.TargetSchedule || "",
+        "Record Date": need.CreatedAt ? formatShortDate(need.CreatedAt) : "",
+      }));
+    });
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "ILDP Records");
+    XLSX.writeFile(wb, `ILDP_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
   // Show details of specific employee
@@ -264,6 +291,8 @@ export default function RecordsTable({
       EmploymentType?: string;
       EmploymentStatus?: string;
       StatusChangedAt?: string;
+      Gender?: string;
+      DateOfAssumption?: string;
       Needs: Array<{
         LearningNeedID: number;
         LearningNeed: string;
@@ -293,6 +322,8 @@ export default function RecordsTable({
           EmploymentType: rec.EmploymentType,
           EmploymentStatus: rec.EmploymentStatus,
           StatusChangedAt: rec.StatusChangedAt,
+          Gender: rec.Gender,
+          DateOfAssumption: rec.DateOfAssumption,
           Needs: [],
           CreatedAt: rec.CreatedAt,
           CreatedBy: rec.EmployeeCreatedBy || rec.CreatedBy,
