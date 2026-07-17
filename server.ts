@@ -1003,7 +1003,7 @@ app.delete("/api/learning-needs/:id", (req, res) => {
 
 // 12. Excel Export using ExcelJS
 app.get("/api/export/excel", async (req, res) => {
-  const { employeeId, office, startDate, endDate, employmentType, employmentStatus, hasNeeds } = req.query;
+  const { employeeId, office, search, learningNeed, startDate, endDate, employmentType, employmentStatus, newlyHired, hasNeeds } = req.query;
   const db = readDatabase();
 
   let results: any[] = [];
@@ -1058,9 +1058,24 @@ app.get("/api/export/excel", async (req, res) => {
     results = results.filter((item) => item.EmployeeID === empId);
   }
 
+  if (search) {
+    const terms = (search as string).toLowerCase().split(/\s+/).filter((t: string) => t.length > 0);
+    if (terms.length > 0) {
+      results = results.filter((item) => {
+        const searchString = `${item.FirstName} ${item.LastName} ${item.Office || ""} ${item.Position || ""}`.toLowerCase();
+        return terms.every((term: string) => searchString.includes(term));
+      });
+    }
+  }
+
   if (office) {
     const o = (office as string).toLowerCase();
     results = results.filter((item) => item.Office && item.Office.toLowerCase().includes(o));
+  }
+
+  if (learningNeed) {
+    const lnVal = (learningNeed as string).toLowerCase();
+    results = results.filter((item) => item.LearningNeed && item.LearningNeed.toLowerCase().includes(lnVal));
   }
 
   if (employmentType) {
@@ -1071,6 +1086,14 @@ app.get("/api/export/excel", async (req, res) => {
   if (employmentStatus) {
     const es = (employmentStatus as string).toLowerCase();
     results = results.filter((item) => item.EmploymentStatus && item.EmploymentStatus.toLowerCase() === es);
+  }
+
+  if (newlyHired) {
+    const nh = (newlyHired as string).toLowerCase();
+    const matchingEmpIds = db.employees
+      .filter((emp: any) => emp.NewlyHired && emp.NewlyHired.toLowerCase() === nh)
+      .map((emp: any) => emp.EmployeeID);
+    results = results.filter((item) => matchingEmpIds.includes(item.EmployeeID));
   }
 
   if (startDate) {

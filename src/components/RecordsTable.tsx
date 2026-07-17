@@ -181,9 +181,12 @@ export default function RecordsTable({
   // Trigger Excel Export Download
   const handleExportExcel = () => {
     let url = `/api/export/excel?`;
-    if (officeFilter) url += `office=${officeFilter}&`;
-    if (employmentTypeFilter) url += `employmentType=${employmentTypeFilter}&`;
-    if (employmentStatusFilter) url += `employmentStatus=${employmentStatusFilter}&`;
+    if (searchTerm) url += `search=${encodeURIComponent(searchTerm)}&`;
+    if (officeFilter) url += `office=${encodeURIComponent(officeFilter)}&`;
+    if (needFilter) url += `learningNeed=${encodeURIComponent(needFilter)}&`;
+    if (employmentTypeFilter) url += `employmentType=${encodeURIComponent(employmentTypeFilter)}&`;
+    if (employmentStatusFilter) url += `employmentStatus=${encodeURIComponent(employmentStatusFilter)}&`;
+    if (newlyHiredFilter) url += `newlyHired=${encodeURIComponent(newlyHiredFilter)}&`;
     if (hideNoNeeds) url += `hasNeeds=true&`;
     if (startDate) url += `startDate=${startDate}&`;
     if (endDate) url += `endDate=${endDate}&`;
