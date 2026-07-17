@@ -67,6 +67,7 @@ export default function RecordsTable({
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState("");
   const [employmentStatusFilter, setEmploymentStatusFilter] = useState("");
   const [newlyHiredFilter, setNewlyHiredFilter] = useState("");
+  const [hideNoNeeds, setHideNoNeeds] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -148,11 +149,11 @@ export default function RecordsTable({
   // Fetch Joined Records on filter changes
   useEffect(() => {
     fetchRecords();
-  }, [searchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, newlyHiredFilter, sortBy, sortOrder]);
+  }, [searchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, newlyHiredFilter, hideNoNeeds, sortBy, sortOrder]);
 
   const fetchRecords = () => {
     setLoading(true);
-    let url = `/api/learning-needs?search=${searchTerm}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&newlyHired=${newlyHiredFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    let url = `/api/learning-needs?search=${searchTerm}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&newlyHired=${newlyHiredFilter}&hasNeeds=${hideNoNeeds ? "true" : ""}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
     
     fetch(url)
       .then((res) => res.json())
@@ -183,6 +184,7 @@ export default function RecordsTable({
     if (officeFilter) url += `office=${officeFilter}&`;
     if (employmentTypeFilter) url += `employmentType=${employmentTypeFilter}&`;
     if (employmentStatusFilter) url += `employmentStatus=${employmentStatusFilter}&`;
+    if (hideNoNeeds) url += `hasNeeds=true&`;
     if (startDate) url += `startDate=${startDate}&`;
     if (endDate) url += `endDate=${endDate}&`;
     
@@ -451,6 +453,19 @@ export default function RecordsTable({
               placeholder="All Entries"
               allowCustom={false}
             />
+          </div>
+
+          {/* Toggle: Hide employees with no learning needs */}
+          <div className="flex items-end">
+            <label className="flex items-center gap-2 cursor-pointer select-none px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl text-xs text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200">
+              <input
+                type="checkbox"
+                checked={hideNoNeeds}
+                onChange={(e) => { setHideNoNeeds(e.target.checked); setCurrentPage(1); }}
+                className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="font-semibold whitespace-nowrap">Hide No Learning Needs</span>
+            </label>
           </div>
 
           {/* Start Date */}

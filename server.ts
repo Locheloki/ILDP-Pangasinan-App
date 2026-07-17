@@ -858,7 +858,7 @@ app.post("/api/employees/:id/learning-needs", (req, res) => {
 // 10. Get All Learning Need Records in tabular format (joined with Employee details)
 app.get("/api/learning-needs", (req, res) => {
   const db = readDatabase();
-  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", newlyHired = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
+  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", newlyHired = "", hasNeeds = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
 
   let results: any[] = [];
 
@@ -966,6 +966,10 @@ app.get("/api/learning-needs", (req, res) => {
     results = results.filter((item) => item.NewlyHired && item.NewlyHired.toLowerCase() === nh);
   }
 
+  if (hasNeeds === "true") {
+    results = results.filter((item) => item.LearningNeedID !== null);
+  }
+
   // Sorting
   results.sort((a, b) => {
     let valA = a[sortBy as string] || "";
@@ -999,7 +1003,7 @@ app.delete("/api/learning-needs/:id", (req, res) => {
 
 // 12. Excel Export using ExcelJS
 app.get("/api/export/excel", async (req, res) => {
-  const { employeeId, office, startDate, endDate, employmentType, employmentStatus } = req.query;
+  const { employeeId, office, startDate, endDate, employmentType, employmentStatus, hasNeeds } = req.query;
   const db = readDatabase();
 
   let results: any[] = [];
@@ -1079,6 +1083,10 @@ app.get("/api/export/excel", async (req, res) => {
     // Include the whole day of end date
     eDate.setHours(23, 59, 59, 999);
     results = results.filter((item) => new Date(item.CreatedAt) <= eDate);
+  }
+
+  if (hasNeeds === "true") {
+    results = results.filter((item) => item.LearningNeed !== "N/A");
   }
 
   // Create Excel workbook
