@@ -29,6 +29,7 @@ interface JoinedRecord {
   EmployeeUpdatedBy?: string;
   Gender?: string;
   DateOfAssumption?: string;
+  NewlyHired?: string;
 }
 
 const renderPendingText = (text: string | null | undefined) => {
@@ -65,6 +66,7 @@ export default function RecordsTable({
   const [needFilter, setNeedFilter] = useState("");
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState("");
   const [employmentStatusFilter, setEmploymentStatusFilter] = useState("");
+  const [newlyHiredFilter, setNewlyHiredFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -146,11 +148,11 @@ export default function RecordsTable({
   // Fetch Joined Records on filter changes
   useEffect(() => {
     fetchRecords();
-  }, [searchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, sortBy, sortOrder]);
+  }, [searchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, newlyHiredFilter, sortBy, sortOrder]);
 
   const fetchRecords = () => {
     setLoading(true);
-    let url = `/api/learning-needs?search=${searchTerm}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    let url = `/api/learning-needs?search=${searchTerm}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&newlyHired=${newlyHiredFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
     
     fetch(url)
       .then((res) => res.json())
@@ -433,6 +435,20 @@ export default function RecordsTable({
               onChange={(val) => { setEmploymentStatusFilter(val === "All Statuses" ? "" : val); setCurrentPage(1); }}
               options={["All Statuses", "Undefined (Pending Review)", "Newly Hired", "Re-employed", "Casual", "Permanent", "Co-Terminous", "Elective Official", "Job Order", "Consultant"]}
               placeholder="All Statuses"
+              allowCustom={false}
+            />
+          </div>
+
+          {/* Filter by Employee Entry (NewlyHired) */}
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Employee Entry
+            </label>
+            <SearchableSelect
+              value={newlyHiredFilter || "All Entries"}
+              onChange={(val) => { setNewlyHiredFilter(val === "All Entries" ? "" : val); setCurrentPage(1); }}
+              options={["All Entries", "Newly Hired", "Reemployed", "N/A"]}
+              placeholder="All Entries"
               allowCustom={false}
             />
           </div>

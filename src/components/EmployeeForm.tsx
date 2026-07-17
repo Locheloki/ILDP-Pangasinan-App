@@ -36,6 +36,7 @@ export default function EmployeeForm({
   const [employmentStatus, setEmploymentStatus] = useState("Undefined (Pending Review)");
   const [gender, setGender] = useState("Undefined (Pending Review)");
   const [dateOfAssumption, setDateOfAssumption] = useState("");
+  const [newlyHired, setNewlyHired] = useState("N/A");
 
   // Learning Needs List
   const [needs, setNeeds] = useState<LearningNeed[]>([]);
@@ -112,6 +113,7 @@ export default function EmployeeForm({
       setEmploymentType(employee.EmploymentType || "Undefined (Pending Review)");
       setEmploymentStatus(employee.EmploymentStatus || "Undefined (Pending Review)");
       setGender(employee.Gender || "Undefined (Pending Review)");
+      setNewlyHired(employee.NewlyHired || "N/A");
       const assumptionDate = employee.DateOfAssumption ? employee.DateOfAssumption.substring(0, 10) : "";
       setDateOfAssumption(assumptionDate);
 
@@ -137,6 +139,7 @@ export default function EmployeeForm({
       setEmploymentType("Undefined (Pending Review)");
       setEmploymentStatus("Undefined (Pending Review)");
       setGender("Undefined (Pending Review)");
+      setNewlyHired("N/A");
       setDateOfAssumption("");
       setNeeds([createEmptyNeed()]);
     }
@@ -166,6 +169,7 @@ export default function EmployeeForm({
         setEmploymentType(employee.EmploymentType || "Undefined (Pending Review)");
         setEmploymentStatus(employee.EmploymentStatus || "Undefined (Pending Review)");
         setGender(employee.Gender || "Undefined (Pending Review)");
+        setNewlyHired(employee.NewlyHired || "N/A");
         const assumptionDate = employee.DateOfAssumption ? employee.DateOfAssumption.substring(0, 10) : "";
         setDateOfAssumption(assumptionDate);
         
@@ -189,6 +193,7 @@ export default function EmployeeForm({
         setEmploymentType("Undefined (Pending Review)");
         setEmploymentStatus("Undefined (Pending Review)");
         setGender("Undefined (Pending Review)");
+        setNewlyHired("N/A");
         setDateOfAssumption("");
         setNeeds([createEmptyNeed()]);
       }
@@ -568,6 +573,7 @@ export default function EmployeeForm({
       EmploymentStatus: employmentStatus,
       Gender: gender,
       DateOfAssumption: dateOfAssumption ? new Date(dateOfAssumption).toISOString() : null as any,
+      NewlyHired: newlyHired,
     };
 
     onSave(empData, cleanNeeds);
@@ -796,6 +802,20 @@ export default function EmployeeForm({
               onChange={setEmploymentStatus}
               options={["Undefined (Pending Review)", "Newly Hired", "Re-employed", "Casual", "Permanent", "Co-Terminous", "Elective Official", "Job Order", "Consultant"]}
               placeholder="Select employment status..."
+              allowCustom={false}
+            />
+          </div>
+
+          {/* Newly Hired / Reemployed Entry */}
+          <div className="md:col-span-6">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Employee Entry
+            </label>
+            <SearchableSelect
+              value={newlyHired}
+              onChange={setNewlyHired}
+              options={["N/A", "Newly Hired", "Reemployed"]}
+              placeholder="Select employee entry..."
               allowCustom={false}
             />
           </div>

@@ -1,6 +1,7 @@
 import express from "express";
 import path from "path";
 import fs from "fs";
+import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import ExcelJS from "exceljs";
 
@@ -660,7 +661,7 @@ app.get("/api/employees/:id", (req, res) => {
 
 // 6. Create New Employee
 app.post("/api/employees", (req, res) => {
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -690,6 +691,7 @@ app.post("/api/employees", (req, res) => {
     EmploymentStatus: status,
     StatusChangedAt: ["Newly Hired", "Re-employed", "Casual"].includes(status) ? new Date().toISOString() : null,
     Gender: gender || "Undefined (Pending Review)",
+    NewlyHired: newlyHired || "N/A",
     CreatedAt: new Date().toISOString(),
     UpdatedAt: new Date().toISOString(),
     CreatedBy: username,
@@ -710,7 +712,7 @@ app.post("/api/employees", (req, res) => {
 // 7. Update Employee and Learning Needs in one transaction (Sync)
 app.put("/api/employees/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, needs = [], username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, needs = [], username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -746,6 +748,7 @@ app.put("/api/employees/:id", (req, res) => {
     EmploymentStatus: newStatus,
     StatusChangedAt: statusChangedAt,
     Gender: gender || oldEmp.Gender || "Undefined (Pending Review)",
+    NewlyHired: newlyHired || oldEmp.NewlyHired || "N/A",
     UpdatedAt: new Date().toISOString(),
     UpdatedBy: username,
     CreatedBy: oldEmp.CreatedBy || username,
@@ -855,7 +858,7 @@ app.post("/api/employees/:id/learning-needs", (req, res) => {
 // 10. Get All Learning Need Records in tabular format (joined with Employee details)
 app.get("/api/learning-needs", (req, res) => {
   const db = readDatabase();
-  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
+  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", newlyHired = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
 
   let results: any[] = [];
 
@@ -888,6 +891,7 @@ app.get("/api/learning-needs", (req, res) => {
           EmployeeUpdatedBy: emp.UpdatedBy,
           Gender: emp.Gender,
           DateOfAssumption: emp.DateOfAssumption,
+          NewlyHired: emp.NewlyHired || "N/A",
         });
       });
     } else {
@@ -916,6 +920,7 @@ app.get("/api/learning-needs", (req, res) => {
         EmployeeUpdatedBy: emp.UpdatedBy,
         Gender: emp.Gender,
         DateOfAssumption: emp.DateOfAssumption,
+        NewlyHired: emp.NewlyHired || "N/A",
       });
     }
   });
@@ -954,6 +959,11 @@ app.get("/api/learning-needs", (req, res) => {
   if (employmentStatus) {
     const es = (employmentStatus as string).toLowerCase();
     results = results.filter((item) => item.EmploymentStatus && item.EmploymentStatus.toLowerCase() === es);
+  }
+
+  if (newlyHired) {
+    const nh = (newlyHired as string).toLowerCase();
+    results = results.filter((item) => item.NewlyHired && item.NewlyHired.toLowerCase() === nh);
   }
 
   // Sorting
@@ -1207,6 +1217,330 @@ app.get("/api/export/excel", async (req, res) => {
 
   await workbook.xlsx.write(res);
   res.end();
+});
+
+// ----------------------------------------------------
+// EXCEL IMPORT ENDPOINTS
+// ----------------------------------------------------
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
+
+function cleanImportStr(str: string | null | undefined): string {
+  if (!str) return "";
+  return str.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").replace(/\s+/g, "");
+}
+
+function getBaseFirstName(firstName: string): string {
+  const parts = firstName.trim().split(/\s+/);
+  if (parts.length > 1) {
+    const last = parts[parts.length - 1];
+    if (last.length === 1 || (last.length === 2 && last.endsWith("."))) {
+      return parts.slice(0, -1).join(" ");
+    }
+  }
+  return firstName;
+}
+
+function parseExcelName(fullName: string) {
+  const parts = fullName.split(",");
+  if (parts.length < 2) {
+    return { lastName: fullName.trim(), firstName: "", middleInitial: "", fullAfterComma: "" };
+  }
+  const lastName = parts[0].trim();
+  const fullAfterComma = parts[1].trim();
+  const words = fullAfterComma.split(/\s+/);
+  if (words.length > 1) {
+    const lastWord = words[words.length - 1];
+    if (lastWord.length === 1 || (lastWord.length === 2 && lastWord.endsWith("."))) {
+      const mi = lastWord.replace(".", "") + ".";
+      const first = words.slice(0, -1).join(" ");
+      return { lastName, firstName: first, middleInitial: mi, fullAfterComma };
+    } else {
+      const mi = lastWord.charAt(0).toUpperCase() + ".";
+      const first = words.slice(0, -1).join(" ");
+      return { lastName, firstName: first, middleInitial: mi, fullMiddleName: lastWord, fullAfterComma };
+    }
+  } else {
+    return { lastName, firstName: fullAfterComma, middleInitial: "", fullAfterComma };
+  }
+}
+
+function isWordBoundaryPrefix(longer: string, shorter: string) {
+  if (!longer.startsWith(shorter)) return false;
+  return longer.length === shorter.length || longer.charAt(shorter.length) === " ";
+}
+
+interface ParsedExcelRow {
+  lastName: string;
+  firstName: string;
+  middleInitial: string;
+  position: string;
+  employmentStatus: string;
+  employmentType: string;
+  office: string;
+  gender: string;
+  dateOfAssumption: string | undefined;
+  rawName: string;
+}
+
+async function parseExcelBuffer(buffer: Buffer): Promise<ParsedExcelRow[]> {
+  const workbook = new ExcelJS.Workbook();
+  await workbook.xlsx.load(buffer);
+  const sheet = workbook.worksheets[0];
+  const results: ParsedExcelRow[] = [];
+  const processedNames = new Set<string>();
+  let currentOffice = "";
+  let currentCategory = "";
+
+  for (let i = 2; i <= sheet.rowCount; i++) {
+    const row = sheet.getRow(i);
+    const cell1 = row.getCell(1).value;
+    const cell2 = row.getCell(2).value;
+
+    if (cell1 !== null && cell1 !== undefined && typeof cell1 !== "number" && cell1 !== "No") {
+      const text = cell1.toString().trim();
+      const lower = text.toLowerCase();
+      if (
+        lower === "casual" ||
+        lower.includes("permanent") ||
+        lower === "consultant" ||
+        lower.includes("job order") ||
+        lower.includes("coterminous")
+      ) {
+        currentCategory = text;
+      } else {
+        currentOffice = text;
+      }
+    } else if (typeof cell1 === "number") {
+      const rawName = cell2?.toString().trim();
+      if (!rawName) continue;
+      const lowerFullName = rawName.toLowerCase();
+      if (processedNames.has(lowerFullName)) continue;
+      processedNames.add(lowerFullName);
+
+      const parsed = parseExcelName(rawName);
+      const catLower = currentCategory.toLowerCase();
+      let employmentType = "Undefined (Pending Review)";
+      if (catLower.includes("job order")) employmentType = "Job Order";
+      else if (catLower.includes("casual")) employmentType = "Casual";
+      else if (catLower.includes("consultant")) employmentType = "Consultant";
+      else if (catLower.includes("permanent")) employmentType = "Permanent";
+
+      const position = row.getCell(3).value?.toString().trim() || "Undefined (Pending Review)";
+      const employmentStatus = row.getCell(4).value?.toString().trim() || "Undefined (Pending Review)";
+      const rawGender = row.getCell(5).value?.toString().trim();
+      const gender = rawGender ? (rawGender === "Female" || rawGender === "Male" ? rawGender : "Undefined (Pending Review)") : "Undefined (Pending Review)";
+      const rawDoa = row.getCell(7).value;
+      const dateOfAssumption = (rawDoa instanceof Date) ? rawDoa.toISOString() : (rawDoa ? new Date(rawDoa as any).toISOString() : undefined);
+
+      results.push({
+        lastName: parsed.lastName,
+        firstName: parsed.firstName,
+        middleInitial: parsed.middleInitial,
+        position,
+        employmentStatus,
+        employmentType,
+        office: currentOffice,
+        gender,
+        dateOfAssumption,
+        rawName,
+      });
+    }
+  }
+  return results;
+}
+
+function matchDbToExcel(dbEmp: any, excelRow: ParsedExcelRow): boolean {
+  const dbLast = cleanImportStr(dbEmp.LastName);
+  const excelLast = cleanImportStr(excelRow.lastName);
+  if (dbLast !== excelLast) return false;
+  const dbFirst = cleanImportStr(dbEmp.FirstName);
+  const excelFirst = cleanImportStr(excelRow.firstName);
+  if (dbFirst === excelFirst) return true;
+  if (isWordBoundaryPrefix(dbFirst, excelFirst) || isWordBoundaryPrefix(excelFirst, dbFirst)) return true;
+  return false;
+}
+
+app.post("/api/import/preview", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No file uploaded" });
+      return;
+    }
+
+    const excelRows = await parseExcelBuffer(req.file.buffer);
+    const db = readDatabase();
+    const dbEmployees: any[] = db.employees || [];
+
+    const matchedDbIds = new Set<number>();
+    const toAdd: ParsedExcelRow[] = [];
+    const toUpdate: any[] = [];
+    const matched = new Set<string>();
+
+    for (const exRow of excelRows) {
+      const match = dbEmployees.find((emp: any) => matchDbToExcel(emp, exRow));
+      if (match) {
+        matchedDbIds.add(match.EmployeeID);
+        matched.add(exRow.rawName);
+        const changes: any = {};
+        if (match.Position !== exRow.position) changes.Position = { old: match.Position, new: exRow.position };
+        if (match.EmploymentStatus !== exRow.employmentStatus) changes.EmploymentStatus = { old: match.EmploymentStatus, new: exRow.employmentStatus };
+        if (match.Office !== exRow.office) changes.Office = { old: match.Office, new: exRow.office };
+        if (match.Gender !== exRow.gender) changes.Gender = { old: match.Gender, new: exRow.gender };
+        if (match.EmploymentType !== exRow.employmentType) changes.EmploymentType = { old: match.EmploymentType, new: exRow.employmentType };
+        if (exRow.dateOfAssumption && match.DateOfAssumption !== exRow.dateOfAssumption) {
+          changes.DateOfAssumption = { old: match.DateOfAssumption, new: exRow.dateOfAssumption };
+        }
+        if (Object.keys(changes).length > 0) {
+          toUpdate.push({
+            employeeId: match.EmployeeID,
+            name: `${match.LastName}, ${match.FirstName} ${match.MiddleInitial || ""}`.trim(),
+            office: match.Office,
+            changes,
+          });
+        }
+      } else {
+        toAdd.push(exRow);
+      }
+    }
+
+    const toDelete = dbEmployees
+      .filter((emp: any) => !matchedDbIds.has(emp.EmployeeID))
+      .map((emp: any) => {
+        const needsCount = (db.learningNeeds || []).filter((ln: any) => ln.EmployeeID === emp.EmployeeID).length;
+        return {
+          employeeId: emp.EmployeeID,
+          name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+          office: emp.Office,
+          needsCount,
+        };
+      });
+
+    res.json({
+      totalInExcel: excelRows.length,
+      totalInDb: dbEmployees.length,
+      stats: { toAdd: toAdd.length, toUpdate: toUpdate.length, toDelete: toDelete.length, unchanged: dbEmployees.length - toDelete.length - toUpdate.filter((u: any) => dbEmployees.some((e: any) => e.EmployeeID === u.employeeId)).length + (dbEmployees.length - toDelete.length - toUpdate.length) },
+      toAdd,
+      toUpdate,
+      toDelete,
+    });
+  } catch (error: any) {
+    console.error("Import preview error:", error);
+    res.status(500).json({ error: "Failed to parse Excel file: " + error.message });
+  }
+});
+
+app.post("/api/import/execute", express.json({ limit: "50mb" }), async (req, res) => {
+  try {
+    const { toAdd, toUpdate, toDelete } = req.body;
+    if (!Array.isArray(toAdd) || !Array.isArray(toUpdate) || !Array.isArray(toDelete)) {
+      res.status(400).json({ error: "Invalid request body" });
+      return;
+    }
+
+    const db = readDatabase();
+    const backupPath = DB_FILE + ".backup-" + Date.now();
+    fs.copyFileSync(DB_FILE, backupPath);
+
+    const currentTime = new Date().toISOString();
+    const deleteIds = new Set<number>(toDelete.map((d: any) => d.employeeId));
+    const updateMap = new Map<number, any>();
+    for (const u of toUpdate) updateMap.set(u.employeeId, u);
+
+    let createdCount = 0;
+    let updatedCount = 0;
+    let deletedCount = 0;
+
+    // 1. Update existing employees
+    db.employees = db.employees.filter((emp: any) => {
+      if (deleteIds.has(emp.EmployeeID)) {
+        deletedCount++;
+        return false;
+      }
+      const update = updateMap.get(emp.EmployeeID);
+      if (update) {
+        const row = toAdd.length > 0 ? null : toUpdate.find((u: any) => u.employeeId === emp.EmployeeID);
+        if (row) {
+          if (row.changes.Position) emp.Position = row.changes.Position.new;
+          if (row.changes.EmploymentStatus) emp.EmploymentStatus = row.changes.EmploymentStatus.new;
+          if (row.changes.Office) emp.Office = row.changes.Office.new;
+          if (row.changes.Gender) emp.Gender = row.changes.Gender.new;
+          if (row.changes.EmploymentType) emp.EmploymentType = row.changes.EmploymentType.new;
+          if (row.changes.DateOfAssumption) emp.DateOfAssumption = row.changes.DateOfAssumption.new;
+        }
+        emp.UpdatedAt = currentTime;
+        emp.UpdatedBy = "Excel Import";
+        updatedCount++;
+      }
+      return true;
+    });
+
+    // Apply updates from toUpdate directly
+    for (const u of toUpdate) {
+      const emp = db.employees.find((e: any) => e.EmployeeID === u.employeeId);
+      if (emp) {
+        if (u.changes.Position) emp.Position = u.changes.Position.new;
+        if (u.changes.EmploymentStatus) emp.EmploymentStatus = u.changes.EmploymentStatus.new;
+        if (u.changes.Office) emp.Office = u.changes.Office.new;
+        if (u.changes.Gender) emp.Gender = u.changes.Gender.new;
+        if (u.changes.EmploymentType) emp.EmploymentType = u.changes.EmploymentType.new;
+        if (u.changes.DateOfAssumption) emp.DateOfAssumption = u.changes.DateOfAssumption.new;
+        emp.UpdatedAt = currentTime;
+        emp.UpdatedBy = "Excel Import";
+      }
+    }
+
+    // 2. Delete associated learning needs
+    if (deleteIds.size > 0) {
+      db.learningNeeds = (db.learningNeeds || []).filter((ln: any) => !deleteIds.has(ln.EmployeeID));
+    }
+
+    // 3. Create new employees
+    let maxId = db.employees.reduce((max: number, emp: any) => (emp.EmployeeID > max ? emp.EmployeeID : max), 0);
+    for (const addRow of toAdd) {
+      maxId++;
+      const newEmp = {
+        EmployeeID: maxId,
+        FirstName: addRow.firstName,
+        MiddleInitial: addRow.middleInitial,
+        LastName: addRow.lastName,
+        Office: addRow.office,
+        Position: addRow.position,
+        EmploymentType: addRow.employmentType,
+        EmploymentStatus: addRow.employmentStatus,
+        Gender: addRow.gender,
+        DateOfAssumption: addRow.dateOfAssumption,
+        CreatedAt: currentTime,
+        UpdatedAt: currentTime,
+        CreatedBy: "Excel Import",
+        UpdatedBy: "Excel Import",
+        StatusChangedAt: null,
+        NewlyHired: "N/A",
+      };
+      db.employees.push(newEmp);
+      ensureCustomOptionsExist(newEmp, [], db);
+      createdCount++;
+    }
+
+    // 4. Update custom options for updated employees
+    for (const u of toUpdate) {
+      const emp = db.employees.find((e: any) => e.EmployeeID === u.employeeId);
+      if (emp) ensureCustomOptionsExist(emp, [], db);
+    }
+
+    writeDatabase(db);
+
+    res.json({
+      success: true,
+      created: createdCount,
+      updated: updatedCount,
+      deleted: deletedCount,
+      totalNow: db.employees.length,
+      backup: backupPath,
+    });
+  } catch (error: any) {
+    console.error("Import execute error:", error);
+    res.status(500).json({ error: "Failed to execute import: " + error.message });
+  }
 });
 
 // ----------------------------------------------------

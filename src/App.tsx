@@ -35,7 +35,8 @@ import {
   Copy,
   Check,
   Globe,
-  Lock
+  Lock,
+  Upload
 } from "lucide-react";
 import { User, DashboardStats, Employee, LearningNeed } from "./types";
 import LoginScreen from "./components/LoginScreen";
@@ -44,6 +45,7 @@ import EmployeeForm from "./components/EmployeeForm";
 import RecordsTable from "./components/RecordsTable";
 import SaveConfirmDialog from "./components/SaveConfirmDialog";
 import RapidEncoding from "./components/RapidEncoding";
+import ImportData from "./components/ImportData";
 
 export default function App() {
   // Theme State: 'light' | 'dark' | 'sunset'
@@ -75,11 +77,11 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
-  // Active View Tab State: home, add, view, rapid
-  const [activeTab, setActiveTab] = useState<"home" | "add" | "view" | "rapid">("home");
-  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view" | "rapid">("view");
+  // Active View Tab State: home, add, view, rapid, import
+  const [activeTab, setActiveTab] = useState<"home" | "add" | "view" | "rapid" | "import">("home");
+  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view" | "rapid" | "import">("view");
 
-  const changeTab = (tab: "home" | "add" | "view" | "rapid") => {
+  const changeTab = (tab: "home" | "add" | "view" | "rapid" | "import") => {
     if (tab === "add" && activeTab !== "add") {
       setTabBeforeEdit(activeTab);
     }
@@ -510,6 +512,21 @@ export default function App() {
                 <Zap className="w-5 h-5 mr-3 shrink-0 text-amber-500 fill-amber-500/10" />
                 <span className="menu-link" data-text="Rapid Encoding">Rapid Encoding</span>
               </button>
+
+              {(currentUser?.role === "Administrator" || currentUser?.role === "System developer") && (
+                <button
+                  style={{ "--active-color": "#ef4444" } as React.CSSProperties}
+                  onClick={() => { changeTab("import"); setIsSidebarOpen(false); }}
+                  className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
+                    activeTab === "import" 
+                      ? "bg-white/10 text-white" 
+                      : "text-slate-300 hover:text-white hover:bg-white/5"
+                  }`}
+                >
+                  <Upload className="w-5 h-5 mr-3 shrink-0" />
+                  <span className="menu-link" data-text="Import Data">Import Data</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -608,6 +625,7 @@ export default function App() {
                 {activeTab === "add" && (editingEmployee ? "Modify Employee Record" : "New Entry Wizard")}
                 {activeTab === "view" && "Registered Learning Needs Directory"}
                 {activeTab === "rapid" && "Ingestion Panel"}
+                {activeTab === "import" && "Employee Data Import"}
               </h2>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 {formatHeaderDate()}
@@ -961,6 +979,11 @@ export default function App() {
                   customOptionsVersion={customOptionsVersion}
                 />
               )}
+            </div>
+
+            {/* Render Page 5: Import Data (Admin Only) */}
+            <div className={`tab-pane-animate ${activeTab === "import" ? "" : "hidden"}`}>
+              <ImportData onComplete={fetchStats} />
             </div>
 
           </div>
