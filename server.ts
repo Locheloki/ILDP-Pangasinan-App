@@ -1229,15 +1229,9 @@ function cleanImportStr(str: string | null | undefined): string {
   return str.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").replace(/\s+/g, "");
 }
 
-function getBaseFirstName(firstName: string): string {
-  const parts = firstName.trim().split(/\s+/);
-  if (parts.length > 1) {
-    const last = parts[parts.length - 1];
-    if (last.length === 1 || (last.length === 2 && last.endsWith("."))) {
-      return parts.slice(0, -1).join(" ");
-    }
-  }
-  return firstName;
+function normField(val: string | null | undefined): string {
+  if (!val) return "";
+  return val.toString().trim();
 }
 
 function parseExcelName(fullName: string) {
@@ -1246,7 +1240,7 @@ function parseExcelName(fullName: string) {
     return { lastName: fullName.trim(), firstName: "", middleInitial: "", fullAfterComma: "" };
   }
   const lastName = parts[0].trim();
-  const fullAfterComma = parts[1].trim();
+  const fullAfterComma = parts.slice(1).join(",").trim();
   const words = fullAfterComma.split(/\s+/);
   if (words.length > 1) {
     const lastWord = words[words.length - 1];
@@ -1349,15 +1343,49 @@ async function parseExcelBuffer(buffer: Buffer): Promise<ParsedExcelRow[]> {
   return results;
 }
 
-function matchDbToExcel(dbEmp: any, excelRow: ParsedExcelRow): boolean {
+function matchScore(dbEmp: any, excelRow: ParsedExcelRow): number {
   const dbLast = cleanImportStr(dbEmp.LastName);
   const excelLast = cleanImportStr(excelRow.lastName);
-  if (dbLast !== excelLast) return false;
+  if (dbLast !== excelLast) return 0;
   const dbFirst = cleanImportStr(dbEmp.FirstName);
   const excelFirst = cleanImportStr(excelRow.firstName);
-  if (dbFirst === excelFirst) return true;
-  if (isWordBoundaryPrefix(dbFirst, excelFirst) || isWordBoundaryPrefix(excelFirst, dbFirst)) return true;
-  return false;
+  let nameScore = 0;
+  if (dbFirst === excelFirst) nameScore = 100;
+  else if (isWordBoundaryPrefix(dbFirst, excelFirst) || isWordBoundaryPrefix(excelFirst, dbFirst)) nameScore = 50;
+  if (nameScore === 0) return 0;
+  const dbOffice = cleanImportStr(dbEmp.Office);
+  const excelOffice = cleanImportStr(excelRow.office);
+  if (dbOffice === excelOffice) return nameScore + 10;
+  const officePartial = dbOffice.startsWith(excelOffice) || excelOffice.startsWith(dbOffice);
+  if (officePartial) return nameScore + 5;
+  if (nameScore >= 50) {
+    const dbPos = cleanImportStr(dbEmp.Position);
+    const excelPos = cleanImportStr(excelRow.position);
+    if (dbPos === excelPos) return nameScore;
+    const dbES = cleanImportStr(dbEmp.EmploymentStatus);
+    const excelES = cleanImportStr(excelRow.employmentStatus);
+    if (dbES === excelES && (dbPos.startsWith(excelPos) || excelPos.startsWith(dbPos))) return nameScore;
+    return 0;
+  }
+  return nameScore;
+}
+
+function findBestDbMatch(dbEmployees: any[], excelRow: ParsedExcelRow): any | null {
+  let best: any = null;
+  let bestScore = 0;
+  for (const emp of dbEmployees) {
+    const score = matchScore(emp, excelRow);
+    if (score > bestScore) {
+      bestScore = score;
+      best = emp;
+    }
+  }
+  if (bestScore === 0) return null;
+  return best;
+}
+
+function fieldsDiffer(a: string | undefined, b: string | undefined): boolean {
+  return normField(a) !== normField(b);
 }
 
 app.post("/api/import/preview", upload.single("file"), async (req, res) => {
@@ -1374,21 +1402,19 @@ app.post("/api/import/preview", upload.single("file"), async (req, res) => {
     const matchedDbIds = new Set<number>();
     const toAdd: ParsedExcelRow[] = [];
     const toUpdate: any[] = [];
-    const matched = new Set<string>();
 
     for (const exRow of excelRows) {
-      const match = dbEmployees.find((emp: any) => matchDbToExcel(emp, exRow));
+      const match = findBestDbMatch(dbEmployees, exRow);
       if (match) {
         matchedDbIds.add(match.EmployeeID);
-        matched.add(exRow.rawName);
         const changes: any = {};
-        if (match.Position !== exRow.position) changes.Position = { old: match.Position, new: exRow.position };
-        if (match.EmploymentStatus !== exRow.employmentStatus) changes.EmploymentStatus = { old: match.EmploymentStatus, new: exRow.employmentStatus };
-        if (match.Office !== exRow.office) changes.Office = { old: match.Office, new: exRow.office };
-        if (match.Gender !== exRow.gender) changes.Gender = { old: match.Gender, new: exRow.gender };
-        if (match.EmploymentType !== exRow.employmentType) changes.EmploymentType = { old: match.EmploymentType, new: exRow.employmentType };
+        if (fieldsDiffer(match.Position, exRow.position)) changes.Position = { old: match.Position || "", new: exRow.position };
+        if (fieldsDiffer(match.EmploymentStatus, exRow.employmentStatus)) changes.EmploymentStatus = { old: match.EmploymentStatus || "", new: exRow.employmentStatus };
+        if (fieldsDiffer(match.Office, exRow.office)) changes.Office = { old: match.Office || "", new: exRow.office };
+        if (fieldsDiffer(match.Gender, exRow.gender)) changes.Gender = { old: match.Gender || "", new: exRow.gender };
+        if (fieldsDiffer(match.EmploymentType, exRow.employmentType)) changes.EmploymentType = { old: match.EmploymentType || "", new: exRow.employmentType };
         if (exRow.dateOfAssumption && match.DateOfAssumption !== exRow.dateOfAssumption) {
-          changes.DateOfAssumption = { old: match.DateOfAssumption, new: exRow.dateOfAssumption };
+          changes.DateOfAssumption = { old: match.DateOfAssumption || "", new: exRow.dateOfAssumption };
         }
         if (Object.keys(changes).length > 0) {
           toUpdate.push({
@@ -1418,7 +1444,7 @@ app.post("/api/import/preview", upload.single("file"), async (req, res) => {
     res.json({
       totalInExcel: excelRows.length,
       totalInDb: dbEmployees.length,
-      stats: { toAdd: toAdd.length, toUpdate: toUpdate.length, toDelete: toDelete.length, unchanged: dbEmployees.length - toDelete.length - toUpdate.filter((u: any) => dbEmployees.some((e: any) => e.EmployeeID === u.employeeId)).length + (dbEmployees.length - toDelete.length - toUpdate.length) },
+      stats: { toAdd: toAdd.length, toUpdate: toUpdate.length, toDelete: toDelete.length },
       toAdd,
       toUpdate,
       toDelete,
@@ -1450,48 +1476,29 @@ app.post("/api/import/execute", express.json({ limit: "50mb" }), async (req, res
     let updatedCount = 0;
     let deletedCount = 0;
 
-    // 1. Update existing employees
-    db.employees = db.employees.filter((emp: any) => {
-      if (deleteIds.has(emp.EmployeeID)) {
-        deletedCount++;
-        return false;
-      }
+    // 1. Delete employees and their learning needs
+    if (deleteIds.size > 0) {
+      db.employees = db.employees.filter((emp: any) => {
+        if (deleteIds.has(emp.EmployeeID)) { deletedCount++; return false; }
+        return true;
+      });
+      db.learningNeeds = (db.learningNeeds || []).filter((ln: any) => !deleteIds.has(ln.EmployeeID));
+    }
+
+    // 2. Apply updates
+    for (const emp of db.employees) {
       const update = updateMap.get(emp.EmployeeID);
       if (update) {
-        const row = toAdd.length > 0 ? null : toUpdate.find((u: any) => u.employeeId === emp.EmployeeID);
-        if (row) {
-          if (row.changes.Position) emp.Position = row.changes.Position.new;
-          if (row.changes.EmploymentStatus) emp.EmploymentStatus = row.changes.EmploymentStatus.new;
-          if (row.changes.Office) emp.Office = row.changes.Office.new;
-          if (row.changes.Gender) emp.Gender = row.changes.Gender.new;
-          if (row.changes.EmploymentType) emp.EmploymentType = row.changes.EmploymentType.new;
-          if (row.changes.DateOfAssumption) emp.DateOfAssumption = row.changes.DateOfAssumption.new;
-        }
+        if (update.changes.Position) emp.Position = update.changes.Position.new;
+        if (update.changes.EmploymentStatus) emp.EmploymentStatus = update.changes.EmploymentStatus.new;
+        if (update.changes.Office) emp.Office = update.changes.Office.new;
+        if (update.changes.Gender) emp.Gender = update.changes.Gender.new;
+        if (update.changes.EmploymentType) emp.EmploymentType = update.changes.EmploymentType.new;
+        if (update.changes.DateOfAssumption) emp.DateOfAssumption = update.changes.DateOfAssumption.new;
         emp.UpdatedAt = currentTime;
         emp.UpdatedBy = "Excel Import";
         updatedCount++;
       }
-      return true;
-    });
-
-    // Apply updates from toUpdate directly
-    for (const u of toUpdate) {
-      const emp = db.employees.find((e: any) => e.EmployeeID === u.employeeId);
-      if (emp) {
-        if (u.changes.Position) emp.Position = u.changes.Position.new;
-        if (u.changes.EmploymentStatus) emp.EmploymentStatus = u.changes.EmploymentStatus.new;
-        if (u.changes.Office) emp.Office = u.changes.Office.new;
-        if (u.changes.Gender) emp.Gender = u.changes.Gender.new;
-        if (u.changes.EmploymentType) emp.EmploymentType = u.changes.EmploymentType.new;
-        if (u.changes.DateOfAssumption) emp.DateOfAssumption = u.changes.DateOfAssumption.new;
-        emp.UpdatedAt = currentTime;
-        emp.UpdatedBy = "Excel Import";
-      }
-    }
-
-    // 2. Delete associated learning needs
-    if (deleteIds.size > 0) {
-      db.learningNeeds = (db.learningNeeds || []).filter((ln: any) => !deleteIds.has(ln.EmployeeID));
     }
 
     // 3. Create new employees

@@ -327,33 +327,113 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
 
       {/* Result Phase */}
       {phase === "result" && result && (
-        <div className="text-center space-y-6 py-8">
-          <CheckCircle className="w-16 h-16 mx-auto text-emerald-500" />
-          <div>
+        <div className="space-y-6 py-4">
+          <div className="text-center">
+            <CheckCircle className="w-16 h-16 mx-auto text-emerald-500 mb-4" />
             <h2 className="text-xl font-bold text-slate-800 dark:text-slate-100 mb-2">Import Complete</h2>
             <p className="text-sm text-slate-500 dark:text-slate-400">Database has been synced successfully</p>
           </div>
-          <div className="grid grid-cols-3 gap-4 max-w-md mx-auto">
-            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4">
+
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 max-w-xl mx-auto">
+            <div className="bg-blue-50 dark:bg-blue-950/30 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-blue-600 dark:text-blue-400">{result.created}</div>
               <div className="text-xs text-blue-500">Created</div>
             </div>
-            <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-4">
+            <div className="bg-amber-50 dark:bg-amber-950/30 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-amber-600 dark:text-amber-400">{result.updated}</div>
               <div className="text-xs text-amber-500">Updated</div>
             </div>
-            <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-4">
+            <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-red-600 dark:text-red-400">{result.deleted}</div>
               <div className="text-xs text-red-500">Deleted</div>
             </div>
+            <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-xl p-4 text-center">
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{result.totalNow}</div>
+              <div className="text-xs text-emerald-500">Total Now</div>
+            </div>
           </div>
-          <p className="text-sm text-slate-500">Total employees now: <strong>{result.totalNow}</strong></p>
-          <button
-            onClick={reset}
-            className="px-6 py-2.5 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
-          >
-            Import Another File
-          </button>
+
+          {/* Detailed lists from preview */}
+          {preview && (
+            <div className="space-y-3 max-w-3xl mx-auto">
+              {/* Created */}
+              {preview.toAdd.length > 0 && (
+                <div className="border border-blue-200 dark:border-blue-800 rounded-xl overflow-hidden">
+                  <button onClick={() => toggleSection("result-add")} className="w-full flex items-center justify-between px-4 py-3 bg-blue-50 dark:bg-blue-950/30 text-blue-700 dark:text-blue-300 text-sm font-semibold">
+                    <span className="flex items-center gap-2"><Plus className="w-4 h-4" /> {result.created} employees created</span>
+                    {expandedSections["result-add"] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </button>
+                  {expandedSections["result-add"] && (
+                    <div className="max-h-72 overflow-y-auto divide-y divide-blue-100 dark:divide-blue-900">
+                      {preview.toAdd.map((emp, i) => (
+                        <div key={i} className="px-4 py-2 text-xs text-slate-700 dark:text-slate-300 flex justify-between">
+                          <span>{emp.rawName}</span>
+                          <span className="text-slate-400">{emp.office || "No office"}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Updated */}
+              {preview.toUpdate.length > 0 && (
+                <div className="border border-amber-200 dark:border-amber-800 rounded-xl overflow-hidden">
+                  <button onClick={() => toggleSection("result-update")} className="w-full flex items-center justify-between px-4 py-3 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 text-sm font-semibold">
+                    <span className="flex items-center gap-2"><Pencil className="w-4 h-4" /> {result.updated} employees updated</span>
+                    {expandedSections["result-update"] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </button>
+                  {expandedSections["result-update"] && (
+                    <div className="max-h-72 overflow-y-auto divide-y divide-amber-100 dark:divide-amber-900">
+                      {preview.toUpdate.map((emp, i) => (
+                        <div key={i} className="px-4 py-2 text-xs text-slate-700 dark:text-slate-300">
+                          <div className="font-medium mb-1">{emp.name}</div>
+                          <div className="flex flex-wrap gap-1.5">
+                            {Object.entries(emp.changes).map(([field, change]) => (
+                              <span key={field} className="inline-flex items-center gap-1 bg-amber-100 dark:bg-amber-900/50 text-amber-700 dark:text-amber-300 rounded-md px-1.5 py-0.5">
+                                {field}: <span className="line-through opacity-50">{change.old || "(empty)"}</span>
+                                <ArrowRight className="w-3 h-3" />
+                                <span className="font-medium">{change.new || "(empty)"}</span>
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Deleted */}
+              {preview.toDelete.length > 0 && (
+                <div className="border border-red-200 dark:border-red-800 rounded-xl overflow-hidden">
+                  <button onClick={() => toggleSection("result-delete")} className="w-full flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm font-semibold">
+                    <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> {result.deleted} employees deleted</span>
+                    {expandedSections["result-delete"] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  </button>
+                  {expandedSections["result-delete"] && (
+                    <div className="max-h-72 overflow-y-auto divide-y divide-red-100 dark:divide-red-900">
+                      {preview.toDelete.map((emp, i) => (
+                        <div key={i} className="px-4 py-2 text-xs text-slate-700 dark:text-slate-300 flex justify-between">
+                          <span>{emp.name}</span>
+                          <span className="text-red-400">{emp.needsCount} learning need{emp.needsCount !== 1 ? "s" : ""} removed</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
+
+          <div className="text-center">
+            <button
+              onClick={reset}
+              className="px-6 py-2.5 rounded-xl text-sm font-medium bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 transition-all"
+            >
+              Import Another File
+            </button>
+          </div>
         </div>
       )}
 
