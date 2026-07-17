@@ -65,7 +65,6 @@ export default function RecordsTable({
   const [needFilter, setNeedFilter] = useState("");
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState("");
   const [employmentStatusFilter, setEmploymentStatusFilter] = useState("");
-  const [newlyHiredFilter, setNewlyHiredFilter] = useState("");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
 
@@ -147,11 +146,11 @@ export default function RecordsTable({
   // Fetch Joined Records on filter changes
   useEffect(() => {
     fetchRecords();
-  }, [searchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, newlyHiredFilter, sortBy, sortOrder]);
+  }, [searchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, sortBy, sortOrder]);
 
   const fetchRecords = () => {
     setLoading(true);
-    let url = `/api/learning-needs?search=${searchTerm}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&newlyHired=${newlyHiredFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    let url = `/api/learning-needs?search=${searchTerm}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
     
     fetch(url)
       .then((res) => res.json())
@@ -182,7 +181,6 @@ export default function RecordsTable({
     if (officeFilter) url += `office=${officeFilter}&`;
     if (employmentTypeFilter) url += `employmentType=${employmentTypeFilter}&`;
     if (employmentStatusFilter) url += `employmentStatus=${employmentStatusFilter}&`;
-    if (newlyHiredFilter) url += `newlyHired=${newlyHiredFilter}&`;
     if (startDate) url += `startDate=${startDate}&`;
     if (endDate) url += `endDate=${endDate}&`;
     
@@ -439,20 +437,6 @@ export default function RecordsTable({
             />
           </div>
 
-          {/* Filter by Newly Hired Status */}
-          <div>
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              Newly Hired Status
-            </label>
-            <SearchableSelect
-              value={newlyHiredFilter || "All Hires"}
-              onChange={(val) => { setNewlyHiredFilter(val === "All Hires" ? "" : val); setCurrentPage(1); }}
-              options={["All Hires", "Newly Hired", "N/A"]}
-              placeholder="All Hires"
-              allowCustom={false}
-            />
-          </div>
-
           {/* Start Date */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
@@ -555,24 +539,17 @@ export default function RecordsTable({
                         >
                           {rec.LastName}, {rec.FirstName}{rec.MiddleInitial ? ` ${rec.MiddleInitial}.` : ""}
                         </div>
-                        <div className="flex items-center gap-2 mt-0.5">
-                          {isRecentEntry(rec.EmployeeCreatedAt) && (
-                            <div className="text-[10px] text-slate-400 dark:text-slate-550">
-                              Encoded by: <span className="font-semibold text-slate-500 dark:text-slate-400">{rec.CreatedBy || "system"}</span>
-                              {rec.UpdatedBy && rec.UpdatedBy !== rec.CreatedBy && (
-                                <>
-                                  <span className="mx-1.5 text-slate-300 dark:text-slate-700">|</span>
-                                  Last edited by: <span className="font-semibold text-slate-500 dark:text-slate-400">{rec.UpdatedBy}</span>
-                                </>
-                              )}
-                            </div>
-                          )}
-                          {(rec as any).NewlyHired === "Newly Hired" && (
-                            <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-extrabold bg-green-500/10 text-green-600 dark:bg-green-500/20 dark:text-green-400 border border-green-200/30">
-                              Newly Hired
-                            </span>
-                          )}
-                        </div>
+                        {isRecentEntry(rec.EmployeeCreatedAt) && (
+                          <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
+                            Encoded by: <span className="font-semibold text-slate-500 dark:text-slate-400">{rec.CreatedBy || "system"}</span>
+                            {rec.UpdatedBy && rec.UpdatedBy !== rec.CreatedBy && (
+                              <>
+                                <span className="mx-1.5 text-slate-300 dark:text-slate-700">|</span>
+                                Last edited by: <span className="font-semibold text-slate-500 dark:text-slate-400">{rec.UpdatedBy}</span>
+                              </>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="py-3 px-6 text-slate-600 dark:text-slate-200 align-middle text-[12px] font-medium">
                         {renderPendingText(rec.Office)}
@@ -804,7 +781,7 @@ export default function RecordsTable({
               </div>
 
               {/* Meta details */}
-              <div className="grid grid-cols-4 gap-4 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
+              <div className="grid grid-cols-3 gap-4 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
                 <div>
                   <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Employment Status</span>
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{selectedEmployeeDetail.EmploymentStatus || "N/A"}</p>
@@ -816,10 +793,6 @@ export default function RecordsTable({
                 <div>
                   <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Date of Assumption</span>
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 mt-0.5">{selectedEmployeeDetail.DateOfAssumption || "N/A"}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Newly Hired?</span>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 mt-0.5">{(selectedEmployeeDetail as any).NewlyHired || "N/A"}</p>
                 </div>
               </div>
 

@@ -36,21 +36,6 @@ export default function EmployeeForm({
   const [employmentStatus, setEmploymentStatus] = useState("Undefined (Pending Review)");
   const [gender, setGender] = useState("Undefined (Pending Review)");
   const [dateOfAssumption, setDateOfAssumption] = useState("");
-  const [newlyHired, setNewlyHired] = useState("N/A");
-
-  useEffect(() => {
-    if (dateOfAssumption) {
-      const date = new Date(dateOfAssumption);
-      const startOf2026 = new Date("2026-01-01");
-      if (date >= startOf2026) {
-        setNewlyHired("Newly Hired");
-      } else {
-        setNewlyHired("N/A");
-      }
-    } else {
-      setNewlyHired("N/A");
-    }
-  }, [dateOfAssumption]);
 
   // Learning Needs List
   const [needs, setNeeds] = useState<LearningNeed[]>([]);
@@ -129,7 +114,6 @@ export default function EmployeeForm({
       setGender(employee.Gender || "Undefined (Pending Review)");
       const assumptionDate = employee.DateOfAssumption ? employee.DateOfAssumption.substring(0, 10) : "";
       setDateOfAssumption(assumptionDate);
-      setNewlyHired((employee as any).NewlyHired || "N/A");
 
       // Fetch employee's learning needs from backend
       fetch(`/api/employees/${employee.EmployeeID}`)
@@ -154,7 +138,6 @@ export default function EmployeeForm({
       setEmploymentStatus("Undefined (Pending Review)");
       setGender("Undefined (Pending Review)");
       setDateOfAssumption("");
-      setNewlyHired("N/A");
       setNeeds([createEmptyNeed()]);
     }
     setSimilarEmployees([]);
@@ -185,7 +168,6 @@ export default function EmployeeForm({
         setGender(employee.Gender || "Undefined (Pending Review)");
         const assumptionDate = employee.DateOfAssumption ? employee.DateOfAssumption.substring(0, 10) : "";
         setDateOfAssumption(assumptionDate);
-        setNewlyHired((employee as any).NewlyHired || "N/A");
         
         fetch(`/api/employees/${employee.EmployeeID}`)
           .then((res) => res.json())
@@ -208,7 +190,6 @@ export default function EmployeeForm({
         setEmploymentStatus("Undefined (Pending Review)");
         setGender("Undefined (Pending Review)");
         setDateOfAssumption("");
-        setNewlyHired("N/A");
         setNeeds([createEmptyNeed()]);
       }
       setSimilarEmployees([]);
@@ -587,7 +568,6 @@ export default function EmployeeForm({
       EmploymentStatus: employmentStatus,
       Gender: gender,
       DateOfAssumption: dateOfAssumption ? new Date(dateOfAssumption).toISOString() : null as any,
-      NewlyHired: newlyHired,
     };
 
     onSave(empData, cleanNeeds);
@@ -844,20 +824,6 @@ export default function EmployeeForm({
               value={dateOfAssumption}
               onChange={(e: any) => setDateOfAssumption(e.target.value)}
               className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
-            />
-          </div>
-
-          {/* Newly Hired Status */}
-          <div className="md:col-span-6">
-            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              Newly Hired Status
-            </label>
-            <SearchableSelect
-              value={newlyHired}
-              onChange={setNewlyHired}
-              options={["Newly Hired", "N/A"]}
-              placeholder="Select status..."
-              allowCustom={false}
             />
           </div>
         </div>

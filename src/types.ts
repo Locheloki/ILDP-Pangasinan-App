@@ -25,7 +25,6 @@ export interface Employee {
   needsCount?: number;
   Gender?: string;
   DateOfAssumption?: string;
-  NewlyHired?: string;
 }
 
 export interface LearningNeed {

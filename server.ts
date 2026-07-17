@@ -596,7 +596,6 @@ app.get("/api/employees/pending", (req, res) => {
   const office = req.query.office ? (req.query.office as string).toLowerCase() : "";
   const employmentType = req.query.employmentType ? (req.query.employmentType as string).toLowerCase() : "";
   const employmentStatus = req.query.employmentStatus ? (req.query.employmentStatus as string).toLowerCase() : "";
-  const newlyHired = req.query.newlyHired ? (req.query.newlyHired as string).toLowerCase() : "";
   const mode = req.query.mode ? (req.query.mode as string) : "no_needs";
 
   // Find IDs of all employees who have at least one learning need
@@ -632,9 +631,6 @@ app.get("/api/employees/pending", (req, res) => {
   if (employmentStatus) {
     pending = pending.filter((emp: any) => emp.EmploymentStatus && emp.EmploymentStatus.toLowerCase() === employmentStatus);
   }
-  if (newlyHired) {
-    pending = pending.filter((emp: any) => emp.NewlyHired && emp.NewlyHired.toLowerCase() === newlyHired);
-  }
 
   // Sort alphabetically by last name
   pending.sort((a: any, b: any) => a.LastName.localeCompare(b.LastName));
@@ -664,7 +660,7 @@ app.get("/api/employees/:id", (req, res) => {
 
 // 6. Create New Employee
 app.post("/api/employees", (req, res) => {
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -694,7 +690,6 @@ app.post("/api/employees", (req, res) => {
     EmploymentStatus: status,
     StatusChangedAt: ["Newly Hired", "Re-employed", "Casual"].includes(status) ? new Date().toISOString() : null,
     Gender: gender || "Undefined (Pending Review)",
-    NewlyHired: newlyHired || "N/A",
     CreatedAt: new Date().toISOString(),
     UpdatedAt: new Date().toISOString(),
     CreatedBy: username,
@@ -715,7 +710,7 @@ app.post("/api/employees", (req, res) => {
 // 7. Update Employee and Learning Needs in one transaction (Sync)
 app.put("/api/employees/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, needs = [], username = "system" } = req.body;
+  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, needs = [], username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -751,7 +746,6 @@ app.put("/api/employees/:id", (req, res) => {
     EmploymentStatus: newStatus,
     StatusChangedAt: statusChangedAt,
     Gender: gender || oldEmp.Gender || "Undefined (Pending Review)",
-    NewlyHired: newlyHired || oldEmp.NewlyHired || "N/A",
     UpdatedAt: new Date().toISOString(),
     UpdatedBy: username,
     CreatedBy: oldEmp.CreatedBy || username,
@@ -861,7 +855,7 @@ app.post("/api/employees/:id/learning-needs", (req, res) => {
 // 10. Get All Learning Need Records in tabular format (joined with Employee details)
 app.get("/api/learning-needs", (req, res) => {
   const db = readDatabase();
-  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", newlyHired = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
+  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
 
   let results: any[] = [];
 
@@ -894,7 +888,6 @@ app.get("/api/learning-needs", (req, res) => {
           EmployeeUpdatedBy: emp.UpdatedBy,
           Gender: emp.Gender,
           DateOfAssumption: emp.DateOfAssumption,
-          NewlyHired: emp.NewlyHired || "N/A",
         });
       });
     } else {
@@ -923,7 +916,6 @@ app.get("/api/learning-needs", (req, res) => {
         EmployeeUpdatedBy: emp.UpdatedBy,
         Gender: emp.Gender,
         DateOfAssumption: emp.DateOfAssumption,
-        NewlyHired: emp.NewlyHired || "N/A",
       });
     }
   });
@@ -964,11 +956,6 @@ app.get("/api/learning-needs", (req, res) => {
     results = results.filter((item) => item.EmploymentStatus && item.EmploymentStatus.toLowerCase() === es);
   }
 
-  if (newlyHired) {
-    const nh = (newlyHired as string).toLowerCase();
-    results = results.filter((item) => item.NewlyHired && item.NewlyHired.toLowerCase() === nh);
-  }
-
   // Sorting
   results.sort((a, b) => {
     let valA = a[sortBy as string] || "";
@@ -1002,7 +989,7 @@ app.delete("/api/learning-needs/:id", (req, res) => {
 
 // 12. Excel Export using ExcelJS
 app.get("/api/export/excel", async (req, res) => {
-  const { employeeId, office, startDate, endDate, employmentType, employmentStatus, newlyHired } = req.query;
+  const { employeeId, office, startDate, endDate, employmentType, employmentStatus } = req.query;
   const db = readDatabase();
 
   let results: any[] = [];
@@ -1028,7 +1015,6 @@ app.get("/api/export/excel", async (req, res) => {
           CreatedAt: ln.CreatedAt,
           Gender: emp.Gender,
           DateOfAssumption: emp.DateOfAssumption,
-          NewlyHired: emp.NewlyHired || "N/A",
         });
       });
     } else {
@@ -1048,7 +1034,6 @@ app.get("/api/export/excel", async (req, res) => {
         CreatedAt: emp.CreatedAt,
         Gender: emp.Gender,
         DateOfAssumption: emp.DateOfAssumption,
-        NewlyHired: emp.NewlyHired || "N/A",
       });
     }
   });
@@ -1074,11 +1059,6 @@ app.get("/api/export/excel", async (req, res) => {
     results = results.filter((item) => item.EmploymentStatus && item.EmploymentStatus.toLowerCase() === es);
   }
 
-  if (newlyHired) {
-    const nh = (newlyHired as string).toLowerCase();
-    results = results.filter((item) => item.NewlyHired && item.NewlyHired.toLowerCase() === nh);
-  }
-
   if (startDate) {
     const sDate = new Date(startDate as string);
     results = results.filter((item) => new Date(item.CreatedAt) >= sDate);
@@ -1096,7 +1076,7 @@ app.get("/api/export/excel", async (req, res) => {
   const worksheet = workbook.addWorksheet("Learning Needs Summary");
 
   // Title Row
-  worksheet.mergeCells("A1", "M1");
+  worksheet.mergeCells("A1", "L1");
   const titleCell = worksheet.getCell("A1");
   titleCell.value = "INDIVIDUAL LEARNING AND DEVELOPMENT PLAN (ILDP) LEARNING NEEDS SUMMARY";
   titleCell.font = { name: "Arial", size: 14, bold: true, color: { argb: "FFFFFFFF" } };
@@ -1109,7 +1089,7 @@ app.get("/api/export/excel", async (req, res) => {
   worksheet.getRow(1).height = 40;
 
   // Subtitle / Meta Row
-  worksheet.mergeCells("A2", "M2");
+  worksheet.mergeCells("A2", "L2");
   const subCell = worksheet.getCell("A2");
   subCell.value = `Exported on: ${new Date().toLocaleDateString()} | Total Records: ${results.length}`;
   subCell.font = { name: "Arial", size: 10, italic: true };
@@ -1124,7 +1104,6 @@ app.get("/api/export/excel", async (req, res) => {
     "Employee Name",
     "Gender",
     "Date of Assumption",
-    "Newly Hired?",
     "Office/Department",
     "Position",
     "Employment Type",
@@ -1161,7 +1140,6 @@ app.get("/api/export/excel", async (req, res) => {
       fullName,
       item.Gender || "N/A",
       formattedDoa,
-      item.NewlyHired || "N/A",
       item.Office,
       item.Position,
       item.EmploymentType,

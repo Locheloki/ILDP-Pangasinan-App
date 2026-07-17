@@ -41,22 +41,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
   const [employmentStatus, setEmploymentStatus] = useState("Undefined (Pending Review)");
   const [gender, setGender] = useState("Undefined (Pending Review)");
   const [dateOfAssumption, setDateOfAssumption] = useState("");
-  const [newlyHired, setNewlyHired] = useState("N/A");
   const [needs, setNeeds] = useState<LearningNeed[]>([createEmptyNeed()]);
-
-  useEffect(() => {
-    if (dateOfAssumption) {
-      const date = new Date(dateOfAssumption);
-      const startOf2026 = new Date("2026-01-01");
-      if (date >= startOf2026) {
-        setNewlyHired("Newly Hired");
-      } else {
-        setNewlyHired("N/A");
-      }
-    } else {
-      setNewlyHired("N/A");
-    }
-  }, [dateOfAssumption]);
   const [isAddingCard, setIsAddingCard] = useState(false);
   const [clipboardCount, setClipboardCount] = useState(() => getStoredLearningNeedsClipboardCount());
   const [clipboardStatus, setClipboardStatus] = useState<string>("");
@@ -254,7 +239,6 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
     setEmploymentStatus(emp.EmploymentStatus || "Undefined (Pending Review)");
     setGender(emp.Gender || "Undefined (Pending Review)");
     setDateOfAssumption(emp.DateOfAssumption ? emp.DateOfAssumption.substring(0, 10) : "");
-    setNewlyHired((emp as any).NewlyHired || "N/A");
     setNeeds([createEmptyNeed()]);
     setError(null);
   };
@@ -422,7 +406,6 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
       employmentStatus: employmentStatus,
       gender: gender,
       dateOfAssumption: dateOfAssumption ? new Date(dateOfAssumption).toISOString() : null,
-      newlyHired: newlyHired,
       needs: cleanNeeds,
       username: currentUser.username,
     };
@@ -489,7 +472,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [selectedEmployee, firstName, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, needs, queueType, playlistQueue]);
+  }, [selectedEmployee, firstName, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, needs, queueType, playlistQueue]);
 
   // Bring newly added learning need cards into view inside rapid encoding
   useEffect(() => {
@@ -955,20 +938,6 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                       value={dateOfAssumption}
                       onChange={(e) => setDateOfAssumption(e.target.value)}
                       className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
-                    />
-                  </div>
-
-                  {/* Newly Hired */}
-                  <div className="md:col-span-2">
-                    <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-                      Newly Hired Status
-                    </label>
-                    <SearchableSelect
-                      value={newlyHired}
-                      onChange={setNewlyHired}
-                      options={["Newly Hired", "N/A"]}
-                      placeholder="Newly Hired"
-                      allowCustom={false}
                     />
                   </div>
                 </div>
