@@ -370,13 +370,24 @@ export default function RecordsTable({
             <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display">Filter & Search Directory</h3>
           </div>
           
-          <button
-            onClick={handleExportExcel}
-            className="btn-glass text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-200/50 dark:border-emerald-900/30 text-xs py-2 px-4 cursor-pointer"
-          >
-            <FileSpreadsheet className="h-4 w-4" />
-            <span>Export Search to Excel</span>
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handleExportExcel}
+              className="btn-glass text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-200/50 dark:border-emerald-900/30 text-xs py-2 px-4 cursor-pointer"
+            >
+              <FileSpreadsheet className="h-4 w-4" />
+              <span>Export Search to Excel</span>
+            </button>
+            <label className="flex items-center gap-2 cursor-pointer select-none text-xs text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-800 rounded-xl py-2 px-4 hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200">
+              <input
+                type="checkbox"
+                checked={hideNoNeeds}
+                onChange={(e) => { setHideNoNeeds(e.target.checked); setCurrentPage(1); }}
+                className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
+              />
+              <span className="font-semibold whitespace-nowrap">Hide No Learning Needs</span>
+            </label>
+          </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
@@ -455,19 +466,6 @@ export default function RecordsTable({
               placeholder="All Entries"
               allowCustom={false}
             />
-          </div>
-
-          {/* Toggle: Hide employees with no learning needs */}
-          <div className="flex items-end">
-            <label className="flex items-center gap-2 cursor-pointer select-none px-3.5 py-1.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl text-xs text-slate-700 dark:text-slate-200 hover:border-blue-400 dark:hover:border-blue-500 transition-colors duration-200">
-              <input
-                type="checkbox"
-                checked={hideNoNeeds}
-                onChange={(e) => { setHideNoNeeds(e.target.checked); setCurrentPage(1); }}
-                className="w-3.5 h-3.5 rounded border-slate-300 dark:border-slate-700 text-blue-600 focus:ring-blue-500 cursor-pointer"
-              />
-              <span className="font-semibold whitespace-nowrap">Hide No Learning Needs</span>
-            </label>
           </div>
 
           {/* Start Date */}
