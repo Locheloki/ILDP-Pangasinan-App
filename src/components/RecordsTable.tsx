@@ -317,7 +317,9 @@ export default function RecordsTable({
     return Array.from(map.values());
   };
 
-  const groupedRecords = groupRecordsByEmployee(records);
+  const groupedRecords = groupRecordsByEmployee(records).filter(
+    (rec) => !hideNoNeeds || rec.Needs.length > 0
+  );
 
   // Pagination calculation
   const indexOfLastItem = currentPage * itemsPerPage;
