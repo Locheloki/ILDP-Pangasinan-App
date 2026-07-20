@@ -1071,17 +1071,9 @@ export default function EmployeeForm({
         <button
           type="button"
           onClick={handleReset}
-          className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer mr-auto"
-        >
-          Reset Fields
-        </button>
-        <button
-          type="button"
-          onClick={onCancel}
-          data-sticky-anchor
           className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer"
         >
-          Cancel
+          Reset Fields
         </button>
         <button
           type="submit"

@@ -690,14 +690,6 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       {/* 2. SEMINAR DETAILS VIEW */}
       {!loading && view === "details" && selectedSeminar && (
         <div className="space-y-6">
-          <button
-            onClick={() => setView("list")}
-            data-sticky-anchor
-            className="btn-glass hover:bg-slate-100 dark:hover:bg-slate-800 text-xs py-2 px-3.5 rounded-xl flex items-center gap-2 cursor-pointer font-semibold transition"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Back to Seminars</span>
-          </button>
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -844,14 +836,6 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       {/* 3. EXCEL IMPORT WIZARD */}
       {!loading && view === "import" && (
         <div className="space-y-6">
-          <button
-            onClick={resetImport}
-            data-sticky-anchor
-            className="btn-glass hover:bg-slate-100 dark:hover:bg-slate-800 text-xs py-2 px-3.5 rounded-xl flex items-center gap-2 cursor-pointer font-semibold transition"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            <span>Cancel Import</span>
-          </button>
 
           {!previewData && !importSummary && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center space-y-4">
