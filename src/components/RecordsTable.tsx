@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye, AlertTriangle } from "lucide-react";
+import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye, AlertTriangle, ArrowLeft } from "lucide-react";
 import { Employee, LearningNeed } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
 import SearchableSelect from "./SearchableSelect";
@@ -830,19 +830,31 @@ export default function RecordsTable({
       {detailModalOpen && selectedEmployeeDetail && createPortal(
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-end animate-fade-in">
           <div className="w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col relative animate-slide-in-right transition-colors duration-200">
-            {/* Topbar */}
-            <div className="border-b border-slate-100 dark:border-slate-800 p-6 flex items-center justify-between bg-slate-50/50 dark:bg-slate-950/40 transition-colors duration-200">
-              <div>
-                <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 font-display">Employee Profile Card</h3>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest mt-0.5 block">
-                  ILDP Employee Records
+            {/* Topbar — sticky back arrow */}
+            <div className="shrink-0 border-b border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center gap-3 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm transition-colors duration-200 sticky top-0 z-10">
+              <button
+                onClick={() => setDetailModalOpen(false)}
+                className="text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-100 cursor-pointer"
+                aria-label="Back to records"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white font-display truncate">
+                  {selectedEmployeeDetail.LastName}, {selectedEmployeeDetail.FirstName} {selectedEmployeeDetail.MiddleInitial || ""}
+                </h3>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest">
+                  Quick View
                 </span>
               </div>
               <button
-                onClick={() => setDetailModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-950 cursor-pointer"
+                onClick={() => {
+                  setDetailModalOpen(false);
+                  onEditEmployee(selectedEmployeeDetail.EmployeeID);
+                }}
+                className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-[11px] font-bold py-1.5 px-3 rounded-lg cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100 shrink-0"
               >
-                <X className="h-5 w-5" />
+                Edit
               </button>
             </div>
 
@@ -1008,19 +1020,13 @@ export default function RecordsTable({
             </div>
 
             {/* Actions Footer */}
-            <div className="p-6 border-t border-slate-100 dark:border-slate-800 flex items-center justify-end gap-3 bg-slate-50/50 dark:bg-slate-950/40 transition-colors duration-200">
-              <button
-                onClick={() => setDetailModalOpen(false)}
-                className="btn-glass text-xs py-2 px-4 cursor-pointer"
-              >
-                Close Profile
-              </button>
+            <div className="shrink-0 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm transition-colors duration-200">
               <button
                 onClick={() => {
                   setDetailModalOpen(false);
                   onEditEmployee(selectedEmployeeDetail.EmployeeID);
                 }}
-                className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-blue-500/5"
+                className="w-full btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2.5 px-4 cursor-pointer font-bold rounded-xl shadow-md shadow-blue-500/5 transition-all duration-100"
               >
                 Modify Records
               </button>
