@@ -15,10 +15,14 @@ import {
   User,
   Plus,
   Trash2,
-  ListFilter
+  ListFilter,
+  Loader2,
+  UserPlus
 } from "lucide-react";
 import { Seminar, Employee, LearningNeed } from "../types";
 import StickyBackButton from "./StickyBackButton";
+import EmployeeProfileDrawer from "./EmployeeProfileDrawer";
+import Modal from "./Modal";
 
 interface SeminarsProps {
   year: number | null;
@@ -26,6 +30,7 @@ interface SeminarsProps {
   onSelectEmployee: (empId: number) => void;
   currentUser: any;
   onSeminarChange?: () => void;
+  onAddNewRecord?: () => void;
 }
 
 interface SeminarFormModalProps {
@@ -64,67 +69,65 @@ function SeminarFormModal({ title, submitLabel, titleValue, yearValue, quarterVa
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in" role="dialog" aria-modal="true" aria-label={title}>
-      <div className="bg-white dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded-2xl max-w-lg w-full shadow-2xl animate-scale-up relative z-50 flex flex-col max-h-[90vh]">
-        <div className="flex justify-between items-center px-6 pt-5 pb-3 shrink-0">
-          <h3 className="text-base font-bold text-slate-800 dark:text-white">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-all duration-100 cursor-pointer" aria-label="Close dialog">
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-        <div className="px-6 pb-5 space-y-4 text-left overflow-y-auto flex-1 min-h-0">
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Seminar Name / Title</label>
-            <input ref={titleRef} type="text" placeholder="e.g. Leadership Development Seminar" value={titleValue} onChange={(e) => onTitleChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Year</label>
-              <input type="number" value={yearValue} onChange={(e) => onYearChange(Number(e.target.value))} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Quarter</label>
-              <select value={quarterValue} onChange={(e) => onQuarterChange(e.target.value as any)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200">
-                <option value="Q1">Q1</option>
-                <option value="Q2">Q2</option>
-                <option value="Q3">Q3</option>
-                <option value="Q4">Q4</option>
-              </select>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Date</label>
-              <input type="date" value={dateValue} onChange={(e) => onDateChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
-            </div>
-            <div>
-              <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Venue / Location</label>
-              <input type="text" placeholder="e.g. Training Center" value={locationValue} onChange={(e) => onLocationChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
-            </div>
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Facilitator / Speaker</label>
-            <input type="text" placeholder="e.g. John Doe, HR Expert" value={speakerValue} onChange={(e) => onSpeakerChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
-          </div>
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Description / Remarks</label>
-            <textarea placeholder="e.g. Attendance is mandatory for all department heads" value={remarksValue} onChange={(e) => onRemarksChange(e.target.value)} rows={2} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200 resize-none" />
-          </div>
-        </div>
-        <div className="flex justify-end gap-2.5 px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+    <Modal
+      isOpen
+      onClose={onClose}
+      title={title}
+      ariaLabel={title}
+      bodyClassName="space-y-4"
+      footer={
+        <>
           <button onClick={onClose} className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform duration-100">
             Cancel <span className="text-[10px] text-slate-400 dark:text-slate-500 font-normal ml-1">Esc</span>
           </button>
           <button ref={submitRef} onClick={onSubmit} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-5 cursor-pointer font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-blue-500/5 transition-transform duration-100">
             {submitLabel} <span className="text-[10px] text-blue-400 dark:text-blue-300 font-normal ml-1">Ctrl+Enter</span>
           </button>
+        </>
+      }
+    >
+      <div>
+        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Seminar Name / Title</label>
+        <input ref={titleRef} type="text" placeholder="e.g. Leadership Development Seminar" value={titleValue} onChange={(e) => onTitleChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
+      </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Year</label>
+          <input type="number" value={yearValue} onChange={(e) => onYearChange(Number(e.target.value))} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Quarter</label>
+          <select value={quarterValue} onChange={(e) => onQuarterChange(e.target.value as any)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200">
+            <option value="Q1">Q1</option>
+            <option value="Q2">Q2</option>
+            <option value="Q3">Q3</option>
+            <option value="Q4">Q4</option>
+          </select>
         </div>
       </div>
-    </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Date</label>
+          <input type="date" value={dateValue} onChange={(e) => onDateChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
+        </div>
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Venue / Location</label>
+          <input type="text" placeholder="e.g. Training Center" value={locationValue} onChange={(e) => onLocationChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
+        </div>
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Facilitator / Speaker</label>
+        <input type="text" placeholder="e.g. John Doe, HR Expert" value={speakerValue} onChange={(e) => onSpeakerChange(e.target.value)} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200" />
+      </div>
+      <div>
+        <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">Description / Remarks</label>
+        <textarea placeholder="e.g. Attendance is mandatory for all department heads" value={remarksValue} onChange={(e) => onRemarksChange(e.target.value)} rows={2} className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors duration-200 resize-none" />
+      </div>
+    </Modal>
   );
 }
 
-export default function Seminars({ year, quarter, onSelectEmployee, currentUser, onSeminarChange }: SeminarsProps) {
+export default function Seminars({ year, quarter, onSelectEmployee, currentUser, onSeminarChange, onAddNewRecord }: SeminarsProps) {
   // Navigation State
   const [view, setView] = useState<"list" | "details" | "import">("list");
   
@@ -139,15 +142,18 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [manualTitle, setManualTitle] = useState("");
-  const [manualYear, setManualYear] = useState<number>(2026);
+  const currentYear = new Date().getFullYear();
+  const [manualYear, setManualYear] = useState<number>(currentYear);
   const [manualQuarter, setManualQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4">("Q2");
   const [manualDate, setManualDate] = useState("");
   const [manualLocation, setManualLocation] = useState("");
   const [manualSpeaker, setManualSpeaker] = useState("");
   const [manualRemarks, setManualRemarks] = useState("");
 
+  // Edit states
+  const [editSeminarId, setEditSeminarId] = useState<string | null>(null);
   const [editTitle, setEditTitle] = useState("");
-  const [editYear, setEditYear] = useState<number>(2026);
+  const [editYear, setEditYear] = useState<number>(currentYear);
   const [editQuarter, setEditQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4">("Q2");
   const [editDate, setEditDate] = useState("");
   const [editLocation, setEditLocation] = useState("");
@@ -159,13 +165,13 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerEmployees, setPickerEmployees] = useState<Employee[]>([]);
   const [selectedPickerIds, setSelectedPickerIds] = useState<number[]>([]);
+  const [pickerLoading, setPickerLoading] = useState(false);
 
   // Employee Profile Quick View (read-only)
   const [profileEmployee, setProfileEmployee] = useState<Employee | null>(null);
   const [profileNeeds, setProfileNeeds] = useState<LearningNeed[]>([]);
   const [profileSeminars, setProfileSeminars] = useState<any[]>([]);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [profileTab, setProfileTab] = useState<"needs" | "seminars">("needs");
 
   // Import Wizard State
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -279,7 +285,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         const data = await res.json();
         setPreviewData({
           title: data.title || "",
-          year: data.year || year || 2026,
+          year: data.year || year || currentYear,
           quarter: data.quarter || quarter || "Q2",
           date: data.date || "",
           location: "",
@@ -462,38 +468,37 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   };
 
   // 4. Attendee Picker search effect
+  // Normalize API response: handle both { employees: [...] } (current) and [...] (legacy flat array)
+  const normalizeEmployees = (data: any): Employee[] => {
+    if (Array.isArray(data)) return data;
+    return data?.employees || [];
+  };
+
   useEffect(() => {
     if (!isPickerOpen) return;
-    if (pickerSearch.trim().length > 1) {
+    const currentAttendeeIds = (selectedSeminar?.attendees || []).map(a => a.EmployeeID);
+
+    if (pickerSearch.trim().length >= 2) {
+      setPickerLoading(true);
       const delay = setTimeout(async () => {
         try {
-          const res = await fetch(`/api/employees?search=${encodeURIComponent(pickerSearch)}`);
+          const res = await fetch(`/api/employees?search=${encodeURIComponent(pickerSearch.trim())}&limit=50`);
           if (res.ok) {
             const data = await res.json();
-            // Filter out employees who are already registered as attendees in the current seminar
-            const currentAttendeeIds = (selectedSeminar?.attendees || []).map(a => a.EmployeeID);
-            const filtered = (data.employees || []).filter(
+            const filtered = normalizeEmployees(data).filter(
               (emp: Employee) => !currentAttendeeIds.includes(emp.EmployeeID)
             );
             setPickerEmployees(filtered);
           }
         } catch (err) {
           console.error(err);
+        } finally {
+          setPickerLoading(false);
         }
       }, 250);
       return () => clearTimeout(delay);
     } else {
-      // Load all employees by default if empty search
-      fetch("/api/employees")
-        .then(res => res.json())
-        .then(data => {
-          const currentAttendeeIds = (selectedSeminar?.attendees || []).map(a => a.EmployeeID);
-          const filtered = (data.employees || []).filter(
-            (emp: Employee) => !currentAttendeeIds.includes(emp.EmployeeID)
-          );
-          setPickerEmployees(filtered);
-        })
-        .catch(err => console.error(err));
+      setPickerEmployees([]);
     }
   }, [pickerSearch, isPickerOpen, selectedSeminar]);
 
@@ -528,7 +533,6 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       setProfileEmployee(data);
       setProfileNeeds(data.needs || []);
       setProfileSeminars(data.seminars || []);
-      setProfileTab("needs");
       setIsProfileOpen(true);
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -572,7 +576,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   });
 
   return (
-    <div className="space-y-6">
+    <div key={`${year}-${quarter}`} className="space-y-6 animate-fade-in-up">
       {/* HEADER CONTROLS */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
@@ -620,7 +624,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         <>
           {seminars.length === 0 ? (
             <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl p-12 text-center flex flex-col items-center justify-center space-y-3">
-              <div className="p-4 bg-slate-50 dark:bg-slate-850/60 text-slate-400 rounded-full">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/60 text-slate-400 rounded-full">
                 <Calendar className="h-8 w-8" />
               </div>
               <h3 className="text-sm font-bold text-slate-800 dark:text-white">No seminars logged for {year} ({quarter || "All Quarters"})</h3>
@@ -634,12 +638,12 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                 <div
                   key={sem.id}
                   onClick={() => handleSelectSeminar(sem.id)}
-                  className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-xs hover:shadow-md transition duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden"
+                  className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl p-5 hover:border-blue-500/50 dark:hover:border-blue-500/30 shadow-xs hover:shadow-md active:scale-[0.98] active:shadow-sm transition-all duration-200 cursor-pointer flex flex-col justify-between group relative overflow-hidden"
                 >
                   <div className="space-y-3">
                     <div className="flex justify-between items-start">
                       <div className="flex items-center gap-1.5">
-                        <span className="bg-slate-100 dark:bg-slate-800/80 text-slate-650 dark:text-slate-300 text-[10px] font-bold px-2.5 py-1 rounded-md border border-slate-200/40 dark:border-white/5">
+                        <span className="bg-slate-100 dark:bg-slate-800/80 text-slate-600 dark:text-slate-300 text-[10px] font-bold px-2.5 py-1 rounded-md border border-slate-200/40 dark:border-white/5">
                           {sem.year}
                         </span>
                         <span className="bg-blue-100 dark:bg-blue-950/60 text-blue-700 dark:text-blue-400 text-[10px] font-bold px-2.5 py-1 rounded-md">
@@ -667,7 +671,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                           </span>
                         )}
                         {sem.location && (
-                          <span className="text-[10px] text-slate-450 dark:text-slate-400 font-medium">
+                          <span className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">
                             Venue: {sem.location}
                           </span>
                         )}
@@ -675,7 +679,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-150 dark:border-slate-800/80">
+                  <div className="flex items-center justify-between pt-4 mt-4 border-t border-slate-200 dark:border-slate-800/80">
                     <span className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
                       <Users className="h-4 w-4 text-slate-400" />
                       {sem.attendees?.length || 0} Registered Attendees
@@ -691,7 +695,8 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
 
       {/* 2. SEMINAR DETAILS VIEW */}
       {!loading && view === "details" && selectedSeminar && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in-up">
+          <StickyBackButton onBack={() => setView("list")} />
 
           <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl p-6 space-y-4">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-100 dark:border-slate-800 pb-4">
@@ -727,18 +732,18 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                 {(currentUser?.role === "Administrator" || currentUser?.role === "System developer") && (
                   <button
                     onClick={triggerOpenEdit}
-                    className="btn-glass bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-350 text-xs py-2.5 px-4 rounded-xl font-bold cursor-pointer transition"
+                    className="btn-glass bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs py-2.5 px-4 rounded-xl font-bold cursor-pointer transition"
                   >
                     Edit Seminar
                   </button>
                 )}
-                <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-150 dark:border-white/5 rounded-xl p-4 flex items-center gap-3 shrink-0 shadow-2xs">
+                <div className="bg-slate-50 dark:bg-slate-950/40 border border-slate-200/60 dark:border-white/5 rounded-xl p-4 flex items-center gap-3 shrink-0 shadow-xs">
                   <div className="p-2.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-lg">
                     <Users className="h-5 w-5" />
                   </div>
                   <div>
                     <span className="text-xs text-slate-400 block font-medium">Attendee Count</span>
-                    <span className="text-lg font-bold text-slate-850 dark:text-white leading-none">{selectedSeminar.attendees?.length || 0}</span>
+                    <span className="text-lg font-bold text-slate-800 dark:text-white leading-none">{selectedSeminar.attendees?.length || 0}</span>
                   </div>
                 </div>
               </div>
@@ -753,7 +758,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                   placeholder="Search attendees by name, office, or position..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="block w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs text-slate-885 dark:text-slate-100 transition-colors"
+                  className="block w-full pl-10 pr-4 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-xs text-slate-800 dark:text-slate-100 transition-colors"
                 />
               </div>
 
@@ -779,7 +784,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
             </div>
 
             {/* TABLE */}
-            <div className="overflow-x-auto border border-slate-100 dark:border-slate-800 rounded-xl shadow-3xs">
+            <div className="overflow-x-auto border border-slate-100 dark:border-slate-800 rounded-xl shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-slate-50 dark:bg-slate-950/60 text-slate-500 dark:text-slate-400 font-bold border-b border-slate-100 dark:border-slate-800">
@@ -800,7 +805,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                     sortedAttendees.map((a) => (
                       <tr 
                         key={a.id} 
-                        className="hover:bg-slate-50/50 dark:hover:bg-slate-850/20 transition duration-100 group"
+                        className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition duration-100 group"
                       >
                         <td className="p-3.5 font-bold text-slate-800 dark:text-slate-200">
                           {a.LastName}, {a.FirstName} {a.MiddleInitial || ""}
@@ -837,7 +842,8 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
 
       {/* 3. EXCEL IMPORT WIZARD */}
       {!loading && view === "import" && (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in-up">
+          <StickyBackButton onBack={resetImport} />
 
           {!previewData && !importSummary && (
             <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl p-12 flex flex-col items-center justify-center space-y-4">
@@ -882,7 +888,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                       type="text"
                       value={previewData.title}
                       onChange={(e) => setPreviewData({ ...previewData, title: e.target.value })}
-                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-850 dark:text-white font-semibold"
+                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
                     />
                   </div>
                   <div>
@@ -893,7 +899,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                       type="number"
                       value={previewData.year}
                       onChange={(e) => setPreviewData({ ...previewData, year: Number(e.target.value) })}
-                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-850 dark:text-white font-semibold"
+                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
                     />
                   </div>
                   <div>
@@ -903,7 +909,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                     <select
                       value={previewData.quarter}
                       onChange={(e) => setPreviewData({ ...previewData, quarter: e.target.value as any })}
-                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-850 dark:text-white font-semibold"
+                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
                     >
                       <option value="Q1">Q1 (Jan - Mar)</option>
                       <option value="Q2">Q2 (Apr - Jun)</option>
@@ -919,7 +925,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                       type="date"
                       value={previewData.date}
                       onChange={(e) => setPreviewData({ ...previewData, date: e.target.value })}
-                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-850 dark:text-white font-semibold"
+                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
                     />
                   </div>
                   <div>
@@ -931,7 +937,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                       placeholder="e.g. Provincial Training Center"
                       value={previewData.location}
                       onChange={(e) => setPreviewData({ ...previewData, location: e.target.value })}
-                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-850 dark:text-white font-semibold"
+                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
                     />
                   </div>
                   <div>
@@ -943,7 +949,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                       placeholder="e.g. Conducted by CEEOD trainers"
                       value={previewData.remarks}
                       onChange={(e) => setPreviewData({ ...previewData, remarks: e.target.value })}
-                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-850 dark:text-white font-semibold"
+                      className="block w-full px-3.5 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
                     />
                   </div>
                 </div>
@@ -951,7 +957,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
 
               {/* Metrics Alerts */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-start gap-3 shadow-2xs">
+                <div className="bg-emerald-500/10 border border-emerald-500/20 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
                   <div className="p-2 bg-emerald-500/25 text-emerald-700 dark:text-emerald-400 rounded-lg">
                     <CheckCircle className="h-5 w-5" />
                   </div>
@@ -961,7 +967,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                   </div>
                 </div>
 
-                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-start gap-3 shadow-2xs">
+                <div className="bg-amber-500/10 border border-amber-500/20 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
                   <div className="p-2 bg-amber-500/25 text-amber-700 dark:text-amber-400 rounded-lg">
                     <AlertTriangle className="h-5 w-5" />
                   </div>
@@ -969,6 +975,19 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                     <span className="text-xs font-bold text-amber-800 dark:text-amber-400 block uppercase tracking-wider">Unmatched Staging Records</span>
                     <span className="text-lg font-bold text-slate-800 dark:text-white leading-none">{previewData.unmatched.length} require manual validation</span>
                   </div>
+                </div>
+              </div>
+
+              {/* Review Recommended Notice */}
+              <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200/60 dark:border-amber-900/30 rounded-2xl p-4 flex items-start gap-3 shadow-xs">
+                <div className="p-1.5 bg-amber-100 dark:bg-amber-900/40 text-amber-600 dark:text-amber-400 rounded-lg shrink-0 mt-0.5">
+                  <Info className="h-4 w-4" />
+                </div>
+                <div className="space-y-1">
+                  <span className="text-xs font-bold text-amber-800 dark:text-amber-400 block">Review Recommended</span>
+                  <p className="text-[11px] text-amber-700 dark:text-amber-300/80 leading-relaxed">
+                    This import was processed automatically. Please review the matched and unmatched employees before finalizing the import to ensure data accuracy.
+                  </p>
                 </div>
               </div>
 
@@ -985,7 +1004,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
 
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     {/* Unmatched list */}
-                    <div className="border border-slate-150 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 max-h-80 overflow-y-auto shadow-inner bg-slate-50/50 dark:bg-slate-950/20">
+                    <div className="border border-slate-200 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 max-h-80 overflow-y-auto shadow-inner bg-slate-50/50 dark:bg-slate-950/20">
                       {previewData.unmatched.map((un, idx) => (
                         <div
                           key={idx}
@@ -1003,7 +1022,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                             <span className="font-bold block">{un.rawName}</span>
                             <span className="text-[10px] text-slate-400 block">Office: {un.office || "Unknown"}</span>
                           </div>
-                          <span className="text-[10px] bg-slate-200 dark:bg-slate-850 text-slate-500 py-0.5 px-2 rounded-md font-semibold shrink-0">
+                          <span className="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-500 py-0.5 px-2 rounded-md font-semibold shrink-0">
                             Click to Match
                           </span>
                         </div>
@@ -1037,13 +1056,13 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                                 placeholder="Search employees by name or surname..."
                                 value={matchingSearch}
                                 onChange={(e) => setMatchingSearch(e.target.value)}
-                                className="block w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-855 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-slate-100 transition-colors"
+                                className="block w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-slate-100 transition-colors"
                               />
                             </div>
                           </div>
 
                           {/* Search Results */}
-                          <div className="flex-1 overflow-y-auto max-h-48 border border-slate-200/50 dark:border-slate-850 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-3xs">
+                          <div className="flex-1 overflow-y-auto max-h-48 border border-slate-200/50 dark:border-slate-800 rounded-xl divide-y divide-slate-100 dark:divide-slate-800 bg-white dark:bg-slate-900 shadow-xs">
                             {matchingResults.length === 0 ? (
                               <div className="p-4 text-center text-xs text-slate-400">
                                 {matchingSearch.trim().length > 1 ? "No matching employees found" : "Type to start searching"}
@@ -1108,7 +1127,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                 </p>
               </div>
 
-              <div className="bg-slate-50 dark:bg-slate-950/45 border border-slate-150 dark:border-white/5 rounded-2xl p-4 text-xs space-y-2.5 text-left shadow-inner">
+              <div className="bg-slate-50 dark:bg-slate-950/45 border border-slate-200 dark:border-white/5 rounded-2xl p-4 text-xs space-y-2.5 text-left shadow-inner">
                 <div className="flex justify-between">
                   <span className="text-slate-500">New attendees linked:</span>
                   <span className="font-bold text-slate-800 dark:text-white">{importSummary.added} records</span>
@@ -1117,7 +1136,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                   <span className="text-slate-500">Duplicate entries skipped:</span>
                   <span className="font-bold text-slate-800 dark:text-white">{importSummary.skipped} entries</span>
                 </div>
-                <div className="flex justify-between border-t border-slate-250 dark:border-slate-800/80 pt-2.5">
+                <div className="flex justify-between border-t border-slate-200 dark:border-slate-800/80 pt-2.5">
                   <span className="text-slate-800 dark:text-slate-200 font-semibold">Total seminar strength:</span>
                   <span className="font-bold text-blue-500">{importSummary.added + importSummary.skipped} attendees</span>
                 </div>
@@ -1182,277 +1201,145 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       )}
 
       {/* 6. INTERACTIVE ATTENDEE PICKER DIALOG MODAL */}
-      {isPickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-slate-950/80 backdrop-blur-sm animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 animate-scale-up flex flex-col max-h-[90vh] relative z-50">
-            <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 pb-3 shrink-0">
-              <h3 className="text-base font-bold text-slate-800 dark:text-white">Batch Add Attendees</h3>
-              <button onClick={() => { setIsPickerOpen(false); setSelectedPickerIds([]); }} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-all duration-100 cursor-pointer">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
-            
-            {/* Search Input inside Picker */}
-            <div className="relative shrink-0">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search employees by name, office, or ID..."
-                value={pickerSearch}
-                onChange={(e) => setPickerSearch(e.target.value)}
-                className="block w-full pl-9 pr-4 py-2 border border-slate-200 dark:border-slate-850 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-850 dark:text-white font-semibold"
-              />
-            </div>
-
-            {/* List employee results with Checkboxes */}
-            <div className="flex-1 overflow-y-auto min-h-60 border border-slate-100 dark:border-slate-800 rounded-xl bg-slate-50/20 dark:bg-slate-950/20 divide-y divide-slate-100 dark:divide-slate-800 shadow-inner">
-              {pickerEmployees.length === 0 ? (
-                <div className="text-center py-12 text-xs text-slate-400 font-medium">
-                  No matchable employees available.
-                </div>
-              ) : (
-                pickerEmployees.map((emp) => {
-                  const isChecked = selectedPickerIds.includes(emp.EmployeeID);
-                  return (
-                    <label
-                      key={emp.EmployeeID}
-                      className="flex items-center gap-3 p-3.5 hover:bg-slate-50/50 dark:hover:bg-slate-850/10 cursor-pointer transition select-none"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={isChecked}
-                        onChange={() => {
-                          if (isChecked) {
-                            setSelectedPickerIds(prev => prev.filter(id => id !== emp.EmployeeID));
-                          } else {
-                            setSelectedPickerIds(prev => [...prev, emp.EmployeeID]);
-                          }
-                        }}
-                        className="h-4 w-4 text-blue-500 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <span className="font-bold text-xs text-slate-850 dark:text-white block truncate">
-                          {emp.LastName}, {emp.FirstName} {emp.MiddleInitial || ""}
-                        </span>
-                        <span className="text-[10px] text-slate-450 dark:text-slate-400 block truncate">
-                          ID: {emp.EmployeeID} · {emp.Office} · {emp.Position}
-                        </span>
-                      </div>
-                    </label>
-                  );
-                })
-              )}
-            </div>
-
-            <div className="flex justify-between items-center pt-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
-              <span className="text-xs text-slate-500 font-medium">
-                {selectedPickerIds.length} employee(s) selected
-              </span>
-              <div className="flex gap-2">
-                <button onClick={() => { setIsPickerOpen(false); setSelectedPickerIds([]); }} className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl">
-                  Cancel
-                </button>
-                <button
-                  onClick={handleAddAttendees}
-                  disabled={selectedPickerIds.length === 0}
-                  className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-5 font-bold cursor-pointer rounded-xl disabled:opacity-50 disabled:pointer-events-none transition"
-                >
-                  Add Selected
-                </button>
-              </div>
-            </div>
+      <Modal
+        isOpen={isPickerOpen}
+        onClose={() => { setIsPickerOpen(false); setSelectedPickerIds([]); setPickerSearch(""); }}
+        maxWidth="max-w-lg"
+        ariaLabel="Batch Add Attendees"
+        hideCloseButton
+        header={
+          <div className="flex justify-between items-center border-b border-slate-100 dark:border-slate-800 px-6 py-4 shrink-0">
+            <h3 className="text-base font-bold text-slate-800 dark:text-white">Batch Add Attendees</h3>
+            <button onClick={() => { setIsPickerOpen(false); setSelectedPickerIds([]); setPickerSearch(""); }} className="text-slate-400 hover:text-slate-600 hover:bg-slate-100 dark:hover:bg-slate-800 p-1.5 rounded-lg transition-all duration-100 cursor-pointer">
+              <X className="h-5 w-5" />
+            </button>
           </div>
+        }
+        footer={
+          <>
+            <span className="text-xs text-slate-500 font-medium mr-auto">
+              {selectedPickerIds.length} employee(s) selected
+            </span>
+            <button onClick={() => { setIsPickerOpen(false); setSelectedPickerIds([]); setPickerSearch(""); }} className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl hover:scale-[1.02] active:scale-[0.98] transition-transform duration-100">
+              Cancel
+            </button>
+            <button
+              onClick={handleAddAttendees}
+              disabled={selectedPickerIds.length === 0}
+              className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-5 font-bold cursor-pointer rounded-xl disabled:opacity-50 disabled:pointer-events-none hover:scale-[1.02] active:scale-[0.98] shadow-md shadow-blue-500/5 transition-all duration-100"
+            >
+              Add Selected
+            </button>
+          </>
+        }
+        bodyClassName="space-y-4"
+      >
+        {/* Search Input inside Picker */}
+        <div className="relative shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search employees by name, office, or ID..."
+            value={pickerSearch}
+            onChange={(e) => setPickerSearch(e.target.value)}
+            className="block w-full pl-9 pr-9 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors"
+          />
+          {pickerLoading && (
+            <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-blue-500 animate-spin" />
+          )}
         </div>
-      )}
 
-      {/* 7. EMPLOYEE PROFILE QUICK VIEW DRAWER (read-only) */}
-      {isProfileOpen && profileEmployee && (
-        <div className="fixed inset-0 z-50 flex justify-end animate-fade-in">
-          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsProfileOpen(false)} />
-          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col animate-slide-in-right transition-colors duration-200">
-            {/* Sticky Topbar */}
-            <div className="shrink-0 border-b border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center gap-3 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm sticky top-0 z-10">
-              <button
-                onClick={() => setIsProfileOpen(false)}
-                className="text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-100 cursor-pointer"
-                aria-label="Back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white font-display truncate">
-                  {profileEmployee.LastName}, {profileEmployee.FirstName} {profileEmployee.MiddleInitial || ""}
-                </h3>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest">
-                  Profile View
-                </span>
-              </div>
-              <button
-                onClick={() => { setIsProfileOpen(false); onSelectEmployee(profileEmployee.EmployeeID); }}
-                className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-[11px] font-bold py-1.5 px-3 rounded-lg cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100 shrink-0"
-              >
-                Edit
-              </button>
+        {/* List employee results with Checkboxes */}
+        <div className="flex-1 overflow-y-auto min-h-40 max-h-[50vh] border border-slate-200/60 dark:border-slate-800 rounded-xl bg-slate-50/20 dark:bg-slate-950/20 divide-y divide-slate-100 dark:divide-slate-800 shadow-inner">
+          {pickerLoading ? (
+            <div className="text-center py-12 space-y-2">
+              <Loader2 className="h-6 w-6 text-blue-500 animate-spin mx-auto" />
+              <p className="text-xs text-slate-400 font-medium">Searching employees...</p>
             </div>
-
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Profile Overview */}
-              <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
-                <div className="w-14 h-14 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl uppercase tracking-wider shrink-0">
-                  {profileEmployee.LastName.charAt(0)}
-                </div>
-                <div className="min-w-0">
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug font-display">
-                    {profileEmployee.LastName}, {profileEmployee.FirstName} {profileEmployee.MiddleInitial || ""}
-                  </h2>
-                  <p className="text-xs text-slate-550 dark:text-slate-400 font-medium mt-0.5">{profileEmployee.Position}</p>
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wide mt-0.5">{profileEmployee.Office}</p>
-                </div>
+          ) : pickerSearch.trim().length < 2 ? (
+            <div className="text-center py-12 space-y-2">
+              <Search className="h-8 w-8 text-slate-300 dark:text-slate-600 mx-auto" />
+              <p className="text-sm font-medium text-slate-400 dark:text-slate-500">
+                Type a name or Employee ID to search...
+              </p>
+              <p className="text-[10px] text-slate-300 dark:text-slate-600">
+                Minimum 2 characters required
+              </p>
+            </div>
+          ) : pickerEmployees.length === 0 ? (
+            <div className="text-center py-12 space-y-3">
+              <div className="inline-flex items-center justify-center w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-400">
+                <UserPlus className="h-6 w-6" />
               </div>
-
-              {/* Meta details */}
-              <div className="grid grid-cols-3 gap-4 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Employment Status</span>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{profileEmployee.EmploymentStatus || "N/A"}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Gender</span>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{profileEmployee.Gender || "N/A"}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Date of Assumption</span>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 mt-0.5">{profileEmployee.DateOfAssumption || "N/A"}</p>
-                </div>
-              </div>
-
-              {/* Tab Selector */}
-              <div className="flex border-b border-slate-100 dark:border-slate-800">
+              <p className="text-sm font-semibold text-slate-600 dark:text-slate-300">
+                No employees match your search.
+              </p>
+              <p className="text-xs text-slate-400">
+                Try a different search term or add their record.
+              </p>
+              {onAddNewRecord && (
                 <button
                   type="button"
-                  onClick={() => setProfileTab("needs")}
-                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
-                    profileTab === "needs"
-                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-slate-400 hover:text-slate-650"
-                  }`}
+                  onClick={() => {
+                    setIsPickerOpen(false);
+                    setPickerSearch("");
+                    setSelectedPickerIds([]);
+                    onAddNewRecord();
+                  }}
+                  className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 cursor-pointer font-bold rounded-xl inline-flex items-center gap-1.5 hover:scale-[1.02] active:scale-[0.98] transition-all duration-100"
                 >
-                  Individual Development Needs ({profileNeeds.length})
+                  <Plus className="h-3.5 w-3.5" />
+                  Add New Record
                 </button>
-                <button
-                  type="button"
-                  onClick={() => setProfileTab("seminars")}
-                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
-                    profileTab === "seminars"
-                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-slate-400 hover:text-slate-650"
-                  }`}
-                >
-                  Training & Seminars ({profileSeminars.length})
-                </button>
-              </div>
-
-              {/* Tab 1: Learning Needs */}
-              {profileTab === "needs" && (
-                <div className="space-y-4">
-                  {profileNeeds.length === 0 ? (
-                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
-                      No learning needs currently registered.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {profileNeeds.map((need: any, idx: number) => (
-                        <div key={idx} className="p-4 bg-slate-50/30 dark:bg-slate-950/20 rounded-xl border border-slate-200/40 dark:border-slate-800 space-y-2">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Plan Opportunity #{idx + 1}</span>
-                              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 leading-snug">{need.LearningNeed || need.learningNeed}</p>
-                            </div>
-                            <span className="text-[9.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30 shrink-0">
-                              {need.TargetSchedule || need.schedule || ""}
-                            </span>
-                          </div>
-                          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100/40 dark:border-slate-800/40">
-                            <div>
-                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 block">Basis</span>
-                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Basis || need.basis || "N/A"}</p>
-                            </div>
-                            <div>
-                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-450 block">Methodology</span>
-                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Methodology || need.methodology || "N/A"}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tab 2: Seminars */}
-              {profileTab === "seminars" && (
-                <div className="space-y-4">
-                  {profileSeminars.length === 0 ? (
-                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
-                      No seminar attendances registered.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {Array.from(new Set(profileSeminars.map((s: any) => s.year)))
-                        .sort((a: number, b: number) => b - a)
-                        .map(year => {
-                          const yearSems = profileSeminars.filter((s: any) => s.year === year);
-                          const quarters = Array.from(new Set(yearSems.map((s: any) => s.quarter || "Undefined"))).sort();
-                          return (
-                            <div key={year} className="space-y-3">
-                              <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block border-b border-slate-100 dark:border-slate-800 pb-1">
-                                {year} Seminars
-                              </span>
-                              {quarters.map(q => (
-                                <div key={q} className="pl-2 space-y-1.5">
-                                  <span className="text-[9.5px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide block">
-                                    {q}
-                                  </span>
-                                  <ul className="space-y-1.5 list-none pl-2 border-l border-slate-100 dark:border-slate-800/80">
-                                    {yearSems
-                                      .filter((s: any) => (s.quarter || "Undefined") === q)
-                                      .map((sem: any, idx: number) => (
-                                        <li key={idx}>
-                                          <div className="w-full text-left flex items-start gap-2 text-xs text-slate-700 dark:text-slate-350 bg-slate-50/20 dark:bg-slate-950/20 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
-                                            <span className="text-blue-500 shrink-0 font-bold">•</span>
-                                            <div>
-                                              <span className="font-bold text-slate-850 dark:text-white block">{sem.title}</span>
-                                              {sem.date && (
-                                                <span className="text-[10px] text-slate-400">
-                                                  Date: {sem.date}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </div>
-                                        </li>
-                                      ))}
-                                  </ul>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                    </div>
-                  )}
-                </div>
               )}
             </div>
-          </div>
+          ) : (
+            pickerEmployees.map((emp) => {
+              const isChecked = selectedPickerIds.includes(emp.EmployeeID);
+              return (
+                <label
+                  key={emp.EmployeeID}
+                  className="flex items-center gap-3 p-3.5 hover:bg-slate-50/50 dark:hover:bg-slate-800/10 cursor-pointer transition select-none"
+                >
+                  <input
+                    type="checkbox"
+                    checked={isChecked}
+                    onChange={() => {
+                      if (isChecked) {
+                        setSelectedPickerIds(prev => prev.filter(id => id !== emp.EmployeeID));
+                      } else {
+                        setSelectedPickerIds(prev => [...prev, emp.EmployeeID]);
+                      }
+                    }}
+                    className="h-4 w-4 text-blue-500 rounded border-slate-300 focus:ring-blue-500 cursor-pointer"
+                  />
+                  <div className="flex-1 min-w-0">
+                    <span className="font-bold text-xs text-slate-800 dark:text-white block truncate">
+                      {emp.LastName}, {emp.FirstName} {emp.MiddleInitial || ""}
+                    </span>
+                    <span className="text-[10px] text-slate-500 dark:text-slate-400 block truncate">
+                      ID: {emp.EmployeeID} · {emp.Office} · {emp.Position}
+                    </span>
+                    <span className="text-[10px] text-slate-400 dark:text-slate-500 block truncate capitalize">
+                      {emp.EmploymentStatus || "N/A"}
+                    </span>
+                  </div>
+                </label>
+              );
+            })
+          )}
         </div>
-      )}
+      </Modal>
 
-      {view === "details" && (
-        <StickyBackButton onBack={() => setView("list")} label="Back" />
-      )}
-      {view === "import" && (
-        <StickyBackButton onBack={resetImport} label="Cancel" />
-      )}
+      {/* 7. EMPLOYEE PROFILE QUICK VIEW (shared component) */}
+      <EmployeeProfileDrawer
+        isOpen={isProfileOpen}
+        employee={profileEmployee}
+        needs={profileNeeds}
+        seminars={profileSeminars}
+        onClose={() => setIsProfileOpen(false)}
+        onEdit={(empId) => { setIsProfileOpen(false); onSelectEmployee(empId); }}
+      />
     </div>
   );
 }

@@ -154,7 +154,7 @@ export default function EmployeeForm({
       LearningNeed: "",
       Basis: ["Advanced Knowledge"],
       Methodology: ["Seminar/Training"],
-      TargetSchedule: "1st Quarter of 2026",
+      TargetSchedule: `1st Quarter of ${new Date().getFullYear()}`,
     };
   }
 
@@ -582,6 +582,7 @@ export default function EmployeeForm({
 
   return (
     <form ref={formRef} onSubmit={handleSubmit} className="space-y-8 animate-in fade-in duration-200">
+      <StickyBackButton onBack={onCancel} />
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-100 dark:border-slate-800 shadow-sm transition-colors duration-200">
         {/* Panel Title */}
         <div className="border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/40 px-6 py-4 flex items-center justify-between rounded-t-2xl transition-colors duration-200">
@@ -1082,7 +1083,6 @@ export default function EmployeeForm({
           Save Records <span className="text-[10px] text-blue-400 dark:text-blue-300 ml-1 font-normal">Ctrl+S</span>
         </button>
       </div>
-      <StickyBackButton onBack={onCancel} />
     </form>
   );
 }

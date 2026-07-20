@@ -2,18 +2,17 @@ import { ArrowLeft } from "lucide-react";
 
 interface StickyBackButtonProps {
   onBack: () => void;
-  label?: string;
 }
 
-export default function StickyBackButton({ onBack, label }: StickyBackButtonProps) {
+export default function StickyBackButton({ onBack }: StickyBackButtonProps) {
   return (
     <button
+      type="button"
       onClick={onBack}
-      className="fixed bottom-6 left-6 z-40 flex items-center gap-2 px-3 py-2 rounded-full shadow-lg border border-slate-200/60 dark:border-slate-700/60 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md text-slate-500 dark:text-slate-400 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-blue-50/90 dark:hover:bg-blue-950/50 hover:shadow-blue-500/10 hover:scale-105 active:scale-95 cursor-pointer transition-all duration-200"
-      aria-label={label || "Go back"}
+      className="sticky top-0 z-40 btn-glass bg-slate-500/10 hover:bg-blue-500/15 text-slate-600 dark:text-slate-300 hover:text-blue-600 dark:hover:text-blue-400 py-2 px-2.5 rounded-full inline-flex items-center cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 shadow-md backdrop-blur-lg mb-4"
+      aria-label="Go back"
     >
       <ArrowLeft className="h-4 w-4" />
-      {label && <span className="text-[11px] font-semibold">{label}</span>}
     </button>
   );
 }

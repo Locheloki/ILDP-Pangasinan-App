@@ -154,6 +154,8 @@ const DEFAULT_SCHEDULES = [
 ];
 
 // Helper functions for DB reading & writing
+let _dbCache: any = null;
+
 function readDatabase() {
   try {
     const defaults = {
@@ -165,6 +167,9 @@ function readDatabase() {
       schedule: DEFAULT_SCHEDULES
     };
 
+    // Return cached copy if available (invalidated by writeDatabase)
+    if (_dbCache) return _dbCache;
+
     if (!fs.existsSync(DB_FILE)) {
       return { 
         users: [], 
@@ -172,13 +177,16 @@ function readDatabase() {
         learningNeeds: [], 
         seminars: [],
         seminarAttendees: [],
+        seminarYears: [],
         customOptions: { ...defaults } 
       };
     }
+
     const data = fs.readFileSync(DB_FILE, "utf-8");
     const db = JSON.parse(data);
     if (!db.seminars) db.seminars = [];
     if (!db.seminarAttendees) db.seminarAttendees = [];
+    if (!db.seminarYears) db.seminarYears = [];
     if (!db.customOptions) {
       db.customOptions = { ...defaults };
     } else {
@@ -190,6 +198,8 @@ function readDatabase() {
         }
       });
     }
+
+    _dbCache = db;
     return db;
   } catch (error) {
     console.error("Error reading database:", error);
@@ -218,6 +228,8 @@ function writeDatabase(data: any) {
       fs.mkdirSync(dir, { recursive: true });
     }
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
+    // Invalidate cache so next read picks up changes
+    _dbCache = null;
   } catch (error) {
     console.error("Error writing database:", error);
   }
@@ -568,20 +580,31 @@ app.post("/api/employees/check-similar", (req, res) => {
 // 4. Get All Employees with filter & search
 app.get("/api/employees", (req, res) => {
   const db = readDatabase();
-  const { search = "", office = "" } = req.query;
+  const { search = "", office = "", limit = "" } = req.query;
 
   let results = [...db.employees];
 
   if (search) {
-    const q = (search as string).toLowerCase();
-    results = results.filter((emp) =>
-      `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName}`.toLowerCase().includes(q)
-    );
+    const terms = (search as string).toLowerCase().split(/\s+/).filter(t => t.length > 0);
+    if (terms.length > 0) {
+      results = results.filter((emp) => {
+        const searchString = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName} ${emp.Office || ""} ${emp.Position || ""}`.toLowerCase();
+        const commaName = `${emp.LastName}, ${emp.FirstName}`.toLowerCase();
+        const empId = String(emp.EmployeeID);
+        return terms.every(term => searchString.includes(term) || commaName.includes(term) || empId.includes(term));
+      });
+    }
   }
 
   if (office) {
     const o = (office as string).toLowerCase();
     results = results.filter((emp) => emp.Office && emp.Office.toLowerCase().includes(o));
+  }
+
+  // Apply result limit if specified (e.g. ?limit=30)
+  const maxResults = limit ? Math.min(parseInt(limit as string) || 50, 100) : 0;
+  if (maxResults > 0) {
+    results = results.slice(0, maxResults);
   }
 
   // Map employee with learning need count
@@ -593,7 +616,7 @@ app.get("/api/employees", (req, res) => {
     };
   });
 
-  return res.json(resultsWithCount);
+  return res.json({ employees: resultsWithCount });
 });
 
 // 4. Get Employees with custom filters (pending/custom encoding queue)
@@ -1736,7 +1759,108 @@ app.post("/api/import/execute", express.json({ limit: "50mb" }), async (req, res
 app.get("/api/seminars", (req, res) => {
   try {
     const db = readDatabase();
-    res.json(db.seminars || []);
+    const seminars = (db.seminars || []).map((sem: any) => {
+      const attendeeMappings = (db.seminarAttendees || []).filter((sa: any) => sa.seminarId === sem.id);
+      return { ...sem, attendees: attendeeMappings.map((sa: any) => ({ EmployeeID: sa.employeeId })) };
+    });
+    res.json(seminars);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 1b. Get all distinct seminar years with quarter and seminar counts
+app.get("/api/seminars/years", (req, res) => {
+  try {
+    const db = readDatabase();
+    const yearsMap = new Map<number, Record<string, number>>();
+    // Include explicitly created years (even if no seminars)
+    (db.seminarYears || []).forEach((yr: number) => {
+      if (!yearsMap.has(yr)) yearsMap.set(yr, { Q1: 0, Q2: 0, Q3: 0, Q4: 0 });
+    });
+    // Aggregate years from actual seminars
+    (db.seminars || []).forEach((sem: any) => {
+      const yr = sem.year;
+      if (!yearsMap.has(yr)) yearsMap.set(yr, { Q1: 0, Q2: 0, Q3: 0, Q4: 0 });
+      const quarters = yearsMap.get(yr)!;
+      if (sem.quarter && quarters[sem.quarter] !== undefined) {
+        quarters[sem.quarter]++;
+      }
+    });
+    const years = Array.from(yearsMap.entries())
+      .map(([year, quarters]) => ({ year, quarters }))
+      .sort((a, b) => b.year - a.year);
+    res.json({ years });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 1c. Create a new seminar year
+app.post("/api/seminars/years", (req, res) => {
+  try {
+    const { year } = req.body;
+    if (!year || typeof year !== "number") {
+      return res.status(400).json({ error: "Valid numeric 'year' is required." });
+    }
+    if (year < 2020 || year > 2100) {
+      return res.status(400).json({ error: "Year must be between 2020 and 2100." });
+    }
+    const db = readDatabase();
+    if (!db.seminarYears) db.seminarYears = [];
+    if (db.seminarYears.includes(year)) {
+      return res.status(409).json({ error: `Year ${year} already exists.` });
+    }
+    db.seminarYears.push(year);
+    db.seminarYears.sort((a: number, b: number) => b - a);
+    writeDatabase(db);
+    res.json({ success: true, year });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 1d. Delete a seminar year and all its seminars + attendees
+app.delete("/api/seminars/years/:year", (req, res) => {
+  try {
+    const year = parseInt(req.params.year);
+    if (isNaN(year)) return res.status(400).json({ error: "Invalid year." });
+
+    const db = readDatabase();
+    const seminarsToRemove = (db.seminars || []).filter((s: any) => s.year === year);
+    const semIds = seminarsToRemove.map((s: any) => s.id);
+    const attendeeCount = (db.seminarAttendees || []).filter((sa: any) => semIds.includes(sa.seminarId)).length;
+
+    db.seminars = (db.seminars || []).filter((s: any) => s.year !== year);
+    db.seminarAttendees = (db.seminarAttendees || []).filter((sa: any) => !semIds.includes(sa.seminarId));
+    db.seminarYears = (db.seminarYears || []).filter((y: number) => y !== year);
+    writeDatabase(db);
+
+    res.json({
+      success: true,
+      year,
+      seminarsRemoved: seminarsToRemove.length,
+      attendeeAssociationsRemoved: attendeeCount,
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 1e. Get year details with seminar count
+app.get("/api/seminars/years/:year", (req, res) => {
+  try {
+    const year = parseInt(req.params.year);
+    if (isNaN(year)) return res.status(400).json({ error: "Invalid year." });
+    const db = readDatabase();
+    const seminarsInYear = (db.seminars || []).filter((s: any) => s.year === year);
+    const semIds = seminarsInYear.map((s: any) => s.id);
+    const attendeeCount = (db.seminarAttendees || []).filter((sa: any) => semIds.includes(sa.seminarId)).length;
+    res.json({
+      year,
+      seminarsRemoved: seminarsInYear.length,
+      attendeeAssociationsRemoved: attendeeCount,
+    });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
@@ -1863,21 +1987,33 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       parsedTitle = cleanOrigName;
     }
 
-    // Find the header row (contains "NAMES" or "No.")
+    // Find the header row (contains "NAMES", "No.", "EMPLOYEE", "ID", "NAME")
     let headerRowIdx = 7;
+    let idCol = -1;
+    let nameCol = -1;
+    let officeCol = -1;
     for (let i = 1; i <= Math.min(20, sheet.rowCount); i++) {
       const row = sheet.getRow(i);
-      const isHeader = row.values.some((v: any) => v && typeof v === "string" && v.toLowerCase().includes("names"));
+      const vals = row.values;
+      for (let c = 1; c <= Math.min(vals.length, 10); c++) {
+        const v = vals[c]?.toString()?.toLowerCase()?.trim() || "";
+        if (v.includes("employee") && v.includes("id")) idCol = c;
+        if (v.includes("employee") && v.includes("no")) idCol = c;
+        if (v === "id" && idCol < 0) idCol = c;
+        if (v.includes("names") || v.includes("name of") || v === "name") nameCol = c;
+        if (v.includes("office") || v.includes("department") || v.includes("division")) officeCol = c;
+      }
+      const isHeader = vals.some((v: any) => v && typeof v === "string" && v.toLowerCase().includes("names"));
       if (isHeader) {
         headerRowIdx = i;
         break;
       }
     }
+    // If no explicit name column found, default to column 2
+    if (nameCol < 0) nameCol = 2;
 
     const db = readDatabase();
-    const dbEmployees = db.employees || [];
-    const matched: any[] = [];
-    const unmatched: any[] = [];
+    const dbEmployees: any[] = db.employees || [];
 
     // Names map for fast exact lookup
     const namesMap = new Map<string, any>();
@@ -1888,54 +2024,107 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       namesMap.set(commaFull, emp);
     });
 
+    // Build EmployeeID lookup map
+    const employeeByIdMap = new Map<string, any>();
+    dbEmployees.forEach((emp: any) => {
+      if (emp.EmployeeID) employeeByIdMap.set(String(emp.EmployeeID).trim(), emp);
+    });
+
     const parsedNames = new Set<string>();
 
     for (let i = headerRowIdx + 1; i <= sheet.rowCount; i++) {
       const row = sheet.getRow(i);
-      const cell1 = row.getCell(1).value;
-      const cell2 = row.getCell(2).value; // Name cell usually col 2 or 3
-      const cell3 = row.getCell(3).value;
+      const cellId = idCol > 0 ? row.getCell(idCol).value : null;
+      const cellName = row.getCell(nameCol).value;
+      const cellOffice = officeCol > 0 ? row.getCell(officeCol).value : null;
 
       let nameVal = "";
       let officeVal = "";
 
-      if (cell2 && typeof cell2 === "string" && cell2.trim().length > 3) {
-        nameVal = cell2.trim();
-        officeVal = cell3 ? cell3.toString().trim() : "";
-      } else if (cell3 && typeof cell3 === "string" && cell3.trim().length > 3) {
-        nameVal = cell3.trim();
-        officeVal = row.getCell(4).value ? row.getCell(4).value!.toString().trim() : "";
-      } else if (cell1 && typeof cell1 === "string" && cell1.trim().length > 3 && isNaN(Number(cell1))) {
-        nameVal = cell1.trim();
-        officeVal = cell2 ? cell2.toString().trim() : "";
+      // Try explicit name column
+      if (cellName && typeof cellName === "string" && cellName.trim().length > 3) {
+        nameVal = cellName.trim();
       }
+      // Fallback: scan cols 1-4 for any text > 3 chars that isn't a number
+      if (!nameVal) {
+        for (const c of [1, 2, 3, 4]) {
+          const v = row.getCell(c).value;
+          if (v && typeof v === "string" && v.trim().length > 3 && isNaN(Number(v))) {
+            nameVal = v.trim();
+            break;
+          }
+        }
+      }
+      if (!nameVal) continue;
 
-      if (!nameVal || nameVal.toLowerCase().includes("page") || nameVal.toLowerCase().includes("total") || nameVal.toLowerCase() === "names") continue;
+      if (cellOffice && typeof cellOffice === "string") officeVal = cellOffice.trim();
+
+      if (nameVal.toLowerCase().includes("page") || nameVal.toLowerCase().includes("total") || nameVal.toLowerCase() === "names") continue;
 
       const normName = nameVal.toLowerCase().replace(/\s+/g, " ").trim();
-      if (parsedNames.has(normName)) continue; // skip file duplicates
+      if (parsedNames.has(normName)) continue;
       parsedNames.add(normName);
 
-      // Check priority matching
-      // 1. Name Match
-      let match = namesMap.get(normName);
+      let match: any = null;
+
+      // Priority 1: Employee ID match
+      const rawId = cellId?.toString()?.trim();
+      if (rawId) {
+        match = employeeByIdMap.get(rawId) || null;
+      }
+
+      // Priority 2: Full name match (comma format or space format) via namesMap
       if (!match) {
-        // Try without middle initials or splitting name
+        match = namesMap.get(normName);
+      }
+
+      // Priority 4: Without middle initials
+      if (!match) {
         const cleanName = normName.replace(/\b\w\.\b/g, "").replace(/\s+/g, " ").trim();
-        dbEmployees.forEach((emp: any) => {
-          if (match) return;
+        for (const emp of dbEmployees) {
+          if (match) break;
           const empFull = `${emp.FirstName} ${emp.LastName}`.toLowerCase().replace(/\s+/g, " ").trim();
           if (empFull === cleanName) {
             match = emp;
           }
-        });
+        }
+      }
+
+      // Priority 5: First name + Last name (any order)
+      if (!match) {
+        const parts = normName.split(/[\s,]+/).filter(Boolean);
+        for (const emp of dbEmployees) {
+          if (match) break;
+          const empFirst = emp.FirstName?.toLowerCase() || "";
+          const empLast = emp.LastName?.toLowerCase() || "";
+          if (parts.length >= 2) {
+            if ((parts[0] === empFirst && parts[parts.length - 1] === empLast) ||
+                (parts[0] === empLast && parts[parts.length - 1] === empFirst)) {
+              match = emp;
+            }
+          }
+        }
+      }
+
+      // Priority 6: Last name + office match
+      if (!match && officeVal) {
+        const normOffice = officeVal.toLowerCase().trim();
+        const excelLast = normName.split(",")[0]?.trim().split(" ").pop() || normName.split(" ").pop() || "";
+        for (const emp of dbEmployees) {
+          if (match) break;
+          const empLast = emp.LastName?.toLowerCase() || "";
+          const empOffice = emp.Office?.toLowerCase() || "";
+          if (empLast === excelLast && empOffice === normOffice) {
+            match = emp;
+          }
+        }
       }
 
       if (match) {
         matched.push({
           rawName: nameVal,
           office: officeVal,
-          EmployeeID: match.EmployeeID,
+          EmployeeID: String(match.EmployeeID),
           LastName: match.LastName,
           FirstName: match.FirstName,
           MiddleInitial: match.MiddleInitial,
@@ -1957,7 +2146,8 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       date: parsedDate,
       totalParsed: matched.length + unmatched.length,
       matched,
-      unmatched
+      unmatched,
+      reviewRecommended: matched.length > 0 || unmatched.length > 0
     });
   } catch (error: any) {
     console.error("Seminar import preview error:", error);

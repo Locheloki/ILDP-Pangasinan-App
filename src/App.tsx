@@ -1,24 +1,13 @@
 import React, { useState, useEffect } from "react";
 import { 
-  LayoutDashboard, 
-  UserPlus, 
-  Database, 
-  LogOut, 
-  Camera,
-  Zap,
   Users, 
   ClipboardList, 
   Calendar, 
   CheckSquare, 
-  UserCheck, 
-  Plus, 
   AlertTriangle,
-  FileSpreadsheet, 
-  Compass, 
   Info,
-  Key,
-  DatabaseBackup,
   Menu,
+  ArrowRight,
   X,
   HelpCircle,
   Phone,
@@ -26,17 +15,13 @@ import {
   Mail,
   Facebook,
   Server,
-  Network,
   Sun,
   Moon,
   Sunset,
-  ChevronLeft,
-  ArrowLeft,
   Copy,
   Check,
   Globe,
   Lock,
-  Upload
 } from "lucide-react";
 import { User, DashboardStats, Employee, LearningNeed } from "./types";
 import LoginScreen from "./components/LoginScreen";
@@ -47,6 +32,8 @@ import SaveConfirmDialog from "./components/SaveConfirmDialog";
 import RapidEncoding from "./components/RapidEncoding";
 import ImportData from "./components/ImportData";
 import Seminars from "./components/Seminars";
+import Sidebar from "./components/Sidebar";
+import Modal from "./components/Modal";
 
 export default function App() {
   // Theme State: 'light' | 'dark' | 'sunset'
@@ -83,9 +70,14 @@ export default function App() {
   const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view" | "rapid" | "import" | "seminars">("view");
   const [selectedSeminarYear, setSelectedSeminarYear] = useState<number | null>(null);
   const [selectedSeminarQuarter, setSelectedSeminarQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4" | null>(null);
-  const [seminarYears, setSeminarYears] = useState<number[]>([2026]);
-  const [seminarsTree, setSeminarsTree] = useState<Record<number, string[]>>({ 2026: ["Q1", "Q2", "Q3", "Q4"] });
+  const [seminarYears, setSeminarYears] = useState<number[]>([]);
+  const [seminarsTree, setSeminarsTree] = useState<Record<number, string[]>>({});
   const [collapsedYears, setCollapsedYears] = useState<Record<number, boolean>>({});
+  const [yearModalOpen, setYearModalOpen] = useState(false);
+  const [deleteYearModalOpen, setDeleteYearModalOpen] = useState<number | null>(null);
+  const [yearSeminarCount, setYearSeminarCount] = useState(0);
+  const [yearAttendeeCount, setYearAttendeeCount] = useState(0);
+  const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
   const changeTab = (tab: "home" | "add" | "view" | "rapid" | "import" | "seminars") => {
     if (tab === "add" && activeTab !== "add") {
@@ -206,33 +198,15 @@ export default function App() {
       .catch((err) => console.error("Error loading metrics:", err));
 
     // Also fetch unique seminar years to populate sidebar
-    fetch("/api/seminars")
+    fetch("/api/seminars/years")
       .then((res) => res.json())
-      .then((sems: any[]) => {
-        const years = Array.from(new Set(sems.map(s => s.year))).sort((a, b) => b - a);
+      .then((data) => {
+        const yearsData = data.years || [];
+        const years = yearsData.map((y: any) => y.year);
         const tree: Record<number, string[]> = {};
-        
-        // Group by year and find unique quarters
-        sems.forEach((s) => {
-          if (!tree[s.year]) {
-            tree[s.year] = [];
-          }
-          if (s.quarter && !tree[s.year].includes(s.quarter)) {
-            tree[s.year].push(s.quarter);
-          }
+        yearsData.forEach((y: any) => {
+          tree[y.year] = Object.keys(y.quarters || {});
         });
-
-        // Ensure 2026 exists with defaults if empty
-        if (years.length === 0) {
-          years.push(2026);
-          tree[2026] = ["Q1", "Q2", "Q3", "Q4"];
-        } else {
-          // Sort quarters within each year
-          Object.keys(tree).forEach((yr) => {
-            tree[Number(yr)].sort();
-          });
-        }
-
         setSeminarYears(years);
         setSeminarsTree(tree);
       })
@@ -392,13 +366,6 @@ export default function App() {
   // Sidebar mobile toggle state
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
-  const [isDesktop, setIsDesktop] = useState(typeof window !== 'undefined' ? window.innerWidth >= 768 : false);
-
-  useEffect(() => {
-    const handleResize = () => setIsDesktop(window.innerWidth >= 768);
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Keyboard shortcut listener: Ctrl + S to save if in add tab, Esc to cancel
   useEffect(() => {
@@ -436,7 +403,7 @@ export default function App() {
   }
 
   return (
-    <div className="h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex overflow-hidden antialiased font-sans transition-colors duration-200">
+    <div className="h-screen w-full bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-100 flex antialiased font-sans transition-colors duration-200">
       {/* Dynamic Toast Alerts */}
       {toastMessage && (
         <div className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl border shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300 ${
@@ -451,270 +418,46 @@ export default function App() {
         </div>
       )}
 
-      {/* Backdrop overlay for mobile sidebar */}
-      {isSidebarOpen && (
-        <div 
-          onClick={() => setIsSidebarOpen(false)}
-          className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs z-40 md:hidden"
-        />
-      )}
-
-      {/* 1. Left Sidebar Component - Floating Liquid Glass Panel */}
-      <aside
-        className={`fixed inset-y-0 left-0 z-50 sidebar-contrast-bg backdrop-blur-xl text-slate-200 flex flex-col shrink-0 transform transition-all duration-300 ease-in-out ${
-          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-        } md:static md:translate-x-0 ${
-          isSidebarCollapsed 
-            ? 'md:w-0 md:opacity-0 md:pointer-events-none md:overflow-hidden md:m-0 md:border-0' 
-            : 'w-64 md:w-64 md:opacity-100 md:my-4 md:ml-4 md:rounded-3xl md:border md:border-white/10 dark:md:border-white/15 md:shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] md:h-[calc(100vh-2rem)]'
-        }`}
-        aria-hidden={(!isSidebarOpen && !isDesktop) || (isDesktop && isSidebarCollapsed)}
-      >
-        {/* Branding header */}
-        <div className="p-5 pb-2">
-          <div className="flex items-center space-x-2.5 min-w-0">
-            {/* Collapse button for desktop mode */}
-            <button 
-              onClick={() => setIsSidebarCollapsed(true)}
-              className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white hidden md:block cursor-pointer transition shrink-0"
-              title="Collapse Sidebar"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-            {/* Close button for mobile menu */}
-            <button 
-              onClick={() => setIsSidebarOpen(false)}
-              className="p-1 rounded-lg hover:bg-white/10 text-slate-400 hover:text-white md:hidden cursor-pointer transition shrink-0"
-              title="Close Menu"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </button>
-
-            <div className="flex items-center space-x-2 min-w-0">
-              <img
-                src="/pangasinan-logo.svg"
-                alt="Pangasinan Provincial Seal"
-                className="w-6 h-6 object-contain bg-white rounded-full p-0.5 shrink-0"
-              />
-              <span className="font-semibold text-white text-base tracking-tight font-sans">
-                ILDP
-              </span>
-            </div>
-          </div>
-        </div>
-
-        {/* Sidebar navigation (scrollable portion) */}
-        <nav className="flex-1 overflow-y-auto py-6 space-y-6 custom-scrollbar">
-          <div>
-            <div className="px-6 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Main Menu
-            </div>
-            <div className="px-3 space-y-1 menu-hover-fill">
-              <button
-                style={{ "--active-color": "#3b82f6" } as React.CSSProperties}
-                onClick={() => { changeTab("home"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
-                  activeTab === "home" 
-                    ? "bg-white/10 text-white" 
-                    : "text-slate-300 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <LayoutDashboard className="w-5 h-5 mr-3 shrink-0" />
-                <span className="menu-link" data-text="Dashboard">Dashboard</span>
-              </button>
-
-              <button
-                style={{ "--active-color": "#8b5cf6" } as React.CSSProperties}
-                onClick={() => { changeTab("add"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
-                  activeTab === "add" 
-                    ? "bg-white/10 text-white" 
-                    : "text-slate-300 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <UserPlus className="w-5 h-5 mr-3 shrink-0" />
-                <span className="menu-link" data-text={editingEmployee ? "Modify Records" : "Add New Record"}>
-                  {editingEmployee ? "Modify Records" : "Add New Record"}
-                </span>
-              </button>
-
-              <button
-                style={{ "--active-color": "#10b981" } as React.CSSProperties}
-                onClick={() => { changeTab("view"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
-                  activeTab === "view" 
-                    ? "bg-white/10 text-white" 
-                    : "text-slate-300 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Database className="w-5 h-5 mr-3 shrink-0" />
-                <span className="menu-link" data-text="View Records">View Records</span>
-              </button>
-
-              <button
-                style={{ "--active-color": "#f59e0b" } as React.CSSProperties}
-                onClick={() => { changeTab("rapid"); setIsSidebarOpen(false); }}
-                className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
-                  activeTab === "rapid" 
-                    ? "bg-white/10 text-white" 
-                    : "text-slate-300 hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <Zap className="w-5 h-5 mr-3 shrink-0 text-amber-500 fill-amber-500/10" />
-                <span className="menu-link" data-text="Rapid Encoding">Rapid Encoding</span>
-              </button>
-
-              {(currentUser?.role === "Administrator" || currentUser?.role === "System developer") && (
-                <button
-                  style={{ "--active-color": "#ef4444" } as React.CSSProperties}
-                  onClick={() => { changeTab("import"); setIsSidebarOpen(false); }}
-                  className={`w-full flex items-center px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
-                    activeTab === "import" 
-                      ? "bg-white/10 text-white" 
-                      : "text-slate-300 hover:text-white hover:bg-white/5"
-                  }`}
-                >
-                  <Upload className="w-5 h-5 mr-3 shrink-0" />
-                  <span className="menu-link" data-text="Import Data">Import Data</span>
-                </button>
-              )}
-            </div>
-          </div>
-
-          <div>
-            <div className="px-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-              Seminars
-            </div>
-            <div className="px-3 space-y-1 menu-hover-fill">
-              {seminarYears.map((yr) => {
-                const isCollapsed = collapsedYears[yr] ?? false;
-                const quarters = seminarsTree[yr] || [];
-                return (
-                  <div key={yr} className="space-y-1">
-                    {/* Collapsible Year Header */}
-                    <button
-                      onClick={() => setCollapsedYears(prev => ({ ...prev, [yr]: !isCollapsed }))}
-                      style={{ "--active-color": "#3b82f6" } as React.CSSProperties}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
-                        !isCollapsed ? "bg-white/10 text-white" : "text-slate-300 hover:text-white hover:bg-white/5"
-                      }`}
-                    >
-                      <span className="flex items-center">
-                        <Calendar className="w-5 h-5 mr-3 shrink-0" />
-                        <span className="menu-link" data-text={yr.toString()}>{yr}</span>
-                      </span>
-                      <span className={`text-[10px] text-slate-400 transform transition-transform duration-200 ${!isCollapsed ? "rotate-180" : ""}`}>
-                        ▼
-                      </span>
-                    </button>
-
-                    {/* Quarter Subsections with height expand animation */}
-                    <div 
-                      className="pl-4 pr-1 overflow-hidden transition-all duration-300 ease-in-out space-y-1"
-                      style={{ 
-                        maxHeight: isCollapsed ? "0" : "160px", 
-                        opacity: isCollapsed ? "0" : "1",
-                        marginTop: isCollapsed ? "0" : "4px",
-                        paddingTop: isCollapsed ? "0" : "4px",
-                        paddingBottom: isCollapsed ? "0" : "4px"
-                      }}
-                    >
-                      {quarters.length === 0 ? (
-                        <span className="text-[10px] text-slate-500 italic block pl-4 py-1.5">No quarters logged</span>
-                      ) : (
-                        quarters.map((q) => (
-                          <button
-                            key={q}
-                            onClick={() => {
-                              setSelectedSeminarYear(yr);
-                              setSelectedSeminarQuarter(q as any);
-                              changeTab("seminars");
-                              setIsSidebarOpen(false);
-                            }}
-                            style={{ "--active-color": "#3b82f6" } as React.CSSProperties}
-                            className={`w-full flex items-center px-4 py-2.5 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
-                              activeTab === "seminars" && selectedSeminarYear === yr && selectedSeminarQuarter === q
-                                ? "bg-white/10 text-white"
-                                : "text-slate-400 hover:text-white hover:bg-white/5"
-                            }`}
-                          >
-                            <span className="menu-link" data-text={q}>{q}</span>
-                          </button>
-                        ))
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="mx-3 mt-4 p-4 bg-slate-900/30 dark:bg-slate-850/20 border border-white/5 dark:border-white/10 rounded-2xl shadow-inner space-y-3">
-            <div className="px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
-              Reports & Actions
-            </div>
-            <div className="space-y-1 menu-hover-fill">
-              <button
-                style={{ "--active-color": "#f59e0b" } as React.CSSProperties}
-                onClick={() => { triggerExcelExportAll(); setIsSidebarOpen(false); }}
-                className="w-full flex items-center px-3 py-2.5 text-xs font-medium transition-all duration-150 text-left text-slate-300 hover:text-white hover:bg-white/5 rounded-xl"
-              >
-                <FileSpreadsheet className="w-5 h-5 mr-3 shrink-0 text-emerald-500" />
-                <span className="menu-link" data-text="Excel Summary Export">Excel Summary Export</span>
-              </button>
-            </div>
-          </div>
-        </nav>
-        {/* Sidebar bottom logged-in section (floating overlay styling) */}
-        <div className="mt-auto p-6 flex items-center justify-between gap-2 border-t border-white/5 bg-slate-900/10 shrink-0">
-          <div className="flex items-center space-x-3 overflow-hidden min-w-0 flex-1">
-            <div 
-              onClick={() => profileFileInputRef.current?.click()}
-              className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-white font-bold flex items-center justify-center shrink-0 uppercase text-sm shadow-md cursor-pointer overflow-hidden group relative transition-colors duration-200"
-              title="Upload Profile Picture"
-            >
-              {currentUser.profilePic ? (
-                <img src={currentUser.profilePic} alt="Profile" className="w-full h-full object-cover tab-pane-animate" />
-              ) : (
-                <span>{currentUser.name.charAt(0)}</span>
-              )}
-              <div className="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity duration-200">
-                <Camera className="h-4 w-4 text-white" />
-              </div>
-            </div>
-            <input 
-              type="file"
-              ref={profileFileInputRef}
-              accept="image/*"
-              className="hidden"
-              onChange={handleProfilePicUpload}
-            />
-            <div className="min-w-0 flex-1">
-              <p className="text-xs font-bold text-white truncate leading-snug">{currentUser.name}</p>
-              <p className="text-[10px] text-slate-400 truncate font-semibold leading-none mt-0.5">{currentUser.role}</p>
-            </div>
-          </div>
-          <div className="flex items-center gap-1 shrink-0">
-            <button
-              onClick={() => setIsChangePasswordOpen(true)}
-              className="p-2 rounded-lg text-slate-400 hover:text-blue-450 hover:bg-white/5 transition cursor-pointer"
-              title="Change Password"
-            >
-              <Key className="h-4.5 w-4.5" />
-            </button>
-            <button
-              onClick={handleSignOut}
-              className="p-2 rounded-lg text-slate-400 hover:text-red-450 hover:bg-white/5 transition cursor-pointer"
-              title="Sign Out"
-            >
-              <LogOut className="h-4.5 w-4.5" />
-            </button>
-          </div>
-        </div>
-      </aside>
+      <Sidebar
+        isOpen={isSidebarOpen}
+        isCollapsed={isSidebarCollapsed}
+        activeTab={activeTab}
+        currentUser={currentUser}
+        editingEmployee={!!editingEmployee}
+        years={seminarYears}
+        seminarsTree={seminarsTree}
+        collapsedYears={collapsedYears}
+        selectedSeminarYear={selectedSeminarYear}
+        selectedSeminarQuarter={selectedSeminarQuarter}
+        profileFileInputRef={profileFileInputRef}
+        onClose={() => setIsSidebarOpen(false)}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+        onTabChange={(tab) => changeTab(tab as any)}
+        onToggleYear={(yr) => setCollapsedYears(prev => ({ ...prev, [yr]: !(prev[yr] ?? false) }))}
+        onSelectSeminarQuarter={(yr, q) => {
+          setSelectedSeminarYear(yr);
+          setSelectedSeminarQuarter(q as any);
+        }}
+        onProfilePicUpload={handleProfilePicUpload}
+        onChangePasswordOpen={() => setIsChangePasswordOpen(true)}
+        onSignOut={handleSignOut}
+        onExcelExport={triggerExcelExportAll}
+        onYearModalOpen={() => setYearModalOpen(true)}
+        onDeleteYear={async (yr) => {
+          try {
+            const res = await fetch(`/api/seminars/years/${yr}`);
+            if (res.ok) {
+              const data = await res.json();
+              setDeleteYearModalOpen(yr);
+              setYearSeminarCount(data.seminarsRemoved ?? 0);
+              setYearAttendeeCount(data.attendeeAssociationsRemoved ?? 0);
+            }
+          } catch {}
+        }}
+      />
 
       {/* 2. Main Content Wrapper - Floating layout on desktop to match sidebar card flow */}
-      <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:my-4 md:mr-4 md:ml-2 md:rounded-3xl md:border md:border-slate-200 dark:md:border-slate-800/80 md:shadow-md bg-slate-50 dark:bg-slate-950">
+      <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:my-3 md:mr-2 md:ml-2 md:rounded-2xl md:border md:border-slate-200 dark:md:border-slate-800/80 md:shadow-md bg-slate-50 dark:bg-slate-950">
         
         {/* Persistent Top Header */}
         <header className="h-16 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 flex items-center justify-between px-6 sm:px-8 shrink-0 shadow-xs transition-colors duration-200">
@@ -727,14 +470,14 @@ export default function App() {
               <Menu className="h-5 w-5" />
             </button>
 
-            {/* Desktop Sidebar Expand Menu Button */}
+            {/* Desktop Sidebar Expand Button (arrow) */}
             {isSidebarCollapsed && (
               <button 
                 onClick={() => setIsSidebarCollapsed(false)}
                 className="p-1.5 -ml-1 rounded-lg text-slate-500 hover:text-slate-800 hover:bg-slate-100 hidden md:flex transition cursor-pointer animate-in fade-in duration-200"
                 title="Expand Sidebar"
               >
-                <Menu className="h-5 w-5" />
+                <ArrowRight className="h-5 w-5" />
               </button>
             )}
             <div>
@@ -822,7 +565,7 @@ export default function App() {
                       {stats.alertEmployees.map((emp) => (
                         <div 
                           key={emp.id}
-                          className="bg-white/60 dark:bg-slate-900/40 border border-slate-200/40 dark:border-white/5 rounded-xl p-3 flex items-center justify-between gap-4 shadow-2xs hover:shadow-xs transition"
+                          className="bg-white/60 dark:bg-slate-900/40 border border-slate-200/40 dark:border-white/5 rounded-xl p-3 flex items-center justify-between gap-4 shadow-xs hover:shadow-xs transition"
                         >
                           <div>
                             <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">{emp.name}</h4>
@@ -883,7 +626,7 @@ export default function App() {
                   {/* Header Section */}
                   <div className="border-b border-slate-50 dark:border-slate-800/50 pb-4">
                     <div className="flex items-center gap-3.5">
-                      <div className="p-2.5 bg-slate-50 dark:bg-slate-850/60 text-slate-800 dark:text-slate-200 rounded-xl">
+                      <div className="p-2.5 bg-slate-50 dark:bg-slate-800/60 text-slate-800 dark:text-slate-200 rounded-xl">
                         <HelpCircle className="h-5 w-5" />
                       </div>
                       <div>
@@ -915,7 +658,7 @@ export default function App() {
                           <span className="text-blue-500 font-bold shrink-0">•</span>
                           <div>
                             <strong>Connect to the Network:</strong> Ensure your device is connected to the <span className="font-bold text-slate-800 dark:text-slate-200">CEEOD</span> office router.
-                            <div className="mt-1.5 bg-amber-50/60 dark:bg-amber-950/15 text-amber-800 dark:text-amber-400 text-[10px] px-3 py-2 rounded-xl flex items-start gap-2 leading-relaxed shadow-3xs">
+                            <div className="mt-1.5 bg-amber-50/60 dark:bg-amber-950/15 text-amber-800 dark:text-amber-400 text-[10px] px-3 py-2 rounded-xl flex items-start gap-2 leading-relaxed shadow-xs">
                               <Info className="h-3.5 w-3.5 shrink-0 text-amber-600 dark:text-amber-500" />
                               <span>This is a strictly local database. It is <strong>not</strong> accessible outside the office or on any other network.</span>
                             </div>
@@ -927,7 +670,7 @@ export default function App() {
                             <strong>Open the App:</strong> Once connected, open any web browser on your device and enter the following IP address in the address bar:
                             
                             <div className="mt-2.5 flex items-center gap-2">
-                              <div className="font-mono text-xs text-blue-700 dark:text-blue-450 font-bold bg-blue-50 dark:bg-blue-950/60 py-2 px-3.5 rounded-xl shadow-2xs select-all">
+                              <div className="font-mono text-xs text-blue-700 dark:text-blue-500 font-bold bg-blue-50 dark:bg-blue-950/60 py-2 px-3.5 rounded-xl shadow-xs select-all">
                                 http://192.168.2.150
                               </div>
                               <button
@@ -936,7 +679,7 @@ export default function App() {
                                   setIpCopied(true);
                                   setTimeout(() => setIpCopied(false), 2000);
                                 }}
-                                className="p-2 bg-slate-200/60 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl transition-all active:scale-95 shadow-3xs cursor-pointer flex items-center gap-1.5 text-[10px] font-semibold"
+                                className="p-2 bg-slate-200/60 hover:bg-slate-200 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-600 dark:text-slate-400 rounded-xl transition-all active:scale-95 shadow-xs cursor-pointer flex items-center gap-1.5 text-[10px] font-semibold"
                                 title="Copy IP to Clipboard"
                               >
                                 {ipCopied ? (
@@ -969,7 +712,7 @@ export default function App() {
                         <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
                           Because this application handles sensitive employee information, <strong>we do not use a cloud service provider</strong>.
                         </p>
-                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-4 shadow-3xs leading-relaxed text-xs text-slate-650 dark:text-slate-450">
+                        <div className="bg-white dark:bg-slate-900/60 rounded-xl p-4 shadow-xs leading-relaxed text-xs text-slate-600 dark:text-slate-400">
                           Keeping the database entirely offline and local to the office router ensures maximum security, data privacy, and complete protection against unauthorized external network access.
                         </div>
                       </div>
@@ -1113,6 +856,11 @@ export default function App() {
                 onSelectEmployee={handleEditEmployeeTrigger}
                 currentUser={currentUser}
                 onSeminarChange={fetchStats}
+                onAddNewRecord={() => {
+                  setEditingEmployee(null);
+                  setFormKey((k) => k + 1);
+                  setActiveTab("add");
+                }}
               />
             </div>
 
@@ -1148,6 +896,146 @@ export default function App() {
           }}
         />
       )}
+
+      {/* Add Year Modal */}
+      <Modal
+        isOpen={yearModalOpen}
+        onClose={() => setYearModalOpen(false)}
+        maxWidth="max-w-sm"
+        ariaLabel="Add Seminar Year"
+        title="Add Seminar Year"
+        bodyClassName="space-y-4"
+        footer={
+          <>
+            <button
+              onClick={() => setYearModalOpen(false)}
+              className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl"
+            >
+              Cancel
+            </button>
+            <button
+              onClick={async () => {
+                const input = document.getElementById("new-year-input") as HTMLInputElement;
+                const year = parseInt(input?.value);
+                if (!year || isNaN(year)) return;
+                try {
+                  const res = await fetch("/api/seminars/years", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ year }),
+                  });
+                  if (res.ok) {
+                    setYearModalOpen(false);
+                    fetchStats();
+                  } else {
+                    const err = await res.json();
+                    showToast(err.error || "Failed to create year", "error");
+                  }
+                } catch {
+                  showToast("Failed to create year", "error");
+                }
+              }}
+              className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 cursor-pointer font-bold rounded-xl shadow-md shadow-blue-500/5"
+            >
+              Create Year
+            </button>
+          </>
+        }
+      >
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          Enter a new seminar year. Quarters Q1–Q4 will be available automatically.
+        </p>
+        <input
+          id="new-year-input"
+          type="number"
+          placeholder="e.g. 2027"
+          min="2020"
+          max="2100"
+          className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold transition-colors"
+          onKeyDown={(e) => {
+            if (e.key === "Enter") (e.currentTarget.parentElement?.parentElement?.querySelector("button:last-child") as HTMLButtonElement)?.click();
+          }}
+        />
+      </Modal>
+
+      {/* Delete Year Confirmation Modal */}
+      <Modal
+        isOpen={deleteYearModalOpen !== null}
+        onClose={() => { setDeleteYearModalOpen(null); setDeleteConfirmText(""); }}
+        maxWidth="max-w-md"
+        ariaLabel="Delete Seminar Year"
+        title={`Delete Year ${deleteYearModalOpen || ""}?`}
+        bodyClassName="space-y-4"
+        footer={
+          <>
+            <button
+              onClick={() => { setDeleteYearModalOpen(null); setDeleteConfirmText(""); }}
+              className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl"
+            >
+              Cancel
+            </button>
+            <button
+              disabled={yearSeminarCount > 0 && deleteConfirmText !== "CONFIRM"}
+              onClick={async () => {
+                const yr = deleteYearModalOpen;
+                if (yr === null) return;
+                try {
+                  const res = await fetch(`/api/seminars/years/${yr}`, { method: "DELETE" });
+                  if (res.ok) {
+                    setDeleteYearModalOpen(null);
+                    setYearSeminarCount(0);
+                    setYearAttendeeCount(0);
+                    setDeleteConfirmText("");
+                    fetchStats();
+                    showToast(`Year ${yr} deleted successfully.`, "success");
+                  } else {
+                    const err = await res.json();
+                    showToast(err.error || "Failed to delete year", "error");
+                  }
+                } catch {
+                  showToast("Failed to delete year", "error");
+                }
+              }}
+              className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold rounded-xl shadow-md shadow-red-500/5 disabled:opacity-50 disabled:pointer-events-none"
+            >
+              Delete Year
+            </button>
+          </>
+        }
+      >
+        {yearSeminarCount > 0 ? (
+          <>
+            <div className="flex gap-3 items-start p-3 bg-red-500/10 border border-red-200/40 dark:border-red-900/30 rounded-xl">
+              <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />
+              <div className="space-y-1">
+                <p className="text-sm font-bold text-red-600 dark:text-red-400">This year contains seminar records.</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+                  Deleting it will permanently remove <strong>{deleteYearModalOpen}</strong>, its <strong>{yearSeminarCount}</strong> seminars, and <strong>{yearAttendeeCount}</strong> attendee associations. This action cannot be undone.
+                </p>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Type <strong className="text-red-500">CONFIRM</strong> below to proceed.
+            </p>
+            <input
+              type="text"
+              placeholder="Type CONFIRM"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              className="block w-full px-3 py-2 border border-red-300 dark:border-red-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-red-500 text-xs text-slate-800 dark:text-white font-bold text-center tracking-widest uppercase transition-colors"
+            />
+          </>
+        ) : (
+          <>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              This year has no seminars and will be removed immediately.
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400">
+              Are you sure you want to remove <strong>{deleteYearModalOpen}</strong> from the sidebar?
+            </p>
+          </>
+        )}
+      </Modal>
     </div>
   );
 }
@@ -1199,77 +1087,80 @@ function ChangePasswordModal({ currentUser, onClose, onSuccess, onError }: Chang
   };
 
   return (
-    <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-100">
-      <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200/60 dark:border-white/10 shadow-2xl p-6 w-full max-w-sm relative overflow-hidden animate-in zoom-in-95 duration-100 transition-colors duration-200">
-        <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 font-display flex items-center gap-2">
-          <Lock className="h-4.5 w-4.5 text-blue-500" />
-          <span>Change Password</span>
-        </h4>
-        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-4">
-          Update the security credentials for your account (<strong>{currentUser.username}</strong>).
-        </p>
+    <Modal
+      isOpen
+      onClose={onClose}
+      maxWidth="max-w-sm"
+      ariaLabel="Change Password"
+      title="Change Password"
+      bodyClassName="space-y-4 pt-2"
+      footer={
+        <>
+          <button
+            type="button"
+            onClick={onClose}
+            className="btn-glass text-xs py-2 px-4 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            disabled={loading}
+            onClick={handleSubmit}
+            className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 cursor-pointer font-bold"
+          >
+            {loading ? "Saving..." : "Change Password"}
+          </button>
+        </>
+      }
+    >
+      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 mb-2">
+        Update the security credentials for your account (<strong>{currentUser.username}</strong>).
+      </p>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-              Current Password
-            </label>
-            <input
-              type="password"
-              required
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
-              placeholder="••••••••"
-            />
-          </div>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+            Current Password
+          </label>
+          <input
+            type="password"
+            required
+            value={oldPassword}
+            onChange={(e) => setOldPassword(e.target.value)}
+            className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
+            placeholder="••••••••"
+          />
+        </div>
 
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-              New Password
-            </label>
-            <input
-              type="password"
-              required
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
-              placeholder="••••••••"
-            />
-          </div>
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+            New Password
+          </label>
+          <input
+            type="password"
+            required
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+            className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
+            placeholder="••••••••"
+          />
+        </div>
 
-          <div>
-            <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
-              Confirm New Password
-            </label>
-            <input
-              type="password"
-              required
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
-              placeholder="••••••••"
-            />
-          </div>
-
-          <div className="mt-5 flex justify-end gap-3 pt-2">
-            <button
-              type="button"
-              onClick={onClose}
-              className="btn-glass text-xs py-2 px-4 cursor-pointer"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={loading}
-              className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 cursor-pointer font-bold"
-            >
-              {loading ? "Saving..." : "Change Password"}
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div>
+          <label className="block text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+            Confirm New Password
+          </label>
+          <input
+            type="password"
+            required
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-xs transition-colors duration-200"
+            placeholder="••••••••"
+          />
+        </div>
+      </form>
+    </Modal>
   );
 }

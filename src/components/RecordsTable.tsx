@@ -1,9 +1,10 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, X, Printer, FileSpreadsheet, Eye, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, Printer, FileSpreadsheet, Eye, AlertTriangle, ArrowLeft } from "lucide-react";
 import { Employee, LearningNeed } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
 import SearchableSelect from "./SearchableSelect";
-import { createPortal } from "react-dom";
+import EmployeeProfileDrawer from "./EmployeeProfileDrawer";
+import Modal from "./Modal";
 
 interface JoinedRecord {
   LearningNeedID: number;
@@ -142,7 +143,6 @@ export default function RecordsTable({
   const [selectedEmployeeNeeds, setSelectedEmployeeNeeds] = useState<LearningNeed[]>([]);
   const [selectedEmployeeSeminars, setSelectedEmployeeSeminars] = useState<any[]>([]);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
-  const [detailTab, setDetailTab] = useState<"needs" | "seminars">("needs");
 
   // Delete confirm state
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -247,7 +247,6 @@ export default function RecordsTable({
         setSelectedEmployeeDetail(data);
         setSelectedEmployeeNeeds(data.needs || []);
         setSelectedEmployeeSeminars(data.seminars || []);
-        setDetailTab("needs");
         setDetailModalOpen(true);
       });
   };
@@ -684,7 +683,7 @@ export default function RecordsTable({
                           </span>
                           <div className="h-[1px] bg-slate-300/50 dark:bg-slate-800/80 flex-1"></div>
                           {rec.Needs.length > 0 && (
-                            <span className="text-[9.5px] font-extrabold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-300/30 dark:border-slate-800/60 shadow-2xs">
+                            <span className="text-[9.5px] font-extrabold text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-900 px-2 py-0.5 rounded-full border border-slate-300/30 dark:border-slate-800/60 shadow-xs">
                               {rec.Needs.length} {rec.Needs.length === 1 ? "need" : "needs"}
                             </span>
                           )}
@@ -694,7 +693,7 @@ export default function RecordsTable({
                           {rec.Needs.map((need) => (
                             <div 
                               key={need.LearningNeedID} 
-                              className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 relative group/need space-y-1.5 shadow-2xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-100"
+                              className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl p-3 relative group/need space-y-1.5 shadow-xs hover:shadow-md hover:-translate-y-0.5 transition-all duration-100"
                             >
                               <div className="flex items-start justify-between gap-3">
                                 <span className="font-bold text-slate-800 dark:text-slate-100 text-[11.5px] leading-tight pr-6">
@@ -775,255 +774,73 @@ export default function RecordsTable({
       </div>
 
       {/* Delete Confirmation Modal Overlay */}
-      {deleteConfirmId && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-2xl p-6 w-full max-w-sm relative animate-zoom-in transition-colors duration-200">
-            <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 font-display">Delete Learning Need?</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              This will permanently delete this specific learning need entry from the database. This action is irreversible.
-            </p>
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="btn-glass text-xs py-2 px-4 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={executeDeleteNeed}
-                className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-red-500/5"
-              >
-                Confirm Delete
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <Modal
+        isOpen={!!deleteConfirmId}
+        onClose={() => setDeleteConfirmId(null)}
+        maxWidth="max-w-sm"
+        ariaLabel="Delete Learning Need"
+        title="Delete Learning Need?"
+      >
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          This will permanently delete this specific learning need entry from the database. This action is irreversible.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            onClick={() => setDeleteConfirmId(null)}
+            className="btn-glass text-xs py-2 px-4 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={executeDeleteNeed}
+            className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-red-500/5"
+          >
+            Confirm Delete
+          </button>
+        </div>
+      </Modal>
 
       {/* Delete Employee Confirmation Modal Overlay */}
-      {deleteEmployeeConfirmId && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fade-in">
-          <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-2xl p-6 w-full max-w-sm relative animate-zoom-in transition-colors duration-200">
-            <h4 className="text-base font-bold text-slate-900 dark:text-slate-100 font-display">Delete Employee?</h4>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-              This will permanently delete this employee and all associated learning needs from the database. This action is irreversible.
-            </p>
-            <div className="mt-5 flex justify-end gap-3">
-              <button
-                onClick={() => setDeleteEmployeeConfirmId(null)}
-                className="btn-glass text-xs py-2 px-4 cursor-pointer"
-              >
-                Cancel
-              </button>
-              <button
-                onClick={executeDeleteEmployee}
-                className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-red-500/5"
-              >
-                Confirm Delete
-              </button>
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      <Modal
+        isOpen={!!deleteEmployeeConfirmId}
+        onClose={() => setDeleteEmployeeConfirmId(null)}
+        maxWidth="max-w-sm"
+        ariaLabel="Delete Employee"
+        title="Delete Employee?"
+      >
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          This will permanently delete this employee and all associated learning needs from the database. This action is irreversible.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            onClick={() => setDeleteEmployeeConfirmId(null)}
+            className="btn-glass text-xs py-2 px-4 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={executeDeleteEmployee}
+            className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-red-500/5"
+          >
+            Confirm Delete
+          </button>
+        </div>
+      </Modal>
 
-      {/* View Employee Detail Drawer Overlay */}
-      {detailModalOpen && selectedEmployeeDetail && createPortal(
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex justify-end animate-fade-in">
-          <div className="w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col relative animate-slide-in-right transition-colors duration-200">
-            {/* Topbar — sticky back arrow */}
-            <div className="shrink-0 border-b border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center gap-3 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm transition-colors duration-200 sticky top-0 z-10">
-              <button
-                onClick={() => setDetailModalOpen(false)}
-                className="text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-100 cursor-pointer"
-                aria-label="Back to records"
-              >
-                <ArrowLeft className="h-5 w-5" />
-              </button>
-              <div className="flex-1 min-w-0">
-                <h3 className="text-sm font-bold text-slate-800 dark:text-white font-display truncate">
-                  {selectedEmployeeDetail.LastName}, {selectedEmployeeDetail.FirstName} {selectedEmployeeDetail.MiddleInitial || ""}
-                </h3>
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest">
-                  Quick View
-                </span>
-              </div>
-              <button
-                onClick={() => {
-                  setDetailModalOpen(false);
-                  onEditEmployee(selectedEmployeeDetail.EmployeeID);
-                }}
-                className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-[11px] font-bold py-1.5 px-3 rounded-lg cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100 shrink-0"
-              >
-                Edit
-              </button>
-            </div>
-
-            {/* Drawer Content */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-6">
-              {/* Profile Overview */}
-              <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
-                <div className="w-14 h-14 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl uppercase tracking-wider">
-                  {selectedEmployeeDetail.LastName.charAt(0)}
-                </div>
-                <div>
-                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug font-display">
-                    {selectedEmployeeDetail.LastName}, {selectedEmployeeDetail.FirstName} {selectedEmployeeDetail.MiddleInitial || ""}
-                  </h2>
-                  <p className="text-xs text-slate-550 dark:text-slate-400 font-medium mt-0.5">{selectedEmployeeDetail.Position}</p>
-                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wide mt-0.5">{selectedEmployeeDetail.Office}</p>
-                </div>
-              </div>
-
-              {/* Meta details */}
-              <div className="grid grid-cols-3 gap-4 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Employment Status</span>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{selectedEmployeeDetail.EmploymentStatus || "N/A"}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Gender</span>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{selectedEmployeeDetail.Gender || "N/A"}</p>
-                </div>
-                <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Date of Assumption</span>
-                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 mt-0.5">{selectedEmployeeDetail.DateOfAssumption || "N/A"}</p>
-                </div>
-              </div>
-
-              {/* Profile Details Tab Selector */}
-              <div className="flex border-b border-slate-100 dark:border-slate-800">
-                <button
-                  type="button"
-                  onClick={() => setDetailTab("needs")}
-                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
-                    !detailTab || detailTab === "needs"
-                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-slate-400 hover:text-slate-650"
-                  }`}
-                >
-                  Individual Development Needs ({selectedEmployeeNeeds.length})
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setDetailTab("seminars")}
-                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
-                    detailTab === "seminars"
-                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
-                      : "border-transparent text-slate-400 hover:text-slate-650"
-                  }`}
-                >
-                  Training & Seminars ({selectedEmployeeSeminars.length})
-                </button>
-              </div>
-
-              {/* Tab 1: Associated Learning Needs List */}
-              {(!detailTab || detailTab === "needs") && (
-                <div className="space-y-4">
-                  {selectedEmployeeNeeds.length === 0 ? (
-                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
-                      No learning needs currently registered.
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
-                      {selectedEmployeeNeeds.map((need, idx) => (
-                        <div key={idx} className="p-4 bg-slate-50/30 dark:bg-slate-950/20 rounded-xl border border-slate-200/40 dark:border-slate-800 space-y-2">
-                          <div className="flex items-start justify-between gap-3">
-                            <div className="flex-1">
-                              <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Plan Opportunity #{idx + 1}</span>
-                              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 leading-snug">{need.LearningNeed}</p>
-                            </div>
-                            <span className="text-[9.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30">
-                              {need.TargetSchedule}
-                            </span>
-                          </div>
-
-                          {/* Basis & Methodology details inside drawer */}
-                          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100/40 dark:border-slate-800/40">
-                            <div>
-                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 block">Basis</span>
-                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Basis}</p>
-                            </div>
-                            <div>
-                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-450 block">Methodology</span>
-                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Methodology}</p>
-                            </div>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {/* Tab 2: Seminars Attended List */}
-              {detailTab === "seminars" && (
-                <div className="space-y-4">
-                  {selectedEmployeeSeminars.length === 0 ? (
-                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
-                      No seminar attendances registered.
-                    </div>
-                  ) : (
-                    <div className="space-y-4">
-                      {/* Group seminars by year */}
-                      {Array.from(new Set(selectedEmployeeSeminars.map(s => s.year)))
-                        .sort((a, b) => b - a)
-                        .map(year => {
-                          const yearSems = selectedEmployeeSeminars.filter(s => s.year === year);
-                          const quarters = Array.from(new Set(yearSems.map(s => s.quarter || "Undefined"))).sort();
-                          return (
-                            <div key={year} className="space-y-3">
-                              <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block border-b border-slate-100 dark:border-slate-800 pb-1">
-                                {year} Seminars
-                              </span>
-                              {quarters.map(q => (
-                                <div key={q} className="pl-2 space-y-1.5">
-                                  <span className="text-[9.5px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide block">
-                                    {q}
-                                  </span>
-                                  <ul className="space-y-1.5 list-none pl-2 border-l border-slate-100 dark:border-slate-800/80">
-                                    {yearSems
-                                      .filter(s => (s.quarter || "Undefined") === q)
-                                      .map((sem, idx) => (
-                                        <li key={idx}>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setDetailModalOpen(false);
-                                              if (typeof (window as any)._navigateToSeminar === "function") {
-                                                (window as any)._navigateToSeminar(sem.year, sem.quarter || "Q2", sem.id);
-                                              }
-                                            }}
-                                            className="w-full text-left flex items-start gap-2 text-xs text-slate-700 dark:text-slate-350 bg-slate-50/20 dark:bg-slate-950/20 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-blue-500/5 dark:hover:bg-blue-500/10 hover:border-blue-500/30 transition cursor-pointer"
-                                          >
-                                            <span className="text-blue-500 shrink-0 font-bold">•</span>
-                                            <div>
-                                              <span className="font-bold text-slate-850 dark:text-white block hover:text-blue-500 hover:underline">{sem.title}</span>
-                                              {sem.date && (
-                                                <span className="text-[10px] text-slate-400">
-                                                  Date: {new Date(sem.date).toLocaleDateString(undefined, { dateStyle: "medium" })}
-                                                </span>
-                                              )}
-                                            </div>
-                                          </button>
-                                        </li>
-                                      ))}
-                                  </ul>
-                                </div>
-                              ))}
-                            </div>
-                          );
-                        })}
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        </div>,
-        document.body
-      )}
+      {/* View Employee Detail Drawer */}
+      <EmployeeProfileDrawer
+        isOpen={detailModalOpen}
+        employee={selectedEmployeeDetail}
+        needs={selectedEmployeeNeeds}
+        seminars={selectedEmployeeSeminars}
+        onClose={() => setDetailModalOpen(false)}
+        onEdit={(empId) => { setDetailModalOpen(false); onEditEmployee(empId); }}
+        onNavigateToSeminar={(year, quarter, semId) => {
+          if (typeof (window as any)._navigateToSeminar === "function") {
+            (window as any)._navigateToSeminar(year, quarter, semId);
+          }
+        }}
+      />
     </div>
   );
 }

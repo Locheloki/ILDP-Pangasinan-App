@@ -278,7 +278,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
       LearningNeed: "",
       Basis: ["Advanced Knowledge"],
       Methodology: ["Seminar/Training"],
-      TargetSchedule: "1st Quarter of 2026",
+      TargetSchedule: `1st Quarter of ${new Date().getFullYear()}`,
     };
   }
 
@@ -555,7 +555,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
             <button
               type="button"
               onClick={() => setIsQueueOpen(false)}
-              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-xl text-slate-400 hover:text-slate-655 dark:hover:text-slate-200 transition cursor-pointer"
+              className="p-1.5 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl text-slate-400 hover:text-slate-655 dark:hover:text-slate-200 transition cursor-pointer"
               title="Collapse Queue"
             >
               <ChevronLeft className="h-4 w-4" />
@@ -697,7 +697,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                         }`}
                       >
                         <div className="min-w-0 flex-1">
-                          <p className={`font-bold truncate ${isHighlighted ? "text-blue-700 dark:text-blue-300" : "text-slate-750 dark:text-slate-300"}`}>
+                          <p className={`font-bold truncate ${isHighlighted ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>
                             {emp.LastName}, {emp.FirstName}
                           </p>
                           <p className="text-[9px] text-slate-400 truncate mt-0.5 font-medium">{emp.Office}</p>
@@ -751,7 +751,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
         <div className="flex-1 overflow-y-auto divide-y divide-slate-200 dark:divide-slate-800/50">
           {playlistQueue.length === 0 ? (
             <div className="p-8 text-center text-xs text-slate-400 flex flex-col items-center justify-center gap-2.5 min-h-[250px]">
-              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-850 flex items-center justify-center text-slate-350 dark:text-slate-500 font-bold text-lg">
+              <div className="w-10 h-10 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-300 dark:text-slate-500 font-bold text-lg">
                 Q
               </div>
               <p className="max-w-[200px] text-slate-400 leading-relaxed font-medium">
@@ -855,7 +855,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                 <button
                   type="button"
                   onClick={handleSkip}
-                  className="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-350 hover:bg-slate-100 dark:hover:bg-slate-850 rounded-xl cursor-pointer transition"
+                  className="px-3.5 py-2 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl cursor-pointer transition"
                   title="Skip (Ctrl + Right)"
                 >
                   Skip Record
@@ -1044,7 +1044,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
 
                       <div className="grid grid-cols-1 md:grid-cols-12 gap-4">
                         {/* Learning Need */}
-                        <div className="md:col-span-12 pr-8">
+                        <div className="md:col-span-12 pr-8 min-w-0">
                           <SearchableSelect
                             label={`Learning Need / Competency Opportunity #${idx + 1}`}
                             value={need.LearningNeed}
@@ -1065,7 +1065,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                         </div>
 
                         {/* Basis of L&D Needs */}
-                        <div className="md:col-span-4 space-y-2">
+                        <div className="md:col-span-4 space-y-2 min-w-0">
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             Basis of Need
                           </label>
@@ -1119,7 +1119,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                         </div>
 
                         {/* Proposed Action / Methodology */}
-                        <div className="md:col-span-4 space-y-2">
+                        <div className="md:col-span-4 space-y-2 min-w-0">
                           <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                             Proposed Methodology
                           </label>
@@ -1173,7 +1173,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                         </div>
 
                         {/* Target Schedule */}
-                        <div className="md:col-span-4">
+                        <div className="md:col-span-4 min-w-0">
                           <SearchableSelect
                             label="Target Schedule"
                             value={need.TargetSchedule}
@@ -1199,15 +1199,15 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
             </div>             {/* Form Footer Keyboard Shortcuts Help */}
             <div className="border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 px-6 py-4 rounded-b-2xl flex flex-col sm:flex-row items-center justify-between gap-3 text-[10px] text-slate-400 font-semibold font-mono tracking-wide uppercase transition-colors duration-200">
               <span className="flex items-center gap-1.5">
-                <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-350 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">Ctrl + Enter</span>
+                <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">Ctrl + Enter</span>
                 <span>Save & Next</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-350 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">Alt + N</span>
+                <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">Alt + N</span>
                 <span>Add Need Card</span>
               </span>
               <span className="flex items-center gap-1.5">
-                <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-350 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">Ctrl + →</span>
+                <span className="bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded border border-slate-200 dark:border-slate-800">Ctrl + →</span>
                 <span>Skip Employee</span>
               </span>
             </div>
