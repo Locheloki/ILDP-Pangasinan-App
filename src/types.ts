@@ -57,4 +57,30 @@ export interface DashboardStats {
     status: string;
     message: string;
   }>;
+}export interface Seminar {
+  id: string;
+  title: string;
+  year: number;
+  quarter: "Q1" | "Q2" | "Q3" | "Q4";
+  date?: string;
+  location?: string;
+  speaker?: string;
+  remarks?: string;
+  createdAt: string;
+  attendees?: Array<{
+    id: string;
+    EmployeeID: number;
+    FirstName: string;
+    MiddleInitial?: string;
+    LastName: string;
+    Office: string;
+    Position: string;
+  }>;
+}
+
+export interface SeminarAttendee {
+  id: string;
+  seminarId: string;
+  employeeId: number;
+  createdAt: string;
 }

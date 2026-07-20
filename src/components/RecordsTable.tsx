@@ -140,6 +140,7 @@ export default function RecordsTable({
   // Detail Modal overlay state
   const [selectedEmployeeDetail, setSelectedEmployeeDetail] = useState<Employee | null>(null);
   const [selectedEmployeeNeeds, setSelectedEmployeeNeeds] = useState<LearningNeed[]>([]);
+  const [selectedEmployeeSeminars, setSelectedEmployeeSeminars] = useState<any[]>([]);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
 
   // Delete confirm state
@@ -244,6 +245,7 @@ export default function RecordsTable({
       .then((data) => {
         setSelectedEmployeeDetail(data);
         setSelectedEmployeeNeeds(data.needs || []);
+        setSelectedEmployeeSeminars(data.seminars || []);
         setDetailModalOpen(true);
       });
   };
@@ -876,43 +878,133 @@ export default function RecordsTable({
                 </div>
               </div>
 
-              {/* Associated Learning Needs List */}
-              <div>
-                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wider mb-3">Individual Development Needs</h3>
-                {selectedEmployeeNeeds.length === 0 ? (
-                  <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
-                    No learning needs currently registered.
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {selectedEmployeeNeeds.map((need, idx) => (
-                      <div key={idx} className="p-4 bg-slate-50/30 dark:bg-slate-950/20 rounded-xl border border-slate-200/40 dark:border-slate-800 space-y-2">
-                        <div className="flex items-start justify-between gap-3">
-                          <div className="flex-1">
-                            <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Plan Opportunity #{idx + 1}</span>
-                            <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 leading-snug">{need.LearningNeed}</p>
-                          </div>
-                          <span className="text-[9.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30">
-                            {need.TargetSchedule}
-                          </span>
-                        </div>
-
-                        {/* Basis & Methodology details inside drawer */}
-                        <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100/40 dark:border-slate-800/40">
-                          <div>
-                            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 block">Basis</span>
-                            <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Basis}</p>
-                          </div>
-                          <div>
-                            <span className="text-[8px] font-bold uppercase tracking-wider text-slate-450 block">Methodology</span>
-                            <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Methodology}</p>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
+              {/* Profile Details Tab Selector */}
+              <div className="flex border-b border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => (window as any)._activeProfileTab = "needs"}
+                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
+                    !(window as any)._activeProfileTab || (window as any)._activeProfileTab === "needs"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-slate-400 hover:text-slate-650"
+                  }`}
+                >
+                  Individual Development Needs ({selectedEmployeeNeeds.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => (window as any)._activeProfileTab = "seminars"}
+                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
+                    (window as any)._activeProfileTab === "seminars"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-slate-400 hover:text-slate-650"
+                  }`}
+                >
+                  Training & Seminars ({selectedEmployeeSeminars.length})
+                </button>
               </div>
+
+              {/* Tab 1: Associated Learning Needs List */}
+              {(!(window as any)._activeProfileTab || (window as any)._activeProfileTab === "needs") && (
+                <div className="space-y-4">
+                  {selectedEmployeeNeeds.length === 0 ? (
+                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
+                      No learning needs currently registered.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {selectedEmployeeNeeds.map((need, idx) => (
+                        <div key={idx} className="p-4 bg-slate-50/30 dark:bg-slate-950/20 rounded-xl border border-slate-200/40 dark:border-slate-800 space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Plan Opportunity #{idx + 1}</span>
+                              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 leading-snug">{need.LearningNeed}</p>
+                            </div>
+                            <span className="text-[9.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30">
+                              {need.TargetSchedule}
+                            </span>
+                          </div>
+
+                          {/* Basis & Methodology details inside drawer */}
+                          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100/40 dark:border-slate-800/40">
+                            <div>
+                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 block">Basis</span>
+                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Basis}</p>
+                            </div>
+                            <div>
+                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-450 block">Methodology</span>
+                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Methodology}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 2: Seminars Attended List */}
+              {(window as any)._activeProfileTab === "seminars" && (
+                <div className="space-y-4">
+                  {selectedEmployeeSeminars.length === 0 ? (
+                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
+                      No seminar attendances registered.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Group seminars by year */}
+                      {Array.from(new Set(selectedEmployeeSeminars.map(s => s.year)))
+                        .sort((a, b) => b - a)
+                        .map(year => {
+                          const yearSems = selectedEmployeeSeminars.filter(s => s.year === year);
+                          const quarters = Array.from(new Set(yearSems.map(s => s.quarter || "Undefined"))).sort();
+                          return (
+                            <div key={year} className="space-y-3">
+                              <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block border-b border-slate-100 dark:border-slate-800 pb-1">
+                                {year} Seminars
+                              </span>
+                              {quarters.map(q => (
+                                <div key={q} className="pl-2 space-y-1.5">
+                                  <span className="text-[9.5px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide block">
+                                    {q}
+                                  </span>
+                                  <ul className="space-y-1.5 list-none pl-2 border-l border-slate-100 dark:border-slate-800/80">
+                                    {yearSems
+                                      .filter(s => (s.quarter || "Undefined") === q)
+                                      .map((sem, idx) => (
+                                        <li key={idx}>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setDetailModalOpen(false);
+                                              if (typeof (window as any)._navigateToSeminar === "function") {
+                                                (window as any)._navigateToSeminar(sem.year, sem.quarter || "Q2", sem.id);
+                                              }
+                                            }}
+                                            className="w-full text-left flex items-start gap-2 text-xs text-slate-700 dark:text-slate-350 bg-slate-50/20 dark:bg-slate-950/20 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800 hover:bg-blue-500/5 dark:hover:bg-blue-500/10 hover:border-blue-500/30 transition cursor-pointer"
+                                          >
+                                            <span className="text-blue-500 shrink-0 font-bold">•</span>
+                                            <div>
+                                              <span className="font-bold text-slate-850 dark:text-white block hover:text-blue-500 hover:underline">{sem.title}</span>
+                                              {sem.date && (
+                                                <span className="text-[10px] text-slate-400">
+                                                  Date: {new Date(sem.date).toLocaleDateString(undefined, { dateStyle: "medium" })}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </button>
+                                        </li>
+                                      ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             {/* Actions Footer */}

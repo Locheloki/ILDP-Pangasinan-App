@@ -170,11 +170,15 @@ function readDatabase() {
         users: [], 
         employees: [], 
         learningNeeds: [], 
+        seminars: [],
+        seminarAttendees: [],
         customOptions: { ...defaults } 
       };
     }
     const data = fs.readFileSync(DB_FILE, "utf-8");
     const db = JSON.parse(data);
+    if (!db.seminars) db.seminars = [];
+    if (!db.seminarAttendees) db.seminarAttendees = [];
     if (!db.customOptions) {
       db.customOptions = { ...defaults };
     } else {
@@ -193,6 +197,8 @@ function readDatabase() {
       users: [], 
       employees: [], 
       learningNeeds: [], 
+      seminars: [],
+      seminarAttendees: [],
       customOptions: { 
         basis: [], 
         methodology: [],
@@ -653,9 +659,16 @@ app.get("/api/employees/:id", (req, res) => {
   }
 
   const needs = db.learningNeeds.filter((ln: any) => ln.EmployeeID === id);
+  const attendeeRecords = (db.seminarAttendees || []).filter((sa: any) => sa.employeeId === id);
+  const seminars = attendeeRecords.map((sa: any) => {
+    const sem = (db.seminars || []).find((s: any) => s.id === sa.seminarId);
+    return sem ? { id: sem.id, title: sem.title, year: sem.year, date: sem.date } : null;
+  }).filter(Boolean);
+
   return res.json({
     ...employee,
     needs,
+    seminars,
   });
 });
 
@@ -1712,6 +1725,428 @@ app.post("/api/import/execute", express.json({ limit: "50mb" }), async (req, res
   } catch (error: any) {
     console.error("Import execute error:", error);
     res.status(500).json({ error: "Failed to execute import: " + error.message });
+  }
+});
+
+// ----------------------------------------------------
+// SEMINARS MODULE ENDPOINTS
+// ----------------------------------------------------
+
+// 1. Get all seminars
+app.get("/api/seminars", (req, res) => {
+  try {
+    const db = readDatabase();
+    res.json(db.seminars || []);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 2. Get specific seminar and its attendee list with full employee details
+app.get("/api/seminars/:id", (req, res) => {
+  try {
+    const db = readDatabase();
+    const sem = (db.seminars || []).find((s: any) => s.id === req.params.id);
+    if (!sem) {
+      res.status(404).json({ error: "Seminar not found" });
+      return;
+    }
+
+    const attendeeMappings = (db.seminarAttendees || []).filter((sa: any) => sa.seminarId === sem.id);
+    const attendees = attendeeMappings.map((sa: any) => {
+      const emp = (db.employees || []).find((e: any) => e.EmployeeID === sa.employeeId);
+      return {
+        id: sa.id,
+        EmployeeID: sa.employeeId,
+        FirstName: emp ? emp.FirstName : "Unknown",
+        MiddleInitial: emp ? emp.MiddleInitial : "",
+        LastName: emp ? emp.LastName : "Employee",
+        Office: emp ? emp.Office : "N/A",
+        Position: emp ? emp.Position : "N/A"
+      };
+    });
+
+    res.json({
+      id: sem.id,
+      title: sem.title,
+      year: sem.year,
+      quarter: sem.quarter,
+      date: sem.date || "",
+      location: sem.location || "",
+      speaker: sem.speaker || "",
+      remarks: sem.remarks || "",
+      createdAt: sem.createdAt,
+      attendees
+    });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 3. Delete seminar and associated mappings
+app.delete("/api/seminars/:id", (req, res) => {
+  try {
+    const db = readDatabase();
+    db.seminars = (db.seminars || []).filter((s: any) => s.id !== req.params.id);
+    db.seminarAttendees = (db.seminarAttendees || []).filter((sa: any) => sa.seminarId !== req.params.id);
+    writeDatabase(db);
+    res.json({ success: true });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 4. Excel Import Preview
+app.post("/api/seminars/import-preview", upload.single("file"), async (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No file uploaded" });
+      return;
+    }
+
+    // Load file and find sheet
+    const workbook = new ExcelJS.Workbook();
+    await workbook.xlsx.load(req.file.buffer);
+    const sheet = workbook.worksheets[0];
+
+    // Attempt to parse seminar metadata from sheet headers
+    // Look at rows 1-6 for something like OVDS and March 23-24, 2026
+    let parsedTitle = "";
+    let parsedYear = 2026;
+    let parsedDate = "";
+    let parsedQuarter = "Q2"; // Default fallback
+
+    // Fallback title from original filename
+    const origName = req.file.originalname || "";
+    const cleanOrigName = origName.replace(/\.xlsx$/i, "").replace(/[-_]+/g, " ");
+
+    // Check path or filename first for Quarter indicators
+    const lowerName = cleanOrigName.toLowerCase();
+    if (lowerName.includes("1st quarter") || lowerName.includes("q1")) parsedQuarter = "Q1";
+    else if (lowerName.includes("2nd quarter") || lowerName.includes("q2")) parsedQuarter = "Q2";
+    else if (lowerName.includes("3rd quarter") || lowerName.includes("q3")) parsedQuarter = "Q3";
+    else if (lowerName.includes("4th quarter") || lowerName.includes("q4")) parsedQuarter = "Q4";
+
+    for (let r = 1; r <= Math.min(10, sheet.rowCount); r++) {
+      const row = sheet.getRow(r);
+      for (let c = 1; c <= 10; c++) {
+        const val = row.getCell(c).value?.toString().trim();
+        if (val) {
+          if (val.includes("PROVINCE OF") || val.includes("HUMAN RESOURCE")) continue;
+          if (val.length > 3 && val.length < 150) {
+            // Find year in text
+            const yrMatch = val.match(/\b(20\d{2})\b/);
+            if (yrMatch) {
+              parsedYear = parseInt(yrMatch[1], 10);
+            }
+            // Find month date to resolve Quarter
+            // e.g. "MARCH 23-24.2026", "April 22-23 2026"
+            const monthMatches = val.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\b/i);
+            if (monthMatches) {
+              const m = monthMatches[1].toLowerCase();
+              if (["january", "february", "march", "jan", "feb", "mar"].some(x => m.startsWith(x))) parsedQuarter = "Q1";
+              else if (["april", "may", "june", "apr", "jun"].some(x => m.startsWith(x))) parsedQuarter = "Q2";
+              else if (["july", "august", "september", "jul", "aug", "sep"].some(x => m.startsWith(x))) parsedQuarter = "Q3";
+              else if (["october", "november", "december", "oct", "nov", "dec"].some(x => m.startsWith(x))) parsedQuarter = "Q4";
+            }
+            if (!parsedTitle && val.length > 5) {
+              parsedTitle = val;
+            } else if (parsedTitle && parsedTitle !== val && val.length > 5) {
+              parsedTitle = parsedTitle + " - " + val;
+            }
+          }
+        }
+      }
+    }
+
+    if (!parsedTitle) {
+      parsedTitle = cleanOrigName;
+    }
+
+    // Find the header row (contains "NAMES" or "No.")
+    let headerRowIdx = 7;
+    for (let i = 1; i <= Math.min(20, sheet.rowCount); i++) {
+      const row = sheet.getRow(i);
+      const isHeader = row.values.some((v: any) => v && typeof v === "string" && v.toLowerCase().includes("names"));
+      if (isHeader) {
+        headerRowIdx = i;
+        break;
+      }
+    }
+
+    const db = readDatabase();
+    const dbEmployees = db.employees || [];
+    const matched: any[] = [];
+    const unmatched: any[] = [];
+
+    // Names map for fast exact lookup
+    const namesMap = new Map<string, any>();
+    dbEmployees.forEach((emp: any) => {
+      const full = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName}`.replace(/\s+/g, " ").trim().toLowerCase();
+      namesMap.set(full, emp);
+      const commaFull = `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.replace(/\s+/g, " ").trim().toLowerCase();
+      namesMap.set(commaFull, emp);
+    });
+
+    const parsedNames = new Set<string>();
+
+    for (let i = headerRowIdx + 1; i <= sheet.rowCount; i++) {
+      const row = sheet.getRow(i);
+      const cell1 = row.getCell(1).value;
+      const cell2 = row.getCell(2).value; // Name cell usually col 2 or 3
+      const cell3 = row.getCell(3).value;
+
+      let nameVal = "";
+      let officeVal = "";
+
+      if (cell2 && typeof cell2 === "string" && cell2.trim().length > 3) {
+        nameVal = cell2.trim();
+        officeVal = cell3 ? cell3.toString().trim() : "";
+      } else if (cell3 && typeof cell3 === "string" && cell3.trim().length > 3) {
+        nameVal = cell3.trim();
+        officeVal = row.getCell(4).value ? row.getCell(4).value!.toString().trim() : "";
+      } else if (cell1 && typeof cell1 === "string" && cell1.trim().length > 3 && isNaN(Number(cell1))) {
+        nameVal = cell1.trim();
+        officeVal = cell2 ? cell2.toString().trim() : "";
+      }
+
+      if (!nameVal || nameVal.toLowerCase().includes("page") || nameVal.toLowerCase().includes("total") || nameVal.toLowerCase() === "names") continue;
+
+      const normName = nameVal.toLowerCase().replace(/\s+/g, " ").trim();
+      if (parsedNames.has(normName)) continue; // skip file duplicates
+      parsedNames.add(normName);
+
+      // Check priority matching
+      // 1. Name Match
+      let match = namesMap.get(normName);
+      if (!match) {
+        // Try without middle initials or splitting name
+        const cleanName = normName.replace(/\b\w\.\b/g, "").replace(/\s+/g, " ").trim();
+        dbEmployees.forEach((emp: any) => {
+          if (match) return;
+          const empFull = `${emp.FirstName} ${emp.LastName}`.toLowerCase().replace(/\s+/g, " ").trim();
+          if (empFull === cleanName) {
+            match = emp;
+          }
+        });
+      }
+
+      if (match) {
+        matched.push({
+          rawName: nameVal,
+          office: officeVal,
+          EmployeeID: match.EmployeeID,
+          LastName: match.LastName,
+          FirstName: match.FirstName,
+          MiddleInitial: match.MiddleInitial,
+          Office: match.Office,
+          Position: match.Position
+        });
+      } else {
+        unmatched.push({
+          rawName: nameVal,
+          office: officeVal
+        });
+      }
+    }
+
+    res.json({
+      title: parsedTitle,
+      year: parsedYear,
+      quarter: parsedQuarter,
+      date: parsedDate,
+      totalParsed: matched.length + unmatched.length,
+      matched,
+      unmatched
+    });
+  } catch (error: any) {
+    console.error("Seminar import preview error:", error);
+    res.status(500).json({ error: "Failed to preview seminar Excel: " + error.message });
+  }
+});
+
+// 5. Excel Import Execute
+app.post("/api/seminars/import-execute", (req, res) => {
+  try {
+    const { title, year, quarter, date, location, remarks, matched, unmatched } = req.body;
+    if (!title || !year || !quarter) {
+      res.status(400).json({ error: "Title, year and quarter are required" });
+      return;
+    }
+
+    const db = readDatabase();
+    
+    // Check for existing seminar with same name, year, and quarter to ensure idempotency
+    let sem = (db.seminars || []).find((s: any) => s.title.toLowerCase().trim() === title.toLowerCase().trim() && s.year === Number(year) && s.quarter === quarter);
+    if (!sem) {
+      sem = {
+        id: "sem_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+        title,
+        year: Number(year),
+        quarter,
+        date: date || "",
+        location: location || "",
+        remarks: remarks || "",
+        createdAt: new Date().toISOString()
+      };
+      db.seminars.push(sem);
+    }
+
+    let attendeesAdded = 0;
+    let duplicatesSkipped = 0;
+
+    const addAttendee = (empId: number) => {
+      const exists = (db.seminarAttendees || []).some((sa: any) => sa.seminarId === sem.id && sa.employeeId === empId);
+      if (!exists) {
+        db.seminarAttendees.push({
+          id: "sa_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+          seminarId: sem.id,
+          employeeId: empId,
+          createdAt: new Date().toISOString()
+        });
+        attendeesAdded++;
+      } else {
+        duplicatesSkipped++;
+      }
+    };
+
+    // 1. Process matched
+    if (Array.isArray(matched)) {
+      matched.forEach((m: any) => {
+        if (m.EmployeeID) {
+          addAttendee(Number(m.EmployeeID));
+        }
+      });
+    }
+
+    // 2. Process unmatched containing administrative overrides
+    if (Array.isArray(unmatched)) {
+      unmatched.forEach((u: any) => {
+        if (u.EmployeeID) {
+          addAttendee(Number(u.EmployeeID));
+        }
+      });
+    }
+
+    writeDatabase(db);
+
+    res.json({
+      success: true,
+      seminarId: sem.id,
+      attendeesAdded,
+      duplicatesSkipped,
+      totalAttendees: (db.seminarAttendees || []).filter((sa: any) => sa.seminarId === sem.id).length
+    });
+  } catch (error: any) {
+    console.error("Seminar import execute error:", error);
+    res.status(500).json({ error: "Failed to execute seminar import: " + error.message });
+  }
+});
+
+// 6. Manual Create Seminar
+app.post("/api/seminars", (req, res) => {
+  try {
+    const { title, year, quarter, date, location, speaker, remarks } = req.body;
+    if (!title || !year || !quarter) {
+      res.status(400).json({ error: "Title, year, and quarter are required." });
+      return;
+    }
+
+    const db = readDatabase();
+    const sem = {
+      id: "sem_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+      title,
+      year: Number(year),
+      quarter,
+      date: date || "",
+      location: location || "",
+      speaker: speaker || "",
+      remarks: remarks || "",
+      createdAt: new Date().toISOString()
+    };
+    db.seminars.push(sem);
+    writeDatabase(db);
+    res.json(sem);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 7. Update Seminar Metadata
+app.put("/api/seminars/:id", (req, res) => {
+  try {
+    const { title, year, quarter, date, location, speaker, remarks } = req.body;
+    const db = readDatabase();
+    const sem = db.seminars.find((s: any) => s.id === req.params.id);
+    if (!sem) {
+      res.status(404).json({ error: "Seminar not found" });
+      return;
+    }
+
+    if (title !== undefined) sem.title = title;
+    if (year !== undefined) sem.year = Number(year);
+    if (quarter !== undefined) sem.quarter = quarter;
+    if (date !== undefined) sem.date = date;
+    if (location !== undefined) sem.location = location;
+    if (speaker !== undefined) sem.speaker = speaker;
+    if (remarks !== undefined) sem.remarks = remarks;
+
+    writeDatabase(db);
+    res.json(sem);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 8. Add multiple attendees to a seminar (batch mapping link)
+app.post("/api/seminars/:id/attendees", (req, res) => {
+  try {
+    const { employeeIds } = req.body;
+    if (!Array.isArray(employeeIds)) {
+      res.status(400).json({ error: "employeeIds array is required." });
+      return;
+    }
+
+    const db = readDatabase();
+    const sem = db.seminars.find((s: any) => s.id === req.params.id);
+    if (!sem) {
+      res.status(404).json({ error: "Seminar not found." });
+      return;
+    }
+
+    let addedCount = 0;
+    employeeIds.forEach((empId: number) => {
+      const exists = db.seminarAttendees.some((sa: any) => sa.seminarId === sem.id && sa.employeeId === Number(empId));
+      if (!exists) {
+        db.seminarAttendees.push({
+          id: "sa_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+          seminarId: sem.id,
+          employeeId: Number(empId),
+          createdAt: new Date().toISOString()
+        });
+        addedCount++;
+      }
+    });
+
+    writeDatabase(db);
+    res.json({ success: true, addedCount });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// 9. Remove single attendee association link
+app.delete("/api/seminars/:id/attendees/:employeeId", (req, res) => {
+  try {
+    const db = readDatabase();
+    const beforeCount = db.seminarAttendees.length;
+    db.seminarAttendees = db.seminarAttendees.filter(
+      (sa: any) => !(sa.seminarId === req.params.id && sa.employeeId === Number(req.params.employeeId))
+    );
+    writeDatabase(db);
+    res.json({ success: true, removed: beforeCount - db.seminarAttendees.length > 0 });
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
   }
 });
 

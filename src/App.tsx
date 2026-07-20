@@ -46,6 +46,7 @@ import RecordsTable from "./components/RecordsTable";
 import SaveConfirmDialog from "./components/SaveConfirmDialog";
 import RapidEncoding from "./components/RapidEncoding";
 import ImportData from "./components/ImportData";
+import Seminars from "./components/Seminars";
 
 export default function App() {
   // Theme State: 'light' | 'dark' | 'sunset'
@@ -77,11 +78,16 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
-  // Active View Tab State: home, add, view, rapid, import
-  const [activeTab, setActiveTab] = useState<"home" | "add" | "view" | "rapid" | "import">("home");
-  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view" | "rapid" | "import">("view");
+  // Active View Tab State: home, add, view, rapid, import, seminars
+  const [activeTab, setActiveTab] = useState<"home" | "add" | "view" | "rapid" | "import" | "seminars">("home");
+  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view" | "rapid" | "import" | "seminars">("view");
+  const [selectedSeminarYear, setSelectedSeminarYear] = useState<number | null>(null);
+  const [selectedSeminarQuarter, setSelectedSeminarQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4" | null>(null);
+  const [seminarYears, setSeminarYears] = useState<number[]>([2026]);
+  const [seminarsTree, setSeminarsTree] = useState<Record<number, string[]>>({ 2026: ["Q1", "Q2", "Q3", "Q4"] });
+  const [collapsedYears, setCollapsedYears] = useState<Record<number, boolean>>({});
 
-  const changeTab = (tab: "home" | "add" | "view" | "rapid" | "import") => {
+  const changeTab = (tab: "home" | "add" | "view" | "rapid" | "import" | "seminars") => {
     if (tab === "add" && activeTab !== "add") {
       setTabBeforeEdit(activeTab);
     }
@@ -170,6 +176,18 @@ export default function App() {
     if (savedSkip) {
       setSkipConfirmation(JSON.parse(savedSkip));
     }
+
+    // Expose routing function for employee profile drawer clicks
+    (window as any)._navigateToSeminar = (year: number, quarter: string, seminarId: string) => {
+      setSelectedSeminarYear(year);
+      setSelectedSeminarQuarter(quarter as any);
+      setActiveTab("seminars");
+      // Trigger deep selection within the Seminars component
+      setTimeout(() => {
+        const customEvent = new CustomEvent("openSeminarDetails", { detail: { seminarId } });
+        window.dispatchEvent(customEvent);
+      }, 100);
+    };
   }, []);
 
   // Fetch stats whenever active tab shifts or user logs in
@@ -186,6 +204,39 @@ export default function App() {
         setStats(data);
       })
       .catch((err) => console.error("Error loading metrics:", err));
+
+    // Also fetch unique seminar years to populate sidebar
+    fetch("/api/seminars")
+      .then((res) => res.json())
+      .then((sems: any[]) => {
+        const years = Array.from(new Set(sems.map(s => s.year))).sort((a, b) => b - a);
+        const tree: Record<number, string[]> = {};
+        
+        // Group by year and find unique quarters
+        sems.forEach((s) => {
+          if (!tree[s.year]) {
+            tree[s.year] = [];
+          }
+          if (s.quarter && !tree[s.year].includes(s.quarter)) {
+            tree[s.year].push(s.quarter);
+          }
+        });
+
+        // Ensure 2026 exists with defaults if empty
+        if (years.length === 0) {
+          years.push(2026);
+          tree[2026] = ["Q1", "Q2", "Q3", "Q4"];
+        } else {
+          // Sort quarters within each year
+          Object.keys(tree).forEach((yr) => {
+            tree[Number(yr)].sort();
+          });
+        }
+
+        setSeminarYears(years);
+        setSeminarsTree(tree);
+      })
+      .catch((err) => console.error("Error loading seminar years:", err));
   };
 
   const handleLoginSuccess = (user: User) => {
@@ -452,8 +503,8 @@ export default function App() {
           </div>
         </div>
 
-        {/* Sidebar navigation */}
-        <nav className="flex-1 py-6 space-y-6">
+        {/* Sidebar navigation (scrollable portion) */}
+        <nav className="flex-1 overflow-y-auto py-6 space-y-6 custom-scrollbar">
           <div>
             <div className="px-6 mb-3 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Main Menu
@@ -530,6 +581,74 @@ export default function App() {
             </div>
           </div>
 
+          <div>
+            <div className="px-6 mb-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+              Seminars
+            </div>
+            <div className="px-3 space-y-1 menu-hover-fill">
+              {seminarYears.map((yr) => {
+                const isCollapsed = collapsedYears[yr] ?? false;
+                const quarters = seminarsTree[yr] || [];
+                return (
+                  <div key={yr} className="space-y-1">
+                    {/* Collapsible Year Header */}
+                    <button
+                      onClick={() => setCollapsedYears(prev => ({ ...prev, [yr]: !isCollapsed }))}
+                      style={{ "--active-color": "#3b82f6" } as React.CSSProperties}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
+                        !isCollapsed ? "bg-white/10 text-white" : "text-slate-300 hover:text-white hover:bg-white/5"
+                      }`}
+                    >
+                      <span className="flex items-center">
+                        <Calendar className="w-5 h-5 mr-3 shrink-0" />
+                        <span className="menu-link" data-text={yr.toString()}>{yr}</span>
+                      </span>
+                      <span className={`text-[10px] text-slate-400 transform transition-transform duration-200 ${!isCollapsed ? "rotate-180" : ""}`}>
+                        ▼
+                      </span>
+                    </button>
+
+                    {/* Quarter Subsections with height expand animation */}
+                    <div 
+                      className="pl-4 pr-1 overflow-hidden transition-all duration-300 ease-in-out space-y-1"
+                      style={{ 
+                        maxHeight: isCollapsed ? "0" : "160px", 
+                        opacity: isCollapsed ? "0" : "1",
+                        marginTop: isCollapsed ? "0" : "4px",
+                        paddingTop: isCollapsed ? "0" : "4px",
+                        paddingBottom: isCollapsed ? "0" : "4px"
+                      }}
+                    >
+                      {quarters.length === 0 ? (
+                        <span className="text-[10px] text-slate-500 italic block pl-4 py-1.5">No quarters logged</span>
+                      ) : (
+                        quarters.map((q) => (
+                          <button
+                            key={q}
+                            onClick={() => {
+                              setSelectedSeminarYear(yr);
+                              setSelectedSeminarQuarter(q as any);
+                              changeTab("seminars");
+                              setIsSidebarOpen(false);
+                            }}
+                            style={{ "--active-color": "#3b82f6" } as React.CSSProperties}
+                            className={`w-full flex items-center px-4 py-2.5 text-xs font-medium transition-all duration-150 text-left rounded-xl ${
+                              activeTab === "seminars" && selectedSeminarYear === yr && selectedSeminarQuarter === q
+                                ? "bg-white/10 text-white"
+                                : "text-slate-400 hover:text-white hover:bg-white/5"
+                            }`}
+                          >
+                            <span className="menu-link" data-text={q}>{q}</span>
+                          </button>
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
           <div className="mx-3 mt-4 p-4 bg-slate-900/30 dark:bg-slate-850/20 border border-white/5 dark:border-white/10 rounded-2xl shadow-inner space-y-3">
             <div className="px-1 text-[9px] font-bold text-slate-400 uppercase tracking-widest">
               Reports & Actions
@@ -546,10 +665,9 @@ export default function App() {
             </div>
           </div>
         </nav>
-
         {/* Sidebar bottom logged-in section (floating overlay styling) */}
-        <div className="mt-auto p-6 flex items-center justify-between bg-transparent">
-          <div className="flex items-center space-x-3 overflow-hidden">
+        <div className="mt-auto p-6 flex items-center justify-between gap-2 border-t border-white/5 bg-slate-900/10 shrink-0">
+          <div className="flex items-center space-x-3 overflow-hidden min-w-0 flex-1">
             <div 
               onClick={() => profileFileInputRef.current?.click()}
               className="w-9 h-9 rounded-full bg-slate-800 hover:bg-slate-700 border border-white/10 text-white font-bold flex items-center justify-center shrink-0 uppercase text-sm shadow-md cursor-pointer overflow-hidden group relative transition-colors duration-200"
@@ -571,22 +689,22 @@ export default function App() {
               className="hidden"
               onChange={handleProfilePicUpload}
             />
-            <div className="min-w-0">
-              <p className="text-xs font-bold text-white truncate">{currentUser.name}</p>
-              <p className="text-[10px] text-slate-400 truncate font-medium">{currentUser.role}</p>
+            <div className="min-w-0 flex-1">
+              <p className="text-xs font-bold text-white truncate leading-snug">{currentUser.name}</p>
+              <p className="text-[10px] text-slate-400 truncate font-semibold leading-none mt-0.5">{currentUser.role}</p>
             </div>
           </div>
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1 shrink-0">
             <button
               onClick={() => setIsChangePasswordOpen(true)}
-              className="p-1.5 rounded-full text-slate-400 hover:text-blue-400 hover:bg-white/10 transition cursor-pointer"
+              className="p-2 rounded-lg text-slate-400 hover:text-blue-450 hover:bg-white/5 transition cursor-pointer"
               title="Change Password"
             >
               <Key className="h-4.5 w-4.5" />
             </button>
             <button
               onClick={handleSignOut}
-              className="p-1.5 rounded-full text-slate-400 hover:text-red-400 hover:bg-white/10 transition cursor-pointer"
+              className="p-2 rounded-lg text-slate-400 hover:text-red-450 hover:bg-white/5 transition cursor-pointer"
               title="Sign Out"
             >
               <LogOut className="h-4.5 w-4.5" />
@@ -626,6 +744,7 @@ export default function App() {
                 {activeTab === "view" && "Registered Learning Needs Directory"}
                 {activeTab === "rapid" && "Ingestion Panel"}
                 {activeTab === "import" && "Employee Data Import"}
+                {activeTab === "seminars" && `Seminar Attendances Directory — ${selectedSeminarYear}`}
               </h2>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 {formatHeaderDate()}
@@ -984,6 +1103,17 @@ export default function App() {
             {/* Render Page 5: Import Data (Admin Only) */}
             <div className={`tab-pane-animate ${activeTab === "import" ? "" : "hidden"}`}>
               <ImportData onComplete={fetchStats} />
+            </div>
+
+            {/* Render Page 6: Seminars Catalog (Dynamic Years) */}
+            <div className={`tab-pane-animate ${activeTab === "seminars" ? "" : "hidden"}`}>
+              <Seminars
+                year={selectedSeminarYear}
+                quarter={selectedSeminarQuarter}
+                onSelectEmployee={handleEditEmployeeTrigger}
+                currentUser={currentUser}
+                onSeminarChange={fetchStats}
+              />
             </div>
 
           </div>
