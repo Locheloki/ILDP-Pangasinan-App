@@ -17,7 +17,8 @@ import {
   Trash2,
   ListFilter
 } from "lucide-react";
-import { Seminar, Employee } from "../types";
+import { Seminar, Employee, LearningNeed } from "../types";
+import StickyBackButton from "./StickyBackButton";
 
 interface SeminarsProps {
   year: number | null;
@@ -158,6 +159,12 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const [pickerSearch, setPickerSearch] = useState("");
   const [pickerEmployees, setPickerEmployees] = useState<Employee[]>([]);
   const [selectedPickerIds, setSelectedPickerIds] = useState<number[]>([]);
+
+  // Employee Profile Quick View (read-only)
+  const [profileEmployee, setProfileEmployee] = useState<Employee | null>(null);
+  const [profileNeeds, setProfileNeeds] = useState<LearningNeed[]>([]);
+  const [profileSeminars, setProfileSeminars] = useState<any[]>([]);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   // Import Wizard State
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -512,6 +519,20 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     }
   };
 
+  // 5b. Open Employee Profile Quick View (read-only)
+  const handleViewProfile = async (employeeId: number) => {
+    try {
+      const res = await fetch(`/api/employees/${employeeId}`);
+      const data = await res.json();
+      setProfileEmployee(data);
+      setProfileNeeds(data.needs || []);
+      setProfileSeminars(data.seminars || []);
+      setIsProfileOpen(true);
+    } catch (err) {
+      console.error("Error loading profile:", err);
+    }
+  };
+
   // 6. Delete Attendee Link
   const handleRemoveAttendee = async (employeeId: number) => {
     if (!selectedSeminar) return;
@@ -671,6 +692,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         <div className="space-y-6">
           <button
             onClick={() => setView("list")}
+            data-sticky-anchor
             className="btn-glass hover:bg-slate-100 dark:hover:bg-slate-800 text-xs py-2 px-3.5 rounded-xl flex items-center gap-2 cursor-pointer font-semibold transition"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -793,7 +815,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                         <td className="p-3.5 text-slate-500 dark:text-slate-400">{a.Position}</td>
                         <td className="p-3.5 text-center flex items-center justify-center gap-3">
                           <button
-                            onClick={() => onSelectEmployee(a.EmployeeID)}
+                            onClick={() => handleViewProfile(a.EmployeeID)}
                             className="text-blue-500 hover:text-blue-600 font-semibold hover:underline inline-flex items-center gap-1 cursor-pointer"
                           >
                             <span>Profile</span>
@@ -824,6 +846,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         <div className="space-y-6">
           <button
             onClick={resetImport}
+            data-sticky-anchor
             className="btn-glass hover:bg-slate-100 dark:hover:bg-slate-800 text-xs py-2 px-3.5 rounded-xl flex items-center gap-2 cursor-pointer font-semibold transition"
           >
             <ArrowLeft className="h-4 w-4" />
@@ -1254,6 +1277,130 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
             </div>
           </div>
         </div>
+      )}
+
+      {/* 7. EMPLOYEE PROFILE QUICK VIEW DRAWER (read-only) */}
+      {isProfileOpen && profileEmployee && (
+        <div className="fixed inset-0 z-50 flex justify-end animate-fade-in">
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => setIsProfileOpen(false)} />
+          <div className="relative w-full max-w-lg bg-white dark:bg-slate-900 h-full shadow-2xl flex flex-col animate-slide-in-right transition-colors duration-200">
+            {/* Sticky Topbar */}
+            <div className="shrink-0 border-b border-slate-100 dark:border-slate-800 px-4 py-3 flex items-center gap-3 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm sticky top-0 z-10">
+              <button
+                onClick={() => setIsProfileOpen(false)}
+                className="text-slate-500 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 p-1.5 rounded-lg transition-all duration-100 cursor-pointer"
+                aria-label="Back"
+              >
+                <ArrowLeft className="h-5 w-5" />
+              </button>
+              <div className="flex-1 min-w-0">
+                <h3 className="text-sm font-bold text-slate-800 dark:text-white font-display truncate">
+                  {profileEmployee.LastName}, {profileEmployee.FirstName} {profileEmployee.MiddleInitial || ""}
+                </h3>
+                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-widest">
+                  Profile View
+                </span>
+              </div>
+              <button
+                onClick={() => { setIsProfileOpen(false); onSelectEmployee(profileEmployee.EmployeeID); }}
+                className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-[11px] font-bold py-1.5 px-3 rounded-lg cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100 shrink-0"
+              >
+                Edit
+              </button>
+            </div>
+
+            {/* Scrollable Content */}
+            <div className="flex-1 overflow-y-auto p-6 space-y-6">
+              {/* Profile Overview */}
+              <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+                <div className="w-14 h-14 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl uppercase tracking-wider shrink-0">
+                  {profileEmployee.LastName.charAt(0)}
+                </div>
+                <div className="min-w-0">
+                  <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug font-display">
+                    {profileEmployee.LastName}, {profileEmployee.FirstName} {profileEmployee.MiddleInitial || ""}
+                  </h2>
+                  <p className="text-xs text-slate-550 dark:text-slate-400 font-medium mt-0.5">{profileEmployee.Position}</p>
+                  <p className="text-[10px] font-bold text-slate-400 dark:text-slate-550 uppercase tracking-wide mt-0.5">{profileEmployee.Office}</p>
+                </div>
+              </div>
+
+              {/* Meta details */}
+              <div className="grid grid-cols-3 gap-4 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Status</span>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{profileEmployee.EmploymentStatus || "N/A"}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Gender</span>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{profileEmployee.Gender || "N/A"}</p>
+                </div>
+                <div>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Assumption</span>
+                  <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 mt-0.5">{profileEmployee.DateOfAssumption || "N/A"}</p>
+                </div>
+              </div>
+
+              {/* Learning Needs */}
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                  Learning Needs ({profileNeeds.length})
+                </h4>
+                {profileNeeds.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">No learning needs registered.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {profileNeeds.map((need: any, i: number) => (
+                      <div key={i} className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-200/50 dark:border-slate-800 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{need.LearningNeed || need.learningNeed || "N/A"}</p>
+                        <div className="flex gap-3 mt-1 text-[10px] text-slate-400">
+                          <span>Methodology: {need.Methodology || need.methodology || "N/A"}</span>
+                          <span>Schedule: {need.Schedule || need.schedule || "N/A"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Seminars */}
+              <div>
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+                  Training & Seminars ({profileSeminars.length})
+                </h4>
+                {profileSeminars.length === 0 ? (
+                  <p className="text-xs text-slate-400 italic">No seminar attendances registered.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {profileSeminars.map((sem: any, i: number) => (
+                      <div key={i} className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-200/50 dark:border-slate-800 rounded-xl p-3">
+                        <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{sem.title}</p>
+                        <p className="text-[10px] text-slate-400 mt-0.5">{sem.year} {sem.quarter}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Footer */}
+            <div className="shrink-0 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm">
+              <button
+                onClick={() => { setIsProfileOpen(false); onSelectEmployee(profileEmployee.EmployeeID); }}
+                className="w-full btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2.5 px-4 cursor-pointer font-bold rounded-xl shadow-md shadow-blue-500/5 transition-all duration-100"
+              >
+                Modify Records
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {view === "details" && (
+        <StickyBackButton onBack={() => setView("list")} label="Back" />
+      )}
+      {view === "import" && (
+        <StickyBackButton onBack={resetImport} label="Cancel" />
       )}
     </div>
   );

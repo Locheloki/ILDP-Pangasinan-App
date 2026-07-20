@@ -4,6 +4,7 @@ import { Employee, LearningNeed, User } from "../types";
 import { OFFICES, POSITIONS, LEARNING_NEEDS, BASES, METHODOLOGIES, SCHEDULES } from "../constants";
 import { getStoredLearningNeedsClipboard, getStoredLearningNeedsClipboardCount, setStoredLearningNeedsClipboard } from "../utils/learningNeedClipboard";
 import SearchableSelect from "./SearchableSelect";
+import StickyBackButton from "./StickyBackButton";
 
 // ----------------------------------------------------
 // Main Form Component
@@ -1077,6 +1078,7 @@ export default function EmployeeForm({
         <button
           type="button"
           onClick={onCancel}
+          data-sticky-anchor
           className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer"
         >
           Cancel
@@ -1088,6 +1090,7 @@ export default function EmployeeForm({
           Save Records <span className="text-[10px] text-blue-400 dark:text-blue-300 ml-1 font-normal">Ctrl+S</span>
         </button>
       </div>
+      <StickyBackButton onBack={onCancel} />
     </form>
   );
 }
