@@ -142,6 +142,7 @@ export default function RecordsTable({
   const [selectedEmployeeNeeds, setSelectedEmployeeNeeds] = useState<LearningNeed[]>([]);
   const [selectedEmployeeSeminars, setSelectedEmployeeSeminars] = useState<any[]>([]);
   const [detailModalOpen, setDetailModalOpen] = useState(false);
+  const [detailTab, setDetailTab] = useState<"needs" | "seminars">("needs");
 
   // Delete confirm state
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
@@ -246,6 +247,7 @@ export default function RecordsTable({
         setSelectedEmployeeDetail(data);
         setSelectedEmployeeNeeds(data.needs || []);
         setSelectedEmployeeSeminars(data.seminars || []);
+        setDetailTab("needs");
         setDetailModalOpen(true);
       });
   };
@@ -894,9 +896,9 @@ export default function RecordsTable({
               <div className="flex border-b border-slate-100 dark:border-slate-800">
                 <button
                   type="button"
-                  onClick={() => (window as any)._activeProfileTab = "needs"}
+                  onClick={() => setDetailTab("needs")}
                   className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
-                    !(window as any)._activeProfileTab || (window as any)._activeProfileTab === "needs"
+                    !detailTab || detailTab === "needs"
                       ? "border-blue-500 text-blue-600 dark:text-blue-400"
                       : "border-transparent text-slate-400 hover:text-slate-650"
                   }`}
@@ -905,9 +907,9 @@ export default function RecordsTable({
                 </button>
                 <button
                   type="button"
-                  onClick={() => (window as any)._activeProfileTab = "seminars"}
+                  onClick={() => setDetailTab("seminars")}
                   className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
-                    (window as any)._activeProfileTab === "seminars"
+                    detailTab === "seminars"
                       ? "border-blue-500 text-blue-600 dark:text-blue-400"
                       : "border-transparent text-slate-400 hover:text-slate-650"
                   }`}
@@ -917,7 +919,7 @@ export default function RecordsTable({
               </div>
 
               {/* Tab 1: Associated Learning Needs List */}
-              {(!(window as any)._activeProfileTab || (window as any)._activeProfileTab === "needs") && (
+              {(!detailTab || detailTab === "needs") && (
                 <div className="space-y-4">
                   {selectedEmployeeNeeds.length === 0 ? (
                     <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
@@ -956,7 +958,7 @@ export default function RecordsTable({
               )}
 
               {/* Tab 2: Seminars Attended List */}
-              {(window as any)._activeProfileTab === "seminars" && (
+              {detailTab === "seminars" && (
                 <div className="space-y-4">
                   {selectedEmployeeSeminars.length === 0 ? (
                     <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
@@ -1017,19 +1019,6 @@ export default function RecordsTable({
                   )}
                 </div>
               )}
-            </div>
-
-            {/* Actions Footer */}
-            <div className="shrink-0 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm transition-colors duration-200">
-              <button
-                onClick={() => {
-                  setDetailModalOpen(false);
-                  onEditEmployee(selectedEmployeeDetail.EmployeeID);
-                }}
-                className="w-full btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2.5 px-4 cursor-pointer font-bold rounded-xl shadow-md shadow-blue-500/5 transition-all duration-100"
-              >
-                Modify Records
-              </button>
             </div>
           </div>
         </div>,

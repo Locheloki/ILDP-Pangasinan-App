@@ -165,6 +165,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const [profileNeeds, setProfileNeeds] = useState<LearningNeed[]>([]);
   const [profileSeminars, setProfileSeminars] = useState<any[]>([]);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileTab, setProfileTab] = useState<"needs" | "seminars">("needs");
 
   // Import Wizard State
   const [uploadFile, setUploadFile] = useState<File | null>(null);
@@ -527,6 +528,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       setProfileEmployee(data);
       setProfileNeeds(data.needs || []);
       setProfileSeminars(data.seminars || []);
+      setProfileTab("needs");
       setIsProfileOpen(true);
     } catch (err) {
       console.error("Error loading profile:", err);
@@ -1312,7 +1314,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
               {/* Meta details */}
               <div className="grid grid-cols-3 gap-4 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
                 <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Status</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Employment Status</span>
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{profileEmployee.EmploymentStatus || "N/A"}</p>
                 </div>
                 <div>
@@ -1320,61 +1322,126 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 capitalize mt-0.5">{profileEmployee.Gender || "N/A"}</p>
                 </div>
                 <div>
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Assumption</span>
+                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-450 dark:text-slate-500">Date of Assumption</span>
                   <p className="text-xs font-semibold text-slate-700 dark:text-slate-350 mt-0.5">{profileEmployee.DateOfAssumption || "N/A"}</p>
                 </div>
               </div>
 
-              {/* Learning Needs */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
-                  Learning Needs ({profileNeeds.length})
-                </h4>
-                {profileNeeds.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">No learning needs registered.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {profileNeeds.map((need: any, i: number) => (
-                      <div key={i} className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-200/50 dark:border-slate-800 rounded-xl p-3">
-                        <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{need.LearningNeed || need.learningNeed || "N/A"}</p>
-                        <div className="flex gap-3 mt-1 text-[10px] text-slate-400">
-                          <span>Methodology: {need.Methodology || need.methodology || "N/A"}</span>
-                          <span>Schedule: {need.Schedule || need.schedule || "N/A"}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Seminars */}
-              <div>
-                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-3">
+              {/* Tab Selector */}
+              <div className="flex border-b border-slate-100 dark:border-slate-800">
+                <button
+                  type="button"
+                  onClick={() => setProfileTab("needs")}
+                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
+                    profileTab === "needs"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-slate-400 hover:text-slate-650"
+                  }`}
+                >
+                  Individual Development Needs ({profileNeeds.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setProfileTab("seminars")}
+                  className={`flex-1 py-2 text-center text-xs font-bold border-b-2 transition duration-200 cursor-pointer ${
+                    profileTab === "seminars"
+                      ? "border-blue-500 text-blue-600 dark:text-blue-400"
+                      : "border-transparent text-slate-400 hover:text-slate-650"
+                  }`}
+                >
                   Training & Seminars ({profileSeminars.length})
-                </h4>
-                {profileSeminars.length === 0 ? (
-                  <p className="text-xs text-slate-400 italic">No seminar attendances registered.</p>
-                ) : (
-                  <div className="space-y-2">
-                    {profileSeminars.map((sem: any, i: number) => (
-                      <div key={i} className="bg-slate-50/50 dark:bg-slate-950/30 border border-slate-200/50 dark:border-slate-800 rounded-xl p-3">
-                        <p className="text-xs font-semibold text-slate-800 dark:text-slate-200">{sem.title}</p>
-                        <p className="text-[10px] text-slate-400 mt-0.5">{sem.year} {sem.quarter}</p>
-                      </div>
-                    ))}
-                  </div>
-                )}
+                </button>
               </div>
-            </div>
 
-            {/* Footer */}
-            <div className="shrink-0 px-4 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/80 dark:bg-slate-950/60 backdrop-blur-sm">
-              <button
-                onClick={() => { setIsProfileOpen(false); onSelectEmployee(profileEmployee.EmployeeID); }}
-                className="w-full btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2.5 px-4 cursor-pointer font-bold rounded-xl shadow-md shadow-blue-500/5 transition-all duration-100"
-              >
-                Modify Records
-              </button>
+              {/* Tab 1: Learning Needs */}
+              {profileTab === "needs" && (
+                <div className="space-y-4">
+                  {profileNeeds.length === 0 ? (
+                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
+                      No learning needs currently registered.
+                    </div>
+                  ) : (
+                    <div className="space-y-3">
+                      {profileNeeds.map((need: any, idx: number) => (
+                        <div key={idx} className="p-4 bg-slate-50/30 dark:bg-slate-950/20 rounded-xl border border-slate-200/40 dark:border-slate-800 space-y-2">
+                          <div className="flex items-start justify-between gap-3">
+                            <div className="flex-1">
+                              <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Plan Opportunity #{idx + 1}</span>
+                              <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 leading-snug">{need.LearningNeed || need.learningNeed}</p>
+                            </div>
+                            <span className="text-[9.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30 shrink-0">
+                              {need.TargetSchedule || need.schedule || ""}
+                            </span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100/40 dark:border-slate-800/40">
+                            <div>
+                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 block">Basis</span>
+                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Basis || need.basis || "N/A"}</p>
+                            </div>
+                            <div>
+                              <span className="text-[8px] font-bold uppercase tracking-wider text-slate-450 block">Methodology</span>
+                              <p className="text-[10.5px] text-slate-600 dark:text-slate-350 leading-relaxed font-medium mt-0.5">{need.Methodology || need.methodology || "N/A"}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Tab 2: Seminars */}
+              {profileTab === "seminars" && (
+                <div className="space-y-4">
+                  {profileSeminars.length === 0 ? (
+                    <div className="text-center p-8 bg-slate-50/20 dark:bg-slate-950/10 rounded-xl border border-slate-200/40 dark:border-slate-800 text-xs text-slate-500">
+                      No seminar attendances registered.
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {Array.from(new Set(profileSeminars.map((s: any) => s.year)))
+                        .sort((a: number, b: number) => b - a)
+                        .map(year => {
+                          const yearSems = profileSeminars.filter((s: any) => s.year === year);
+                          const quarters = Array.from(new Set(yearSems.map((s: any) => s.quarter || "Undefined"))).sort();
+                          return (
+                            <div key={year} className="space-y-3">
+                              <span className="text-[11px] font-extrabold text-slate-500 dark:text-slate-400 uppercase tracking-widest block border-b border-slate-100 dark:border-slate-800 pb-1">
+                                {year} Seminars
+                              </span>
+                              {quarters.map(q => (
+                                <div key={q} className="pl-2 space-y-1.5">
+                                  <span className="text-[9.5px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wide block">
+                                    {q}
+                                  </span>
+                                  <ul className="space-y-1.5 list-none pl-2 border-l border-slate-100 dark:border-slate-800/80">
+                                    {yearSems
+                                      .filter((s: any) => (s.quarter || "Undefined") === q)
+                                      .map((sem: any, idx: number) => (
+                                        <li key={idx}>
+                                          <div className="w-full text-left flex items-start gap-2 text-xs text-slate-700 dark:text-slate-350 bg-slate-50/20 dark:bg-slate-950/20 p-2.5 rounded-lg border border-slate-100 dark:border-slate-800">
+                                            <span className="text-blue-500 shrink-0 font-bold">•</span>
+                                            <div>
+                                              <span className="font-bold text-slate-850 dark:text-white block">{sem.title}</span>
+                                              {sem.date && (
+                                                <span className="text-[10px] text-slate-400">
+                                                  Date: {sem.date}
+                                                </span>
+                                              )}
+                                            </div>
+                                          </div>
+                                        </li>
+                                      ))}
+                                  </ul>
+                                </div>
+                              ))}
+                            </div>
+                          );
+                        })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
