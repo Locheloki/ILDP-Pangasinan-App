@@ -6,6 +6,8 @@ export interface User {
   name: string;
   role: UserRole;
   profilePic?: string;
+  isActive?: boolean;
+  createdAt?: string;
 }
 
 export interface Employee {
@@ -57,7 +59,9 @@ export interface DashboardStats {
     status: string;
     message: string;
   }>;
-}export interface Seminar {
+}
+
+export interface Seminar {
   id: string;
   title: string;
   year: number;
@@ -83,4 +87,19 @@ export interface SeminarAttendee {
   seminarId: string;
   employeeId: number;
   createdAt: string;
+}
+
+export interface AuditLog {
+  id: number;
+  timestamp: string;
+  module: string;
+  action: string;
+  entity_type: string;
+  entity_id: string | null;
+  entity_name: string | null;
+  description: string | null;
+  before_data: any;
+  after_data: any;
+  performed_by: string;
+  created_at: string;
 }

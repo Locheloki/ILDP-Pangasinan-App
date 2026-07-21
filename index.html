@@ -7,6 +7,15 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      window.onerror = function(msg, url, line, col, err) {
+        var d = document.createElement("div");
+        d.style.cssText = "position:fixed;top:0;left:0;right:0;background:#ff4444;color:#fff;padding:20px;font-family:monospace;font-size:14px;z-index:99999;white-space:pre-wrap;word-break:break-all;max-height:100vh;overflow:auto";
+        d.textContent = (err && err.stack) || msg;
+        document.body.prepend(d);
+        return true;
+      };
+    </script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

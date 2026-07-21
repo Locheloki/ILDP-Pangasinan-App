@@ -34,8 +34,17 @@ import ImportData from "./components/ImportData";
 import Seminars from "./components/Seminars";
 import Sidebar from "./components/Sidebar";
 import Modal from "./components/Modal";
+import ErrorBoundary from "./components/ErrorBoundary";
+import AuditLogs from "./components/AuditLogs";
+import UserManagement from "./components/UserManagement";
+import { useNavigation } from "./NavigationContext";
 
 export default function App() {
+  return <AppContent />;
+}
+
+function AppContent() {
+  const { returnContext, setReturnContext, consumeReturnContext } = useNavigation();
   // Theme State: 'light' | 'dark' | 'sunset'
   const [theme, setTheme] = useState<'light' | 'dark' | 'sunset'>(() => {
     if (typeof window !== "undefined") {
@@ -65,9 +74,9 @@ export default function App() {
   const [currentUser, setCurrentUser] = useState<User | null>(null);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
-  // Active View Tab State: home, add, view, rapid, import, seminars
-  const [activeTab, setActiveTab] = useState<"home" | "add" | "view" | "rapid" | "import" | "seminars">("home");
-  const [tabBeforeEdit, setTabBeforeEdit] = useState<"home" | "add" | "view" | "rapid" | "import" | "seminars">("view");
+  // Active View Tab State
+  const [activeTab, setActiveTab] = useState<string>("home");
+  const [tabBeforeEdit, setTabBeforeEdit] = useState<string>("view");
   const [selectedSeminarYear, setSelectedSeminarYear] = useState<number | null>(null);
   const [selectedSeminarQuarter, setSelectedSeminarQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4" | null>(null);
   const [seminarYears, setSeminarYears] = useState<number[]>([]);
@@ -79,7 +88,7 @@ export default function App() {
   const [yearAttendeeCount, setYearAttendeeCount] = useState(0);
   const [deleteConfirmText, setDeleteConfirmText] = useState("");
 
-  const changeTab = (tab: "home" | "add" | "view" | "rapid" | "import" | "seminars") => {
+  const changeTab = (tab: string) => {
     if (tab === "add" && activeTab !== "add") {
       setTabBeforeEdit(activeTab);
     }
@@ -91,6 +100,9 @@ export default function App() {
 
   // Edit / Form state
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+
+  // Return context rematch trigger - incremented when returning from add/edit to trigger rematch in Seminars
+  const [seminarsRematchTrigger, setSeminarsRematchTrigger] = useState(0);
 
   // Summary Metrics Stats
   const [stats, setStats] = useState<DashboardStats>({
@@ -189,6 +201,20 @@ export default function App() {
     }
   }, [currentUser, activeTab]);
 
+  // Consume return context when navigating back from add/edit
+  useEffect(() => {
+    if (activeTab === "seminars") {
+      const ctx = consumeReturnContext();
+      if (ctx?.returnParams?.shouldRematch) {
+        // Clear the context after consuming
+        setReturnContext(null);
+        // Trigger rematch in Seminars component
+        setSeminarsRematchTrigger((k) => k + 1);
+        showToast(`Returning to import review. Refreshing matches...`, "success");
+      }
+    }
+  }, [activeTab, consumeReturnContext]);
+
   const fetchStats = () => {
     fetch("/api/dashboard/stats")
       .then((res) => res.json())
@@ -232,7 +258,14 @@ export default function App() {
   };
 
   // Switch directory row edit mode
-  const handleEditEmployeeTrigger = (employeeId: number) => {
+  const handleEditEmployeeTrigger = (employeeId: number, fromTab?: string) => {
+    // Save return context if coming from seminars import
+    if (fromTab === "seminars" || activeTab === "seminars") {
+      setReturnContext({
+        returnTab: "seminars",
+        returnParams: { shouldRematch: true },
+      });
+    }
     setTabBeforeEdit(activeTab);
     fetch(`/api/employees/${employeeId}`)
       .then((res) => res.json())
@@ -342,9 +375,20 @@ export default function App() {
       setPendingEmployee(null);
       setPendingNeeds(null);
       
-      // Refresh Stats and redirect to table list
+      // Refresh Stats
       fetchStats();
-      if (isEdit) {
+      
+      // Check if we should return to a previous context (e.g., seminar import review)
+      if (returnContext?.returnTab) {
+        const targetTab = returnContext.returnTab;
+        const shouldRematch = returnContext.returnParams?.shouldRematch;
+        setReturnContext(null);
+        changeTab(targetTab);
+        // Trigger rematch if returning to seminar import
+        if (shouldRematch) {
+          setSeminarsRematchTrigger((k) => k + 1);
+        }
+      } else if (isEdit) {
         changeTab("view");
       } else {
         // Keep user on Add New page and reset the form for convenience
@@ -418,43 +462,121 @@ export default function App() {
         </div>
       )}
 
-      <Sidebar
-        isOpen={isSidebarOpen}
-        isCollapsed={isSidebarCollapsed}
-        activeTab={activeTab}
-        currentUser={currentUser}
-        editingEmployee={!!editingEmployee}
-        years={seminarYears}
-        seminarsTree={seminarsTree}
-        collapsedYears={collapsedYears}
-        selectedSeminarYear={selectedSeminarYear}
-        selectedSeminarQuarter={selectedSeminarQuarter}
-        profileFileInputRef={profileFileInputRef}
-        onClose={() => setIsSidebarOpen(false)}
-        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
-        onTabChange={(tab) => changeTab(tab as any)}
-        onToggleYear={(yr) => setCollapsedYears(prev => ({ ...prev, [yr]: !(prev[yr] ?? false) }))}
-        onSelectSeminarQuarter={(yr, q) => {
-          setSelectedSeminarYear(yr);
-          setSelectedSeminarQuarter(q as any);
-        }}
-        onProfilePicUpload={handleProfilePicUpload}
-        onChangePasswordOpen={() => setIsChangePasswordOpen(true)}
-        onSignOut={handleSignOut}
-        onExcelExport={triggerExcelExportAll}
-        onYearModalOpen={() => setYearModalOpen(true)}
-        onDeleteYear={async (yr) => {
-          try {
-            const res = await fetch(`/api/seminars/years/${yr}`);
-            if (res.ok) {
-              const data = await res.json();
-              setDeleteYearModalOpen(yr);
-              setYearSeminarCount(data.seminarsRemoved ?? 0);
-              setYearAttendeeCount(data.attendeeAssociationsRemoved ?? 0);
+      {/* Mobile sidebar backdrop */}
+      {isSidebarOpen && (
+        <div className="md:hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm" onClick={() => setIsSidebarOpen(false)} />
+      )}
+
+      {/* Desktop sidebar wrapper */}
+      <div
+        className="hidden md:block shrink-0 overflow-hidden transition-[width] duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] my-3 ml-3 rounded-2xl border border-white/10 dark:md:border-white/15 shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] h-[calc(100vh-1.5rem)] sidebar-contrast-bg backdrop-blur-xl"
+        style={{ width: isSidebarCollapsed ? 64 : 240 }}
+      >
+        <Sidebar
+          isOpen={true}
+          isCollapsed={isSidebarCollapsed}
+          activeTab={activeTab}
+          currentUser={currentUser}
+          editingEmployee={!!editingEmployee}
+          years={seminarYears}
+          seminarsTree={seminarsTree}
+          collapsedYears={collapsedYears}
+          selectedSeminarYear={selectedSeminarYear}
+          selectedSeminarQuarter={selectedSeminarQuarter}
+          profileFileInputRef={profileFileInputRef}
+          onClose={() => setIsSidebarOpen(false)}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onTabChange={(tab) => changeTab(tab)}
+          onToggleYear={(yr) => setCollapsedYears(prev => {
+            const isCurrentlyExpanded = !(prev[yr] ?? true);
+            if (isCurrentlyExpanded) {
+              return { ...prev, [yr]: true };
+            } else {
+              const next: Record<number, boolean> = {};
+              for (const key of Object.keys(prev)) {
+                next[Number(key)] = true;
+              }
+              next[yr] = false;
+              return next;
             }
-          } catch {}
-        }}
-      />
+          })}
+          onSelectSeminarQuarter={(yr, q) => {
+            setSelectedSeminarYear(yr);
+            setSelectedSeminarQuarter(q as any);
+          }}
+          onProfilePicUpload={handleProfilePicUpload}
+          onChangePasswordOpen={() => setIsChangePasswordOpen(true)}
+          onSignOut={handleSignOut}
+          onExcelExport={triggerExcelExportAll}
+          onYearModalOpen={() => setYearModalOpen(true)}
+          onDeleteYear={async (yr) => {
+            try {
+              const res = await fetch(`/api/seminars/years/${yr}`);
+              if (res.ok) {
+                const data = await res.json();
+                setDeleteYearModalOpen(yr);
+                setYearSeminarCount(data.seminarsRemoved ?? 0);
+                setYearAttendeeCount(data.attendeeAssociationsRemoved ?? 0);
+              }
+            } catch {}
+          }}
+          variant="desktop"
+        />
+      </div>
+
+      {/* Mobile sidebar */}
+      <div className="md:hidden">
+        <Sidebar
+          isOpen={isSidebarOpen}
+          isCollapsed={false}
+          activeTab={activeTab}
+          currentUser={currentUser}
+          editingEmployee={!!editingEmployee}
+          years={seminarYears}
+          seminarsTree={seminarsTree}
+          collapsedYears={collapsedYears}
+          selectedSeminarYear={selectedSeminarYear}
+          selectedSeminarQuarter={selectedSeminarQuarter}
+          profileFileInputRef={profileFileInputRef}
+          onClose={() => setIsSidebarOpen(false)}
+          onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+          onTabChange={(tab) => changeTab(tab)}
+          onToggleYear={(yr) => setCollapsedYears(prev => {
+            const isCurrentlyExpanded = !(prev[yr] ?? true);
+            if (isCurrentlyExpanded) {
+              return { ...prev, [yr]: true };
+            } else {
+              const next: Record<number, boolean> = {};
+              for (const key of Object.keys(prev)) {
+                next[Number(key)] = true;
+              }
+              next[yr] = false;
+              return next;
+            }
+          })}
+          onSelectSeminarQuarter={(yr, q) => {
+            setSelectedSeminarYear(yr);
+            setSelectedSeminarQuarter(q as any);
+          }}
+          onProfilePicUpload={handleProfilePicUpload}
+          onChangePasswordOpen={() => setIsChangePasswordOpen(true)}
+          onSignOut={handleSignOut}
+          onExcelExport={triggerExcelExportAll}
+          onYearModalOpen={() => setYearModalOpen(true)}
+          onDeleteYear={async (yr) => {
+            try {
+              const res = await fetch(`/api/seminars/years/${yr}`);
+              if (res.ok) {
+                const data = await res.json();
+                setDeleteYearModalOpen(yr);
+                setYearSeminarCount(data.seminarsRemoved ?? 0);
+                setYearAttendeeCount(data.attendeeAssociationsRemoved ?? 0);
+              }
+            } catch {}
+          }}
+          variant="mobile"
+        />
+      </div>
 
       {/* 2. Main Content Wrapper - Floating layout on desktop to match sidebar card flow */}
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden md:my-3 md:mr-2 md:ml-2 md:rounded-2xl md:border md:border-slate-200 dark:md:border-slate-800/80 md:shadow-md bg-slate-50 dark:bg-slate-950">
@@ -488,6 +610,8 @@ export default function App() {
                 {activeTab === "rapid" && "Ingestion Panel"}
                 {activeTab === "import" && "Employee Data Import"}
                 {activeTab === "seminars" && `Seminar Attendances Directory — ${selectedSeminarYear}`}
+                {activeTab === "auditlogs" && "Activity & Audit Logs"}
+                {activeTab === "usermanagement" && "User Management"}
               </h2>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 {formatHeaderDate()}
@@ -816,7 +940,21 @@ export default function App() {
                 employee={editingEmployee}
                 currentUser={currentUser}
                 onSave={handleFormSaveRequest}
-                onCancel={() => { changeTab(tabBeforeEdit); setEditingEmployee(null); setFormKey((k) => k + 1); }}
+                onCancel={() => {
+                  // Check if we should return to seminar import
+                  const ctx = consumeReturnContext();
+                  if (ctx?.returnTab) {
+                    setReturnContext(null);
+                    changeTab(ctx.returnTab);
+                    if (ctx.returnParams?.shouldRematch) {
+                      setSeminarsRematchTrigger((k) => k + 1);
+                    }
+                  } else {
+                    changeTab(tabBeforeEdit);
+                  }
+                  setEditingEmployee(null);
+                  setFormKey((k) => k + 1);
+                }}
                 customOptionsVersion={customOptionsVersion}
                 onCustomOptionsChange={handleCustomOptionsChange}
               />
@@ -848,20 +986,36 @@ export default function App() {
               <ImportData onComplete={fetchStats} />
             </div>
 
-            {/* Render Page 6: Seminars Catalog (Dynamic Years) */}
+            {/* Render Page 6: Audit Logs */}
+            <div className={`tab-pane-animate ${activeTab === "auditlogs" ? "" : "hidden"}`}>
+              <AuditLogs currentUser={currentUser} />
+            </div>
+
+            {/* Render Page 7: Seminars Catalog (Dynamic Years) */}
             <div className={`tab-pane-animate ${activeTab === "seminars" ? "" : "hidden"}`}>
-              <Seminars
+              <ErrorBoundary><Seminars
                 year={selectedSeminarYear}
                 quarter={selectedSeminarQuarter}
-                onSelectEmployee={handleEditEmployeeTrigger}
+                onSelectEmployee={(empId) => handleEditEmployeeTrigger(empId, "seminars")}
                 currentUser={currentUser}
                 onSeminarChange={fetchStats}
                 onAddNewRecord={() => {
+                  // Save return context so we come back after creating employee
+                  setReturnContext({
+                    returnTab: "seminars",
+                    returnParams: { shouldRematch: true },
+                  });
                   setEditingEmployee(null);
                   setFormKey((k) => k + 1);
-                  setActiveTab("add");
+                  changeTab("add");
                 }}
-              />
+                rematchTrigger={seminarsRematchTrigger}
+              /></ErrorBoundary>
+            </div>
+
+            {/* Render Page 8: User Management (System Developer only) */}
+            <div className={`tab-pane-animate ${activeTab === "usermanagement" ? "" : "hidden"}`}>
+              <UserManagement currentUser={currentUser} />
             </div>
 
           </div>
