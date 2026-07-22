@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Search, Filter, Edit, Trash2, ArrowUpDown, ChevronLeft, ChevronRight, Printer, FileSpreadsheet, Eye, AlertTriangle, ArrowLeft } from "lucide-react";
+import { Search, Filter, Edit, Trash2, Archive, ArchiveRestore, ArrowUpDown, ChevronLeft, ChevronRight, Printer, FileSpreadsheet, Eye, AlertTriangle, ArrowLeft } from "lucide-react";
 import { Employee, LearningNeed } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
 import SearchableSelect from "./SearchableSelect";
@@ -148,6 +148,13 @@ export default function RecordsTable({
   const [deleteConfirmId, setDeleteConfirmId] = useState<number | null>(null);
   const [deleteEmployeeConfirmId, setDeleteEmployeeConfirmId] = useState<number | null>(null);
 
+  // Archived employees view state
+  const [isArchivedView, setIsArchivedView] = useState(false);
+  const [archivedEmployees, setArchivedEmployees] = useState<any[]>([]);
+  const [archivedLoading, setArchivedLoading] = useState(false);
+  const [archivedSearch, setArchivedSearch] = useState("");
+  const [restoreConfirmId, setRestoreConfirmId] = useState<number | null>(null);
+
   // Fetch Joined Records on filter changes
   useEffect(() => {
     fetchRecords();
@@ -178,6 +185,39 @@ export default function RecordsTable({
         console.error("Error fetching records:", err);
         setLoading(false);
       });
+  };
+
+  const fetchArchivedEmployees = () => {
+    setArchivedLoading(true);
+    fetch(`/api/employees/archived?search=${archivedSearch}`)
+      .then((res) => res.json())
+      .then((data) => {
+        setArchivedEmployees(data.employees || []);
+        setArchivedLoading(false);
+      })
+      .catch((err) => {
+        console.error("Error fetching archived employees:", err);
+        setArchivedLoading(false);
+      });
+  };
+
+  useEffect(() => {
+    if (isArchivedView) fetchArchivedEmployees();
+  }, [isArchivedView, archivedSearch]);
+
+  const handleRestoreEmployee = async (employeeId: number) => {
+    try {
+      await fetch(`/api/employees/${employeeId}/restore`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ performed_by: "Admin" }),
+      });
+      setRestoreConfirmId(null);
+      fetchArchivedEmployees();
+      onRefreshStats?.();
+    } catch (err) {
+      console.error("Error restoring employee:", err);
+    }
   };
 
   // Trigger Excel Export Download (pure client-side HTML-to-Excel)
@@ -424,6 +464,13 @@ export default function RecordsTable({
           
           <div className="flex items-center gap-2">
             <button
+              onClick={() => { setIsArchivedView(!isArchivedView); setCurrentPage(1); }}
+              className={`btn-glass text-xs py-2 px-4 cursor-pointer flex items-center gap-2 ${isArchivedView ? "bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30" : ""}`}
+            >
+              <Archive className="h-4 w-4" />
+              <span>{isArchivedView ? "Back to Active" : "Archived"}</span>
+            </button>
+            <button
               onClick={handleExportExcel}
               className="btn-glass text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 dark:bg-emerald-950/40 border-emerald-200/50 dark:border-emerald-900/30 text-xs py-2 px-4 cursor-pointer"
             >
@@ -442,6 +489,7 @@ export default function RecordsTable({
           </div>
         </div>
 
+        {!isArchivedView && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {/* Search Term */}
           <div>
@@ -546,9 +594,11 @@ export default function RecordsTable({
             />
           </div>
         </div>
+        )}
       </div>
 
       {/* Main Grid View */}
+      {!isArchivedView && (
       <div ref={cardsContainerRef} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
@@ -772,6 +822,99 @@ export default function RecordsTable({
           </div>
         )}
       </div>
+      )}
+
+      {/* Archived Employees View */}
+      {isArchivedView && (
+        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
+          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
+            <div className="relative flex-1 max-w-sm">
+              <Search className="absolute inset-y-0 left-3 h-4 w-4 text-slate-400 my-auto" />
+              <input
+                type="text"
+                value={archivedSearch}
+                onChange={(e) => setArchivedSearch(e.target.value)}
+                placeholder="Search archived employees..."
+                className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <span className="text-xs text-slate-400">{archivedEmployees.length} archived</span>
+          </div>
+
+          {archivedLoading ? (
+            <div className="py-12 text-center">
+              <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <span className="text-slate-400 font-medium text-xs mt-3 block">Loading archived employees...</span>
+            </div>
+          ) : archivedEmployees.length === 0 ? (
+            <div className="py-12 text-center text-slate-400 text-xs">
+              No archived employees found.
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="bg-slate-50/70 dark:bg-slate-950/80 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold text-[10px]">
+                    <th className="py-3 px-6">Employee Name</th>
+                    <th className="py-3 px-6">Office / Department</th>
+                    <th className="py-3 px-6">Position</th>
+                    <th className="py-3 px-6 text-center">Needs</th>
+                    <th className="py-3 px-6 text-center">Seminars</th>
+                    <th className="py-3 px-6 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                  {archivedEmployees.map((emp) => (
+                    <tr key={emp.EmployeeID} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                      <td className="py-3 px-6 font-medium">{emp.LastName}, {emp.FirstName} {emp.MiddleInitial || ""}</td>
+                      <td className="py-3 px-6">{emp.Office}</td>
+                      <td className="py-3 px-6">{emp.Position}</td>
+                      <td className="py-3 px-6 text-center">{emp.needsCount || 0}</td>
+                      <td className="py-3 px-6 text-center">{emp.seminarCount || 0}</td>
+                      <td className="py-3 px-6 text-center">
+                        <button
+                          onClick={() => setRestoreConfirmId(emp.EmployeeID)}
+                          className="btn-glass bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 text-[10px] py-1.5 px-3 cursor-pointer font-bold flex items-center gap-1 mx-auto"
+                        >
+                          <ArchiveRestore className="h-3 w-3" />
+                          Restore
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Restore Confirmation Modal */}
+      <Modal
+        isOpen={!!restoreConfirmId}
+        onClose={() => setRestoreConfirmId(null)}
+        maxWidth="max-w-sm"
+        ariaLabel="Restore Employee"
+        title="Restore Employee?"
+      >
+        <p className="text-xs text-slate-500 dark:text-slate-400">
+          This will move the employee back to the active employee list. Their learning needs and seminar history will remain intact.
+        </p>
+        <div className="mt-5 flex justify-end gap-3">
+          <button
+            onClick={() => setRestoreConfirmId(null)}
+            className="btn-glass text-xs py-2 px-4 cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() => restoreConfirmId && handleRestoreEmployee(restoreConfirmId)}
+            className="btn-glass bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-emerald-500/5"
+          >
+            Restore Employee
+          </button>
+        </div>
+      </Modal>
 
       {/* Delete Confirmation Modal Overlay */}
       <Modal

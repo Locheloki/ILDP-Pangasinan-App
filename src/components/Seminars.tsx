@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import { 
   Calendar, 
   Users, 
@@ -18,8 +18,10 @@ import {
   UserPlus,
   Pencil,
   Info,
-  ChevronDown
+  ChevronDown,
+  RefreshCw
 } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Seminar, Employee, LearningNeed } from "../types";
 import StickyBackButton from "./StickyBackButton";
 import EmployeeProfileDrawer from "./EmployeeProfileDrawer";
@@ -33,13 +35,12 @@ interface SeminarsProps {
   currentUser: any;
   onSeminarChange?: () => void;
   onAddNewRecord?: () => void;
-  rematchTrigger?: number;
 }
 
 
 
-export default function Seminars({ year, quarter, onSelectEmployee, currentUser, onSeminarChange, onAddNewRecord, rematchTrigger }: SeminarsProps) {
-  const authHeaders = currentUser?.id ? { "x-user-id": String(currentUser.id) } : {};
+export default function Seminars({ year, quarter, onSelectEmployee, currentUser, onSeminarChange, onAddNewRecord }: SeminarsProps) {
+  const authHeaders: Record<string, string> = currentUser?.id ? { "x-user-id": String(currentUser.id) } : {};
   // Navigation State
   const [view, setView] = useState<"list" | "details" | "import">("list");
   
@@ -95,7 +96,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   // Import Wizard State
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [expandedDiff, setExpandedDiff] = useState<Set<number>>(new Set());
-  const [rematchKey, setRematchKey] = useState(0);
+  const [rematchLoading, setRematchLoading] = useState(false);
   const [previewData, setPreviewData] = useState<{
     title: string;
     year: number;
@@ -103,9 +104,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     date: string;
     location: string;
     remarks: string;
-    matched: any[];
-    matchedDiff: any[];
-    unmatched: any[];
+    attendees: any[];
     externalParticipants: { _key: string; rawName: string; organization: string; role: string; remarks: string }[];
     rawEmployees: { rawName: string; office: string; position?: string; _key?: string; manualEmployeeId?: number }[];
   } | null>(null);
@@ -131,6 +130,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const [externalRole, setExternalRole] = useState("");
   const [externalRemarks, setExternalRemarks] = useState("");
   const [reviewAcknowledged, setReviewAcknowledged] = useState(false);
+  const [showImportConfirm, setShowImportConfirm] = useState(false);
   const [showWhyReview, setShowWhyReview] = useState(false);
 
   // Create Employee modal (inline, no navigation)
@@ -158,29 +158,6 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     window.addEventListener("openSeminarDetails", handleOpenSeminar);
     return () => window.removeEventListener("openSeminarDetails", handleOpenSeminar);
   }, []);
-
-  // Auto-rematch when preview is open and employee records may have changed
-  useEffect(() => {
-    if (!previewData?.rawEmployees?.length) return;
-    handleRematch();
-  }, [rematchKey]);
-
-  useEffect(() => {
-    const handleVisibility = () => {
-      if (document.visibilityState === "visible") {
-        setRematchKey((k) => k + 1);
-      }
-    };
-    document.addEventListener("visibilitychange", handleVisibility);
-    return () => document.removeEventListener("visibilitychange", handleVisibility);
-  }, []);
-
-  // Trigger rematch when returning from another page (e.g., after adding an employee)
-  useEffect(() => {
-    if (rematchTrigger && rematchTrigger > 0 && previewData?.rawEmployees?.length) {
-      handleRematch();
-    }
-  }, [rematchTrigger]);
 
   const fetchSeminars = async () => {
     setLoading(true);
@@ -268,15 +245,13 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       if (res.ok) {
         const data = await res.json();
         setPreviewData({
-          title: "",
+          title: data.title || "",
           year: year || currentYear,
           quarter: quarter || "Q2",
           date: data.date || "",
           location: "",
           remarks: "",
-          matched: data.matched || [],
-          matchedDiff: data.matchedDiff || [],
-          unmatched: data.unmatched || [],
+          attendees: data.attendees || [],
           externalParticipants: [],
           rawEmployees: data.rawEmployees || []
         });
@@ -295,10 +270,20 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     if (!previewData) return;
     setLoading(true);
     try {
+      const finalTitle = (previewData.title || "").trim() || "Imported Seminar";
       const res = await fetch("/api/seminars/import-execute", {
         method: "POST",
         headers: { "Content-Type": "application/json", ...authHeaders },
-        body: JSON.stringify(previewData)
+        body: JSON.stringify({
+          title: finalTitle,
+          year: previewData.year || year || currentYear,
+          quarter: previewData.quarter || quarter || "Q2",
+          date: previewData.date || "",
+          location: previewData.location || "",
+          remarks: previewData.remarks || "",
+          attendees: previewData.attendees || [],
+          externalParticipants: previewData.externalParticipants || []
+        })
       });
       if (res.ok) {
         const data = await res.json();
@@ -323,7 +308,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const handleRematch = async (overrideRawEmployees?: any[]) => {
     const employeesToSend = overrideRawEmployees || previewData?.rawEmployees;
     if (!employeesToSend?.length) return;
-    setLoading(true);
+    setRematchLoading(true);
     try {
       const res = await fetch("/api/seminars/import-reprocess", {
         method: "POST",
@@ -334,9 +319,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         const data = await res.json();
         setPreviewData((prev) => prev ? {
           ...prev,
-          matched: data.matched || [],
-          matchedDiff: data.matchedDiff || [],
-          unmatched: data.unmatched || []
+          attendees: data.attendees || []
         } : prev);
         setExpandedDiff(new Set());
       } else {
@@ -346,7 +329,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     } catch (err: any) {
       alert("Network error refreshing matches: " + (err.message || err));
     } finally {
-      setLoading(false);
+      setRematchLoading(false);
     }
   };
 
@@ -435,8 +418,9 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       const res = await fetch(`/api/employees`);
       if (res.ok) {
         const all = await res.json();
+        const employees = Array.isArray(all) ? all : (all.employees || []);
         const q = query.toLowerCase();
-        const filtered = all.filter((emp: any) =>
+        const filtered = employees.filter((emp: any) =>
           `${emp.FirstName} ${emp.LastName} ${emp.EmployeeID}`.toLowerCase().includes(q)
         );
         setManualMatchResults(filtered.slice(0, 20));
@@ -619,8 +603,8 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const handleOpenExternalForm = (key: string) => {
     setExternalFormKey(key);
     const raw = previewData?.rawEmployees?.find((r) => r._key === key);
-    const unmatched = previewData?.unmatched?.find((u) => u._key === key);
-    const position = unmatched?.position || raw?.position || "";
+    const attendee = previewData?.attendees?.find((a) => a._key === key);
+    const position = attendee?.excelPosition || raw?.position || "";
     setExternalOrg("");
     setExternalRole(position);
     setExternalRemarks("");
@@ -629,28 +613,26 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   const handleMarkAsExternal = () => {
     if (!externalFormKey || !previewData) return;
     
-    // Find the unmatched employee
-    const unmatched = previewData.unmatched.find((u) => u._key === externalFormKey);
-    if (!unmatched) return;
+    const attendee = previewData.attendees.find((a) => a._key === externalFormKey);
+    if (!attendee) return;
     
-    // Add to external participants
     const newExternal = {
       _key: externalFormKey,
-      rawName: unmatched.rawName,
+      rawName: attendee.rawName,
       organization: externalOrg,
       role: externalRole,
       remarks: externalRemarks,
     };
     
-    // Remove from unmatched and add to externalParticipants
-    const updatedUnmatched = previewData.unmatched.filter((u) => u._key !== externalFormKey);
+    const updatedAttendees = previewData.attendees.map((a) =>
+      a._key === externalFormKey ? { ...a, status: "external" } : a
+    );
     setPreviewData({
       ...previewData,
-      unmatched: updatedUnmatched,
+      attendees: updatedAttendees,
       externalParticipants: [...(previewData.externalParticipants || []), newExternal],
     });
     
-    // Reset form
     setExternalFormKey(null);
     setExternalOrg("");
     setExternalRole("");
@@ -669,7 +651,6 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     setPreviewData(null);
     setImportSummary(null);
     setExpandedDiff(new Set());
-    setRematchKey(0);
     setEditingNameKey(null);
     setEditingNameValue("");
     setIsManualMatchOpen(false);
@@ -680,6 +661,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     setExternalRemarks("");
     setSelectedKeys(new Set());
     setReviewAcknowledged(false);
+    setShowImportConfirm(false);
     setShowWhyReview(false);
     setView("list");
   };
@@ -1261,535 +1243,636 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                 </div>
               </div>
 
-              {/* 3. Import Summary + Review Progress */}
-              <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-xs flex items-center gap-3 lg:col-span-1">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                    <Users className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">Total</div>
-                    <div className="text-lg font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display">
-                      {previewData.matched.length + previewData.matchedDiff.length + previewData.unmatched.length + (previewData.externalParticipants?.length || 0)}
-                    </div>
-                    <div className="text-[9px] text-slate-400 dark:text-slate-500 truncate">attendees</div>
-                  </div>
-                </div>
-                <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/30 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
-                    <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">Internal</div>
-                    <div className="text-lg font-bold text-emerald-700 dark:text-emerald-300 tracking-tight font-display">{previewData.matched.length}</div>
-                    <div className="text-[9px] text-emerald-600/60 dark:text-emerald-400/60 truncate">employees</div>
-                  </div>
-                </div>
-                <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-amber-200/60 dark:border-amber-900/30 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
-                    <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">Review</div>
-                    <div className="text-lg font-bold text-amber-700 dark:text-amber-300 tracking-tight font-display">{previewData.matchedDiff.length}</div>
-                    <div className="text-[9px] text-amber-600/60 dark:text-amber-400/60 truncate">needs review</div>
-                  </div>
-                </div>
-                <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-red-200/60 dark:border-red-900/30 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-red-500/10 flex items-center justify-center shrink-0">
-                    <X className="h-5 w-5 text-red-600 dark:text-red-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">Unknown</div>
-                    <div className="text-lg font-bold text-red-700 dark:text-red-300 tracking-tight font-display">{previewData.unmatched.length}</div>
-                    <div className="text-[9px] text-red-600/60 dark:text-red-400/60 truncate">unresolved</div>
-                  </div>
-                </div>
-                <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-blue-200/60 dark:border-blue-900/30 shadow-xs flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
-                    <UserPlus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
-                  </div>
-                  <div className="min-w-0">
-                    <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">External</div>
-                    <div className="text-lg font-bold text-blue-700 dark:text-blue-300 tracking-tight font-display">{previewData.externalParticipants?.length || 0}</div>
-                    <div className="text-[9px] text-blue-600/60 dark:text-blue-400/60 truncate">participants</div>
-                  </div>
-                </div>
-              </div>
+              {/* Memoized section filters */}
+              {(() => {
+                const confirmed = previewData.attendees.filter(a => a.status === "matched");
+                const needsReview = previewData.attendees.filter(a => a.status === "review" || a.status === "unmatched");
+                const lowConfidence = needsReview.filter(a => a.reviewReason === "LOW_CONFIDENCE");
+                const noMatch = needsReview.filter(a => a.reviewReason === "NO_MATCH");
+                const externalList = previewData.externalParticipants || [];
+                const importableCount = confirmed.length + needsReview.filter(a => a.status === "review").length + externalList.length;
+                const totalCount = previewData.attendees.length + externalList.length;
+                const reviewedCount = confirmed.length + externalList.length;
 
-              {/* Review Progress */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs p-4">
-                <div className="flex items-center justify-between mb-2.5">
-                  <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Review Progress</span>
-                  <span className="text-[10px] text-slate-500 dark:text-slate-400">
-                    {previewData.matched.length + (previewData.externalParticipants?.length || 0)} / {previewData.matched.length + previewData.matchedDiff.length + previewData.unmatched.length + (previewData.externalParticipants?.length || 0)} reviewed
-                  </span>
-                </div>
-                <div className="w-full h-1.5 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
-                  <div
-                    className="h-full bg-emerald-500 rounded-full transition-all duration-500"
-                    style={{ width: `${Math.min(100, ((previewData.matched.length + (previewData.externalParticipants?.length || 0)) / Math.max(1, previewData.matched.length + previewData.matchedDiff.length + previewData.unmatched.length + (previewData.externalParticipants?.length || 0))) * 100)}%` }}
-                  />
-                </div>
-                <div className="flex justify-between mt-1.5">
-                  <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">
-                    {previewData.matched.length + (previewData.externalParticipants?.length || 0)} reviewed
-                  </span>
-                  <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">
-                    {previewData.matchedDiff.length + previewData.unmatched.length} remaining
-                  </span>
-                </div>
-              </div>
-
-              {/* Bulk action bar — sticky when items selected */}
-              {selectedKeys.size > 0 && (
-                <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs p-3 flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
-                      <span className="text-blue-600 dark:text-blue-400">{selectedKeys.size}</span> Attendee{selectedKeys.size !== 1 ? "s" : ""} Selected
-                    </span>
-                    <button type="button" onClick={clearAllSelections} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
-                      Clear Selection
-                    </button>
-                  </div>
-                  <div className="flex gap-2">
-                    <button type="button" onClick={handleBulkMatch} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
-                      Match Selected
-                    </button>
-                    <button type="button" onClick={() => {
-                      if (selectedKeys.size === 0 || !previewData) return;
-                      const firstKey = Array.from(selectedKeys)[0];
-                      handleOpenExternalForm(firstKey);
-                    }} className="btn-glass bg-violet-500/10 hover:bg-violet-500/20 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
-                      Mark External
-                    </button>
-                    <button type="button" onClick={handleBulkRemove} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
-                      Remove Selected
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* 4. Attendee Review Container */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
-                {/* Internal Employees Section */}
-                {previewData.matched.length > 0 && (
+                return (
                   <>
-                    <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-emerald-500" />
-                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">Internal Employees</h4>
-                        <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9.5px] font-bold px-2 py-0.5 rounded-full border border-emerald-200/40 dark:border-emerald-900/30">{previewData.matched.length}</span>
-                        {(() => {
-                          const matchedKeys = previewData.matched.map((m, i) => m._key || `matched_${i}`);
-                          const state = getSectionState(matchedKeys);
-                          return state === "all" ? <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">All Selected</span> : state === "some" ? <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">Partially Selected</span> : null;
-                        })()}
+                    {/* 3. Import Summary + Review Progress */}
+                    <div className="grid grid-cols-3 gap-4">
+                      <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-emerald-200/60 dark:border-emerald-900/30 shadow-xs flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0">
+                          <CheckCircle className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">Ready to Import</div>
+                          <motion.span
+                            key={confirmed.length}
+                            initial={{ scale: 1.3 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                            className="text-lg font-bold text-emerald-700 dark:text-emerald-300 tracking-tight font-display block"
+                          >
+                            {confirmed.length}
+                          </motion.span>
+                          <div className="text-[9px] text-emerald-600/60 dark:text-emerald-400/60 truncate">confirmed</div>
+                        </div>
                       </div>
-                      <button type="button" onClick={() => toggleSelectAll(previewData.matched.map((m, i) => m._key || `matched_${i}`))} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all duration-100 cursor-pointer ${
-                        previewData.matched.every((m, i) => selectedKeys.has(m._key || `matched_${i}`))
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 hover:bg-emerald-500/20"
-                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:bg-blue-500/20"
-                      }`}>
-                        {previewData.matched.every((m, i) => selectedKeys.has(m._key || `matched_${i}`)) ? (
-                          <><CheckCircle className="h-3 w-3" /> Deselect All</>
-                        ) : (
-                          <><span className="text-xs leading-none">☐</span> Select All</>
-                        )}
-                      </button>
+                      <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-amber-200/60 dark:border-amber-900/30 shadow-xs flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center shrink-0">
+                          <AlertTriangle className="h-5 w-5 text-amber-600 dark:text-amber-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">Needs Review</div>
+                          <motion.span
+                            key={needsReview.length}
+                            initial={{ scale: 1.3 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                            className="text-lg font-bold text-amber-700 dark:text-amber-300 tracking-tight font-display block"
+                          >
+                            {needsReview.length}
+                          </motion.span>
+                          <div className="text-[9px] text-amber-600/60 dark:text-amber-400/60 truncate">requires attention</div>
+                        </div>
+                      </div>
+                      <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-4 rounded-xl border border-blue-200/60 dark:border-blue-900/30 shadow-xs flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                          <UserPlus className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <div className="text-[9px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider truncate">External</div>
+                          <motion.span
+                            key={externalList.length}
+                            initial={{ scale: 1.3 }}
+                            animate={{ scale: 1 }}
+                            transition={{ type: "spring", stiffness: 500, damping: 20 }}
+                            className="text-lg font-bold text-blue-700 dark:text-blue-300 tracking-tight font-display block"
+                          >
+                            {externalList.length}
+                          </motion.span>
+                          <div className="text-[9px] text-blue-600/60 dark:text-blue-400/60 truncate">participants</div>
+                        </div>
+                      </div>
                     </div>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-80 overflow-y-auto">
-                      {previewData.matched.map((m, idx) => {
-                        const key = m._key || `matched_${idx}`;
-                        const isSelected = selectedKeys.has(key);
-                        const hasDiff = m.differences?.length > 0;
-                        return (
-                          <div key={key} className={`px-5 py-2.5 ${isSelected ? "bg-blue-50/30 dark:bg-blue-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"}`}>
-                            <div className="flex items-center gap-3">
-                              <input type="checkbox" checked={isSelected} onChange={() => toggleSelectKey(key)} className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                              <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasDiff ? "bg-amber-500" : "bg-emerald-500"}`} />
-                              {editingNameKey === key ? (
-                                <div className="flex items-center gap-2 flex-1">
-                                  <input type="text" value={editingNameValue} onChange={(e) => setEditingNameValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSaveEditedName(); if (e.key === "Escape") handleCancelEditName(); }} className="flex-1 px-2 py-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
-                                  <button type="button" onClick={handleSaveEditedName} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer">Save</button>
-                                  <button type="button" onClick={handleCancelEditName} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><X className="h-3 w-3" /></button>
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="flex-1 min-w-0 flex items-center gap-3">
-                                    <div className="min-w-0 flex-1">
-                                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{m.LastName}, {m.FirstName} {m.MiddleInitial || ""}</span>
-                                      <span className="text-[10px] text-slate-400 ml-2">{m.Office}</span>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                      {m.differences?.map((d: string) => (
-                                        <span key={d} className="inline-flex items-center gap-1 text-[10px] text-amber-600 dark:text-amber-400">
-                                          <span>&#9888;</span> {d}
-                                        </span>
-                                      ))}
-                                      <span className="text-[10px] text-emerald-600 dark:text-emerald-400">{m.matchReasons?.[0]}</span>
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button type="button" onClick={() => handleStartEditName(key, m.rawName || `${m.LastName}, ${m.FirstName}`)} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Edit</button>
-                                    <button type="button" onClick={() => onSelectEmployee(Number(m.EmployeeID))} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">View</button>
-                                    <button type="button" onClick={() => handleRemoveImportAttendee(key)} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
-                                  </div>
-                                </>
-                              )}
+
+                    {/* Review Progress */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs p-4">
+                      <div className="flex items-center justify-between mb-2.5">
+                        <span className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Review Progress</span>
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400">
+                          {reviewedCount} / {totalCount} reviewed
+                        </span>
+                      </div>
+                      <div className="w-full h-2 bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
+                        <motion.div
+                          className="h-full bg-emerald-500"
+                          initial={false}
+                          animate={{ width: `${reviewedCount > 0 && totalCount > 0 ? (reviewedCount / totalCount) * 100 : 0}%` }}
+                          transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        />
+                      </div>
+                      <div className="flex justify-between mt-1.5">
+                        <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">
+                          {reviewedCount} reviewed
+                        </span>
+                        <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">
+                          {needsReview.length} remaining
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Bulk action bar — sticky when items selected */}
+                    {selectedKeys.size > 0 && (
+                      <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs p-3 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <span className="text-xs font-bold text-slate-700 dark:text-slate-300">
+                            <span className="text-blue-600 dark:text-blue-400">{selectedKeys.size}</span> Attendee{selectedKeys.size !== 1 ? "s" : ""} Selected
+                          </span>
+                          <button type="button" onClick={clearAllSelections} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all cursor-pointer">
+                            Clear Selection
+                          </button>
+                        </div>
+                        <div className="flex gap-2">
+                          <button type="button" onClick={handleBulkMatch} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
+                            Match Selected
+                          </button>
+                          <button type="button" onClick={() => {
+                            if (selectedKeys.size === 0 || !previewData) return;
+                            const firstKey = Array.from(selectedKeys)[0];
+                            handleOpenExternalForm(firstKey);
+                          }} className="btn-glass bg-violet-500/10 hover:bg-violet-500/20 text-violet-600 dark:text-violet-400 border border-violet-200/50 dark:border-violet-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
+                            Mark External
+                          </button>
+                          <button type="button" onClick={handleBulkRemove} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all">
+                            Remove Selected
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* 4. Attendee Review Container */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-2xl shadow-xs overflow-hidden">
+                      {/* Confirmed Section */}
+                      {confirmed.length > 0 && (
+                        <>
+                          <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="h-4 w-4 text-emerald-500" />
+                              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">Confirmed</h4>
+                              <span className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[9.5px] font-bold px-2 py-0.5 rounded-full border border-emerald-200/40 dark:border-emerald-900/30">{confirmed.length}</span>
+                              {(() => {
+                                const matchedKeys = confirmed.map((a, i) => a._key || `confirmed_${i}`);
+                                const state = getSectionState(matchedKeys);
+                                return state === "all" ? <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">All Selected</span> : state === "some" ? <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">Partially Selected</span> : null;
+                              })()}
                             </div>
-                            {hasDiff && (
-                              <div className="ml-9 mt-1">
-                                <button type="button" onClick={() => setExpandedDiff((prev) => { const next = new Set(prev); const key = idx + 10000; next.has(key) ? next.delete(key) : next.add(key); return next; })} className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer">
-                                  {expandedDiff.has(idx + 10000) ? "Hide details" : "Show details"}
-                                </button>
-                                {expandedDiff.has(idx + 10000) && (
-                                  <div className="mt-1.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg p-2.5 border border-slate-200/60 dark:border-slate-800">
-                                    <div className="grid grid-cols-3 gap-2 text-[9px] font-semibold text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200 dark:border-slate-800 mb-1.5">
-                                      <span>Field</span><span>Database</span><span>Excel File</span>
-                                    </div>
-                                    {m.differences?.map((diff: string) => (
-                                      <div key={diff} className="grid grid-cols-3 gap-2 py-1 text-[9px] border-b border-slate-100 dark:border-slate-800 last:border-0">
-                                        <span className="font-medium text-slate-700 dark:text-slate-300">{diff}</span>
-                                        <span className="text-slate-600 dark:text-slate-400">{m[`db${diff}`] || m[diff] || "-"}</span>
-                                        <span className="text-amber-600 dark:text-amber-400">{m[`excel${diff}`] || m.office || m.position || "-"}</span>
+                            <button type="button" onClick={() => toggleSelectAll(confirmed.map((a, i) => a._key || `confirmed_${i}`))} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all duration-100 cursor-pointer ${
+                              confirmed.every((a, i) => selectedKeys.has(a._key || `confirmed_${i}`))
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 hover:bg-emerald-500/20"
+                                : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:bg-blue-500/20"
+                            }`}>
+                              {confirmed.every((a, i) => selectedKeys.has(a._key || `confirmed_${i}`)) ? (
+                                <><CheckCircle className="h-3 w-3" /> Deselect All</>
+                              ) : (
+                                <><span className="text-xs leading-none">☐</span> Select All</>
+                              )}
+                            </button>
+                          </div>
+                          <AnimatePresence mode="popLayout">
+                            {confirmed.map((m, idx) => {
+                              const key = m._key || `confirmed_${idx}`;
+                              const isSelected = selectedKeys.has(key);
+                              const hasDiff = m.differences?.length > 0;
+                              const rawEmp = previewData.rawEmployees.find((r) => r._key === key);
+                              const rawOffice = rawEmp?.office || "";
+                              const rawPosition = rawEmp?.position || "";
+                              const dbOffice = m.dbOffice || m.Office || "";
+                              const dbPosition = m.dbPosition || m.Position || "";
+                              return (
+                                <motion.div
+                                  key={key}
+                                  layout
+                                  initial={{ opacity: 0, y: 10 }}
+                                  animate={{ opacity: 1, y: 0 }}
+                                  exit={{ opacity: 0, x: -30, scale: 0.95, transition: { duration: 0.2 } }}
+                                  transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.8 }}
+                                  className={`px-5 py-2.5 ${isSelected ? "bg-blue-50/30 dark:bg-blue-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"}`}
+                                >
+                                  <div className="flex items-center gap-3">
+                                    <input type="checkbox" checked={isSelected} onChange={() => toggleSelectKey(key)} className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                                    <div className={`w-1.5 h-1.5 rounded-full shrink-0 ${hasDiff ? "bg-amber-500" : "bg-emerald-500"}`} />
+                                    {editingNameKey === key ? (
+                                      <div className="flex items-center gap-2 flex-1">
+                                        <input type="text" value={editingNameValue} onChange={(e) => setEditingNameValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSaveEditedName(); if (e.key === "Escape") handleCancelEditName(); }} className="flex-1 px-2 py-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                                        <button type="button" onClick={handleSaveEditedName} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer">Save</button>
+                                        <button type="button" onClick={handleCancelEditName} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><X className="h-3 w-3" /></button>
                                       </div>
-                                    ))}
-                                    {m.matchReasons?.length > 0 && (
-                                      <div className="mt-1.5 text-[9px] text-slate-400 dark:text-slate-500">
-                                        Match: {m.matchReasons.join(", ")}
-                                      </div>
+                                    ) : (
+                                      <>
+                                        <div className="flex-1 min-w-0 flex items-center gap-3">
+                                          <div className="min-w-0 flex-1">
+                                            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{m.LastName}, {m.FirstName} {m.MiddleInitial || ""}</span>
+                                            {m.Office && <span className="text-[10px] text-slate-400 ml-2">{m.Office}</span>}
+                                            {hasDiff && m.differences?.includes("Office") && (
+                                              <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700 ml-1.5">
+                                                Office: {rawOffice || "-"} → {dbOffice}
+                                              </span>
+                                            )}
+                                            {hasDiff && m.differences?.includes("Position") && (
+                                              <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700 ml-1.5">
+                                                Position: {rawPosition || "-"} → {dbPosition}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                        <div className="flex items-center gap-1 shrink-0">
+                                          <button type="button" onClick={() => handleStartEditName(key, m.rawName || `${m.LastName}, ${m.FirstName}`)} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">Edit</button>
+                                          <button type="button" onClick={() => onSelectEmployee(Number(m.EmployeeID))} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">View</button>
+                                          <button type="button" onClick={() => handleRemoveImportAttendee(key)} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
+                                        </div>
+                                      </>
                                     )}
                                   </div>
-                                )}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
-
-                {/* Needs Review Section */}
-                {previewData.matchedDiff.length > 0 && (
-                  <>
-                    <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-amber-500" />
-                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">Needs Review</h4>
-                        <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[9.5px] font-bold px-2 py-0.5 rounded-full border border-amber-200/40 dark:border-amber-900/30">{previewData.matchedDiff.length}</span>
-                        {(() => {
-                          const mdiffKeys = previewData.matchedDiff.map((m, i) => m._key || `mdiff_${i}`);
-                          const state = getSectionState(mdiffKeys);
-                          return state === "all" ? <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">All Selected</span> : state === "some" ? <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">Partially Selected</span> : null;
-                        })()}
-                      </div>
-                      <button type="button" onClick={() => toggleSelectAll(previewData.matchedDiff.map((m, i) => m._key || `mdiff_${i}`))} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all duration-100 cursor-pointer ${
-                        previewData.matchedDiff.every((m, i) => selectedKeys.has(m._key || `mdiff_${i}`))
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 hover:bg-emerald-500/20"
-                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:bg-blue-500/20"
-                      }`}>
-                        {previewData.matchedDiff.every((m, i) => selectedKeys.has(m._key || `mdiff_${i}`)) ? (
-                          <><CheckCircle className="h-3 w-3" /> Deselect All</>
-                        ) : (
-                          <><span className="text-xs leading-none">☐</span> Select All</>
-                        )}
-                      </button>
-                    </div>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-80 overflow-y-auto">
-                      {previewData.matchedDiff.map((m, idx) => {
-                        const key = m._key || `mdiff_${idx}`;
-                        const isSelected = selectedKeys.has(key);
-                        return (
-                          <div key={key} className={`px-5 py-2.5 ${isSelected ? "bg-blue-50/30 dark:bg-blue-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"}`}>
-                            <div className="flex items-center gap-3">
-                              <input type="checkbox" checked={isSelected} onChange={() => toggleSelectKey(key)} className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
-                              {editingNameKey === key ? (
-                                <div className="flex items-center gap-2 flex-1">
-                                  <input type="text" value={editingNameValue} onChange={(e) => setEditingNameValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSaveEditedName(); if (e.key === "Escape") handleCancelEditName(); }} className="flex-1 px-2 py-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
-                                  <button type="button" onClick={handleSaveEditedName} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer">Save</button>
-                                  <button type="button" onClick={handleCancelEditName} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><X className="h-3 w-3" /></button>
-                                </div>
-                              ) : (
-                                <>
-                                  <div className="flex-1 min-w-0 flex items-center gap-3">
-                                    <div className="min-w-0 flex-1">
-                                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{m.LastName}, {m.FirstName} {m.MiddleInitial || ""}</span>
-                                      <span className="text-[10px] text-slate-400 ml-2">{m.Office}</span>
-                                      <span className="text-[10px] text-amber-600 dark:text-amber-400 ml-2">{m.confidence || 95}% confidence</span>
+                                  {hasDiff && (
+                                    <div className="ml-9 mt-1.5">
+                                      <button type="button" onClick={() => setExpandedDiff((prev) => { const next = new Set(prev); const ekey = idx + 10000; next.has(ekey) ? next.delete(ekey) : next.add(ekey); return next; })} className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]">
+                                        {expandedDiff.has(idx + 10000) ? "Hide comparison" : "Show comparison"}
+                                      </button>
                                     </div>
-                                    <div className="text-[10px] text-slate-500 shrink-0">
-                                      {m.differences?.map((d: string) => (
-                                        <span key={d} className="inline-flex items-center gap-1 mr-2">
-                                          <span className="text-amber-500">&#9888;</span> {d}
-                                          {d === "Office" && ` (Excel: ${m.excelOffice || "-"})`}
-                                        </span>
-                                      ))}
-                                    </div>
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button type="button" onClick={() => handleStartEditName(key, m.rawName || `${m.LastName}, ${m.FirstName}`)} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Edit</button>
-                                    <button type="button" onClick={() => onSelectEmployee(Number(m.EmployeeID))} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">View</button>
-                                    <button type="button" onClick={() => handleRemoveImportAttendee(key)} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
-                                  </div>
-                                </>
-                              )}
-                            </div>
-                            {/* Expandable diff details */}
-                            <div className="ml-9 mt-1">
-                              <button type="button" onClick={() => setExpandedDiff((prev) => { const next = new Set(prev); next.has(idx) ? next.delete(idx) : next.add(idx); return next; })} className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer">
-                                {expandedDiff.has(idx) ? "Hide details" : "Show details"}
-                              </button>
-                              {expandedDiff.has(idx) && (
-                                <div className="mt-1.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg p-2.5 border border-slate-200/60 dark:border-slate-800">
-                                  <div className="grid grid-cols-3 gap-2 text-[9px] font-semibold text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200 dark:border-slate-800 mb-1.5">
-                                    <span>Field</span><span>Database</span><span>Excel File</span>
-                                  </div>
-                                  {m.differences?.map((diff: string) => (
-                                    <div key={diff} className="grid grid-cols-3 gap-2 py-1 text-[9px] border-b border-slate-100 dark:border-slate-800 last:border-0">
-                                      <span className="font-medium text-slate-700 dark:text-slate-300">{diff}</span>
-                                      <span className="text-slate-600 dark:text-slate-400">{m[`db${diff}`] || m[diff] || "-"}</span>
-                                        <span className="text-amber-600 dark:text-amber-400">{m[`excel${diff}`] || m.office || m.position || "-"}</span>
-                                      </div>
-                                    ))}
-                                    {m.matchReasons?.length > 0 && (
-                                      <div className="mt-1.5 text-[9px] text-slate-400 dark:text-slate-500">
-                                        Match: {m.matchReasons.join(", ")}
-                                      </div>
+                                  )}
+                                  <AnimatePresence>
+                                    {hasDiff && expandedDiff.has(idx + 10000) && (
+                                      <motion.div
+                                        initial={{ height: 0, opacity: 0 }}
+                                        animate={{ height: "auto", opacity: 1 }}
+                                        exit={{ height: 0, opacity: 0 }}
+                                        transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                                        className="overflow-hidden"
+                                      >
+                                        <div className="ml-9 mt-1.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg p-2.5 border border-slate-200/60 dark:border-slate-800">
+                                          <div className="grid grid-cols-3 gap-2 text-[9px] font-semibold text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200 dark:border-slate-800 mb-1.5">
+                                            <span>Field</span><span>Database</span><span>Excel File</span>
+                                          </div>
+                                          {m.differences?.map((diff: string) => (
+                                            <div key={diff} className="grid grid-cols-3 gap-2 py-1 text-[9px] border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                              <span className="font-medium text-slate-700 dark:text-slate-300">{diff}</span>
+                                              <span className="text-slate-600 dark:text-slate-400">{diff === "Office" ? dbOffice : diff === "Position" ? dbPosition : m[`db${diff}`] || "-"}</span>
+                                              <span className="text-amber-600 dark:text-amber-400">{diff === "Office" ? rawOffice : diff === "Position" ? rawPosition : m[`excel${diff}`] || "-"}</span>
+                                            </div>
+                                          ))}
+                                          {m.matchReasons?.length > 0 && (
+                                            <div className="mt-1.5 text-[9px] text-slate-400 dark:text-slate-500">
+                                              Match: {m.matchReasons.join(", ")}
+                                            </div>
+                                          )}
+                                        </div>
+                                      </motion.div>
                                     )}
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
+                                  </AnimatePresence>
+                                </motion.div>
+                              );
+                            })}
+                          </AnimatePresence>
+                        </>
+                      )}
 
-                {/* Unknown Section */}
-                {previewData.unmatched.length > 0 && (
-                  <>
-                    <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <X className="h-4 w-4 text-slate-400" />
-                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">Unknown</h4>
-                        <span className="bg-red-500/10 text-red-600 dark:text-red-400 text-[9.5px] font-bold px-2 py-0.5 rounded-full border border-red-200/40 dark:border-red-900/30">{previewData.unmatched.length}</span>
-                        {(() => {
-                          const unmatchedKeys = previewData.unmatched.map((u, i) => u._key || `unmatched_${i}`);
-                          const state = getSectionState(unmatchedKeys);
-                          return state === "all" ? <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">All Selected</span> : state === "some" ? <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">Partially Selected</span> : null;
-                        })()}
-                      </div>
-                      <button type="button" onClick={() => toggleSelectAll(previewData.unmatched.map((u, i) => u._key || `unmatched_${i}`))} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all duration-100 cursor-pointer ${
-                        previewData.unmatched.every((u, i) => selectedKeys.has(u._key || `unmatched_${i}`))
-                          ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 hover:bg-emerald-500/20"
-                          : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:bg-blue-500/20"
-                      }`}>
-                        {previewData.unmatched.every((u, i) => selectedKeys.has(u._key || `unmatched_${i}`)) ? (
-                          <><CheckCircle className="h-3 w-3" /> Deselect All</>
-                        ) : (
-                          <><span className="text-xs leading-none">☐</span> Select All</>
-                        )}
-                      </button>
-                    </div>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-80 overflow-y-auto">
-                      {previewData.unmatched.map((un, idx) => {
-                        const key = un._key || `unmatched_${idx}`;
-                        const isSelected = selectedKeys.has(key);
-                        return (
-                          <div key={key} className={`px-5 py-2.5 ${isSelected ? "bg-blue-50/30 dark:bg-blue-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"}`}>
-                            <div className="flex items-center gap-3">
-                              <input type="checkbox" checked={isSelected} onChange={() => toggleSelectKey(key)} className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
-                              <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" />
-                              {editingNameKey === key ? (
-                                <div className="flex items-center gap-2 flex-1">
-                                  <input type="text" value={editingNameValue} onChange={(e) => setEditingNameValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSaveEditedName(); if (e.key === "Escape") handleCancelEditName(); }} className="flex-1 px-2 py-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
-                                  <button type="button" onClick={handleSaveEditedName} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer">Save</button>
-                                  <button type="button" onClick={handleCancelEditName} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><X className="h-3 w-3" /></button>
-                                </div>
+                      {/* Needs Review Section (merged) */}
+                      {needsReview.length > 0 && (
+                        <>
+                          <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-amber-500" />
+                              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">Needs Review</h4>
+                              <span className="bg-amber-500/10 text-amber-600 dark:text-amber-400 text-[9.5px] font-bold px-2 py-0.5 rounded-full border border-amber-200/40 dark:border-amber-900/30">{needsReview.length}</span>
+                              {(() => {
+                                const reviewKeys = needsReview.map((a, i) => a._key || `review_${i}`);
+                                const state = getSectionState(reviewKeys);
+                                return state === "all" ? <span className="text-[9px] text-emerald-600 dark:text-emerald-400 font-semibold">All Selected</span> : state === "some" ? <span className="text-[9px] text-amber-600 dark:text-amber-400 font-semibold">Partially Selected</span> : null;
+                              })()}
+                            </div>
+                            <button type="button" onClick={() => toggleSelectAll(needsReview.map((a, i) => a._key || `review_${i}`))} className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1 rounded-lg border transition-all duration-100 cursor-pointer ${
+                              needsReview.every((a, i) => selectedKeys.has(a._key || `review_${i}`))
+                                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 hover:bg-emerald-500/20"
+                                : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:bg-blue-500/20"
+                            }`}>
+                              {needsReview.every((a, i) => selectedKeys.has(a._key || `review_${i}`)) ? (
+                                <><CheckCircle className="h-3 w-3" /> Deselect All</>
                               ) : (
-                                <>
-                                  <div className="flex-1 min-w-0 flex items-center gap-3">
-                                    <div className="min-w-0 flex-1">
-                                      <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{un.rawName}</span>
-                                      {un.office && <span className="text-[10px] text-slate-400 ml-2">{un.office}</span>}
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 dark:text-slate-500 shrink-0">No match found</span>
-                                  </div>
-                                  <div className="flex items-center gap-1 shrink-0">
-                                    <button type="button" onClick={() => handleOpenManualMatch(key)} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-[10px] py-1.5 px-2.5 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100">Match</button>
-                                    <button type="button" onClick={() => handleOpenExternalForm(key)} className="text-[10px] text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-colors cursor-pointer">External</button>
-                                    <button type="button" onClick={() => handleStartEditName(key, un.rawName)} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Edit</button>
-                                    <button type="button" onClick={() => handleOpenCreateEmployee(key)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer font-semibold">Create</button>
-                                    <button type="button" onClick={() => handleRemoveImportAttendee(key)} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
-                                  </div>
-                                </>
+                                <><span className="text-xs leading-none">☐</span> Select All</>
                               )}
-                            </div>
-                            {/* Inline External Participant Form */}
-                            {externalFormKey === key && (
-                              <div className="ml-9 mt-2 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200/60 dark:border-slate-800 space-y-2">
-                                <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Mark as External Participant</div>
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                                  <div>
-                                    <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Organization</label>
-                                    <input type="text" value={externalOrg} onChange={(e) => setExternalOrg(e.target.value)} placeholder="e.g. Department of Labor" className="w-full px-2 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-300 dark:placeholder:text-slate-600" />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Role</label>
-                                    <input type="text" value={externalRole} onChange={(e) => setExternalRole(e.target.value)} placeholder="Auto-filled" className="w-full px-2 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-300 dark:placeholder:text-slate-600" />
-                                  </div>
-                                  <div>
-                                    <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Remarks</label>
-                                    <input type="text" value={externalRemarks} onChange={(e) => setExternalRemarks(e.target.value)} placeholder="Optional" className="w-full px-2 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-300 dark:placeholder:text-slate-600" />
-                                  </div>
-                                </div>
-                                <div className="flex gap-2 pt-1">
-                                  <button type="button" onClick={handleMarkAsExternal} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100">Confirm External</button>
-                                  <button type="button" onClick={handleCancelExternalForm} className="text-[10px] text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
-                                </div>
-                              </div>
-                            )}
+                            </button>
                           </div>
-                        );
-                      })}
-                    </div>
-                  </>
-                )}
 
-                {/* External Participants Section (integrated) */}
-                {(previewData.externalParticipants?.length || 0) > 0 && (
-                  <>
-                    <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <UserPlus className="h-4 w-4 text-blue-500" />
-                        <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">External Participants</h4>
-                        <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9.5px] font-bold px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30">{previewData.externalParticipants.length}</span>
-                      </div>
-                    </div>
-                    <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-72 overflow-y-auto">
-                      {previewData.externalParticipants.map((ep) => (
-                        <div key={ep._key} className="px-5 py-2.5 flex items-center gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/20">
-                          <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
-                          <div className="flex-1 min-w-0 flex items-center gap-3">
-                            <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{ep.rawName}</span>
-                            {ep.organization && <span className="text-[10px] text-slate-400">{ep.organization}</span>}
-                            {ep.role && <span className="text-[10px] text-slate-400">{ep.role}</span>}
+                          {/* Low Confidence Matches Subsection */}
+                          {lowConfidence.length > 0 && (
+                            <>
+                              <div className="px-5 py-2 bg-amber-50/30 dark:bg-amber-950/10 border-b border-amber-100/60 dark:border-amber-900/20">
+                                <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400">Low Confidence Matches ({lowConfidence.length})</span>
+                                <span className="text-[9px] text-amber-500/70 dark:text-amber-400/60 ml-2">Matched below threshold — verify before importing</span>
+                              </div>
+                              <AnimatePresence mode="popLayout">
+                                {lowConfidence.map((m, idx) => {
+                                  const key = m._key || `lowconf_${idx}`;
+                                  const isSelected = selectedKeys.has(key);
+                                  const hasDiff = m.differences?.length > 0;
+                                  const rawEmp = previewData.rawEmployees.find((r) => r._key === key);
+                                  const rawOffice = rawEmp?.office || "";
+                                  const rawPosition = rawEmp?.position || "";
+                                  const dbOffice = m.dbOffice || m.Office || "";
+                                  const dbPosition = m.dbPosition || m.Position || "";
+                                  return (
+                                    <motion.div
+                                      key={key}
+                                      layout
+                                      initial={{ opacity: 0, y: 10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, x: -30, scale: 0.95, transition: { duration: 0.2 } }}
+                                      transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.8 }}
+                                      className={`px-5 py-2.5 ${isSelected ? "bg-blue-50/30 dark:bg-blue-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <input type="checkbox" checked={isSelected} onChange={() => toggleSelectKey(key)} className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />
+                                        {editingNameKey === key ? (
+                                          <div className="flex items-center gap-2 flex-1">
+                                            <input type="text" value={editingNameValue} onChange={(e) => setEditingNameValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSaveEditedName(); if (e.key === "Escape") handleCancelEditName(); }} className="flex-1 px-2 py-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                                            <button type="button" onClick={handleSaveEditedName} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer">Save</button>
+                                            <button type="button" onClick={handleCancelEditName} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><X className="h-3 w-3" /></button>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className="flex-1 min-w-0 flex items-center gap-3">
+                                              <div className="min-w-0 flex-1">
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{m.LastName}, {m.FirstName} {m.MiddleInitial || ""}</span>
+                                                {m.Office && <span className="text-[10px] text-slate-400 ml-2">{m.Office}</span>}
+                                                <span className="text-[9px] text-amber-600 dark:text-amber-400 ml-2">{m.confidence || 95}% confidence</span>
+                                                {hasDiff && m.differences?.includes("Office") && (
+                                                  <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700 ml-1.5">
+                                                    Office: {rawOffice || "-"} → {dbOffice}
+                                                  </span>
+                                                )}
+                                                {hasDiff && m.differences?.includes("Position") && (
+                                                  <span className="inline-flex items-center gap-0.5 text-[9px] text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded-full border border-slate-200/60 dark:border-slate-700 ml-1.5">
+                                                    Position: {rawPosition || "-"} → {dbPosition}
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                              <button type="button" onClick={() => handleStartEditName(key, m.rawName || `${m.LastName}, ${m.FirstName}`)} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">Edit</button>
+                                              <button type="button" onClick={() => onSelectEmployee(Number(m.EmployeeID))} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">View</button>
+                                              <button type="button" onClick={() => handleRemoveImportAttendee(key)} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+                                      {hasDiff && (
+                                        <div className="ml-9 mt-1.5">
+                                          <button type="button" onClick={() => setExpandedDiff((prev) => { const next = new Set(prev); const ekey = idx + 20000; next.has(ekey) ? next.delete(ekey) : next.add(ekey); return next; })} className="text-[9px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 cursor-pointer transition-all duration-150 hover:scale-[1.02] active:scale-[0.98]">
+                                            {expandedDiff.has(idx + 20000) ? "Hide comparison" : "Show comparison"}
+                                          </button>
+                                        </div>
+                                      )}
+                                      <AnimatePresence>
+                                        {hasDiff && expandedDiff.has(idx + 20000) && (
+                                          <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: "auto", opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+                                            className="overflow-hidden"
+                                          >
+                                            <div className="ml-9 mt-1.5 bg-slate-50 dark:bg-slate-950/40 rounded-lg p-2.5 border border-slate-200/60 dark:border-slate-800">
+                                              <div className="grid grid-cols-3 gap-2 text-[9px] font-semibold text-slate-500 dark:text-slate-400 pb-1.5 border-b border-slate-200 dark:border-slate-800 mb-1.5">
+                                                <span>Field</span><span>Database</span><span>Excel File</span>
+                                              </div>
+                                              {m.differences?.map((diff: string) => (
+                                                <div key={diff} className="grid grid-cols-3 gap-2 py-1 text-[9px] border-b border-slate-100 dark:border-slate-800 last:border-0">
+                                                  <span className="font-medium text-slate-700 dark:text-slate-300">{diff}</span>
+                                                  <span className="text-slate-600 dark:text-slate-400">{diff === "Office" ? dbOffice : diff === "Position" ? dbPosition : m[`db${diff}`] || "-"}</span>
+                                                  <span className="text-amber-600 dark:text-amber-400">{diff === "Office" ? rawOffice : diff === "Position" ? rawPosition : m[`excel${diff}`] || "-"}</span>
+                                                </div>
+                                              ))}
+                                              {m.matchReasons?.length > 0 && (
+                                                <div className="mt-1.5 text-[9px] text-slate-400 dark:text-slate-500">
+                                                  Match: {m.matchReasons.join(", ")}
+                                                </div>
+                                              )}
+                                            </div>
+                                          </motion.div>
+                                        )}
+                                      </AnimatePresence>
+                                    </motion.div>
+                                  );
+                                })}
+                              </AnimatePresence>
+                            </>
+                          )}
+
+                          {/* No Match Found Subsection */}
+                          {noMatch.length > 0 && (
+                            <>
+                              <div className="px-5 py-2 bg-red-50/30 dark:bg-red-950/10 border-b border-red-100/60 dark:border-red-900/20">
+                                <span className="text-[10px] font-bold text-red-600 dark:text-red-400">No Match Found ({noMatch.length})</span>
+                                <span className="text-[9px] text-red-500/70 dark:text-red-400/60 ml-2">No database match — match manually, mark external, or create employee</span>
+                              </div>
+                              <AnimatePresence mode="popLayout">
+                                {noMatch.map((un, idx) => {
+                                  const key = un._key || `nomatch_${idx}`;
+                                  const isSelected = selectedKeys.has(key);
+                                  const rawEmp = previewData.rawEmployees.find((r) => r._key === key);
+                                  return (
+                                    <motion.div
+                                      key={key}
+                                      layout
+                                      initial={{ opacity: 0, y: 10 }}
+                                      animate={{ opacity: 1, y: 0 }}
+                                      exit={{ opacity: 0, x: -30, scale: 0.95, transition: { duration: 0.2 } }}
+                                      transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.8 }}
+                                      className={`px-5 py-2.5 ${isSelected ? "bg-blue-50/30 dark:bg-blue-950/20" : "hover:bg-slate-50/50 dark:hover:bg-slate-800/20"}`}
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <input type="checkbox" checked={isSelected} onChange={() => toggleSelectKey(key)} className="h-3.5 w-3.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer" />
+                                        <div className="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600 shrink-0" />
+                                        {editingNameKey === key ? (
+                                          <div className="flex items-center gap-2 flex-1">
+                                            <input type="text" value={editingNameValue} onChange={(e) => setEditingNameValue(e.target.value)} onKeyDown={(e) => { if (e.key === "Enter") handleSaveEditedName(); if (e.key === "Escape") handleCancelEditName(); }} className="flex-1 px-2 py-1 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-blue-500" autoFocus />
+                                            <button type="button" onClick={handleSaveEditedName} className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-colors cursor-pointer">Save</button>
+                                            <button type="button" onClick={handleCancelEditName} className="text-slate-400 hover:text-slate-600 p-1 cursor-pointer"><X className="h-3 w-3" /></button>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            <div className="flex-1 min-w-0 flex items-center gap-3">
+                                              <div className="min-w-0 flex-1">
+                                                <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{un.rawName}</span>
+                                                {un.office && <span className="text-[10px] text-slate-400 ml-2">{un.office}</span>}
+                                              </div>
+                                            </div>
+                                            <div className="flex items-center gap-1 shrink-0">
+                                              <button type="button" onClick={() => handleOpenManualMatch(key)} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-[10px] py-1.5 px-2.5 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100">Match</button>
+                                              <button type="button" onClick={() => handleOpenExternalForm(key)} className="text-[10px] text-blue-500 hover:text-blue-700 dark:hover:text-blue-400 px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-950/40 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">External</button>
+                                              <button type="button" onClick={() => handleStartEditName(key, un.rawName)} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">Edit</button>
+                                              <button type="button" onClick={() => handleOpenCreateEmployee(key)} className="text-[10px] text-emerald-600 dark:text-emerald-400 hover:text-emerald-700 dark:hover:text-emerald-300 px-2 py-1 rounded-lg hover:bg-emerald-50 dark:hover:bg-emerald-950/40 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer font-semibold">Create</button>
+                                              <button type="button" onClick={() => handleRemoveImportAttendee(key)} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
+                                            </div>
+                                          </>
+                                        )}
+                                      </div>
+                                      {/* Inline External Participant Form */}
+                                      {externalFormKey === key && (
+                                        <div className="ml-9 mt-2 p-3 bg-slate-50 dark:bg-slate-950/40 rounded-lg border border-slate-200/60 dark:border-slate-800 space-y-2">
+                                          <div className="text-[10px] font-semibold text-slate-500 dark:text-slate-400">Mark as External Participant</div>
+                                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                                            <div>
+                                              <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Organization</label>
+                                              <input type="text" value={externalOrg} onChange={(e) => setExternalOrg(e.target.value)} placeholder="e.g. Department of Labor" className="w-full px-2 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-300 dark:placeholder:text-slate-600" />
+                                            </div>
+                                            <div>
+                                              <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Role</label>
+                                              <input type="text" value={externalRole} onChange={(e) => setExternalRole(e.target.value)} placeholder="Auto-filled" className="w-full px-2 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-300 dark:placeholder:text-slate-600" />
+                                            </div>
+                                            <div>
+                                              <label className="block text-[9px] font-semibold text-slate-400 dark:text-slate-500 mb-0.5">Remarks</label>
+                                              <input type="text" value={externalRemarks} onChange={(e) => setExternalRemarks(e.target.value)} placeholder="Optional" className="w-full px-2 py-1.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-300 dark:placeholder:text-slate-600" />
+                                            </div>
+                                          </div>
+                                          <div className="flex gap-2 pt-1">
+                                            <button type="button" onClick={handleMarkAsExternal} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 text-[10px] py-1.5 px-3 font-bold rounded-xl cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100">Confirm External</button>
+                                            <button type="button" onClick={handleCancelExternalForm} className="text-[10px] text-slate-500 hover:text-slate-700 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Cancel</button>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </motion.div>
+                                  );
+                                })}
+                              </AnimatePresence>
+                            </>
+                          )}
+                        </>
+                      )}
+
+                      {/* External Participants Section (integrated) */}
+                      {externalList.length > 0 && (
+                        <>
+                          <div className="px-5 py-3 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/30 flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <UserPlus className="h-4 w-4 text-blue-500" />
+                              <h4 className="text-xs font-bold text-slate-800 dark:text-slate-100">External Participants</h4>
+                              <span className="bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[9.5px] font-bold px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30">{externalList.length}</span>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-1 shrink-0">
-                            <button type="button" onClick={() => {
-                              const updated = previewData.externalParticipants.filter((e) => e._key !== ep._key);
-                              const restored = { _key: ep._key, rawName: ep.rawName, office: "" };
-                              setPreviewData({
-                                ...previewData,
-                                externalParticipants: updated,
-                                unmatched: [...previewData.unmatched, restored],
-                              });
-                            }} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Undo</button>
-                            <button type="button" onClick={() => {
-                              const updated = previewData.externalParticipants.filter((e) => e._key !== ep._key);
-                              setPreviewData({ ...previewData, externalParticipants: updated });
-                            }} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
+                          <div className="divide-y divide-slate-100 dark:divide-slate-800/60 max-h-72 overflow-y-auto">
+                            {externalList.map((ep) => (
+                              <motion.div
+                                key={ep._key}
+                                layout
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, x: -30, scale: 0.95, transition: { duration: 0.2 } }}
+                                transition={{ type: "spring", stiffness: 500, damping: 35, mass: 0.8 }}
+                                className="px-5 py-2.5 flex items-center gap-3 hover:bg-slate-50/50 dark:hover:bg-slate-800/20"
+                              >
+                                <div className="w-1.5 h-1.5 rounded-full bg-blue-500 shrink-0" />
+                                <div className="flex-1 min-w-0 flex items-center gap-3">
+                                  <span className="text-xs font-semibold text-slate-800 dark:text-slate-200">{ep.rawName}</span>
+                                  {ep.organization && <span className="text-[10px] text-slate-400">{ep.organization}</span>}
+                                  {ep.role && <span className="text-[10px] text-slate-400">{ep.role}</span>}
+                                </div>
+                                <div className="flex items-center gap-1 shrink-0">
+                                  <button type="button" onClick={() => {
+                                    const updated = previewData.externalParticipants.filter((e) => e._key !== ep._key);
+                                    const restored = { _key: ep._key, rawName: ep.rawName, office: "", status: "unmatched" as const, reviewReason: "NO_MATCH" as const };
+                                    setPreviewData({
+                                      ...previewData,
+                                      externalParticipants: updated,
+                                      attendees: [...previewData.attendees, restored],
+                                    });
+                                  }} className="text-[10px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-all duration-150 hover:scale-[1.02] active:scale-[0.98] cursor-pointer">Undo</button>
+                                  <button type="button" onClick={() => {
+                                    const updated = previewData.externalParticipants.filter((e) => e._key !== ep._key);
+                                    setPreviewData({ ...previewData, externalParticipants: updated });
+                                  }} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-1.5 rounded-full cursor-pointer hover:scale-[1.02] active:scale-[0.98] transition-all duration-100"><Trash2 className="h-3 w-3" /></button>
+                                </div>
+                              </motion.div>
+                            ))}
+                          </div>
+                        </>
+                      )}
+
+                      {/* Empty state when no attendees */}
+                      {confirmed.length === 0 && needsReview.length === 0 && externalList.length === 0 && (
+                        <div className="px-5 py-10 text-center">
+                          <div className="w-12 h-12 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center mx-auto mb-3">
+                            <Users className="h-6 w-6 text-slate-400 dark:text-slate-500" />
+                          </div>
+                          <p className="text-sm font-semibold text-slate-500 dark:text-slate-400">No attendees found</p>
+                          <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">The uploaded file did not contain any recognizable attendees.</p>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 5. Why Review Is Required */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setShowWhyReview(!showWhyReview)}
+                        className="w-full px-5 py-3 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
+                      >
+                        <span className="flex items-center gap-2">
+                          <Info className="h-4 w-4 text-slate-400" />
+                          Why is manual review required?
+                        </span>
+                        <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${showWhyReview ? "rotate-180" : ""}`} />
+                      </button>
+                      {showWhyReview && (
+                        <div className="px-5 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800">
+                          <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed space-y-2">
+                            <p>Automatic matching is designed to assist the encoder, not replace administrative verification. Manual review is important because:</p>
+                            <ul className="list-disc pl-4 space-y-0.5">
+                              <li>External participants who legitimately do not exist in the employee database.</li>
+                              <li>Employees using only their first name or abbreviated names.</li>
+                              <li>Missing middle names or suffixes (Jr., Sr., III, etc.).</li>
+                              <li>Nicknames and different capitalization or spacing.</li>
+                              <li>Typographical errors in the attendance sheet.</li>
+                              <li>Recently hired employees not yet encoded into the database.</li>
+                              <li>Employees with recently updated information.</li>
+                            </ul>
+                            <p className="font-semibold text-slate-600 dark:text-slate-300">These situations should be expected rather than treated as system failures. The goal is to help you make informed decisions while keeping you in control of the final data.</p>
                           </div>
                         </div>
-                      ))}
+                      )}
                     </div>
+
+                    {/* 6. Review Acknowledgment */}
+                    <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs p-4">
+                      <label className="flex items-start gap-3 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={reviewAcknowledged}
+                          onChange={(e) => setReviewAcknowledged(e.target.checked)}
+                          className="h-4 w-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <div className="space-y-0.5">
+                          <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                            I have reviewed all attendees and verified the seminar information.
+                          </span>
+                          <p className="text-[10px] text-slate-400 dark:text-slate-500">
+                            Please review every attendee before importing. Automatic matching is intended to reduce encoding time but should not replace administrative verification.
+                          </p>
+                        </div>
+                      </label>
+                    </div>
+
+                    {/* 7. Action buttons */}
+                    <div className="flex flex-wrap justify-end gap-3">
+                      <button type="button" onClick={resetImport} className="btn-glass text-xs py-2.5 px-5 cursor-pointer font-bold rounded-xl">
+                        Discard
+                      </button>
+                      {previewData.rawEmployees?.length > 0 && (
+                        <button type="button" onClick={() => handleRematch()} disabled={rematchLoading} className="btn-glass text-xs py-2.5 px-4 cursor-pointer font-bold rounded-xl disabled:opacity-50 disabled:pointer-events-none flex items-center gap-2">
+                          <RefreshCw className={`h-3.5 w-3.5 ${rematchLoading ? "animate-spin" : ""}`} />
+                          {rematchLoading ? "Refreshing..." : "Refresh Matching"}
+                        </button>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setReviewAcknowledged(true);
+                          setShowImportConfirm(true);
+                        }}
+                        disabled={importableCount === 0}
+                        className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2.5 px-6 font-extrabold cursor-pointer rounded-xl shadow-md shadow-blue-500/5 transition-all duration-100 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
+                      >
+                        {importableCount === 0 ? "No Attendees to Import" : `Import (${importableCount} attendees)`}
+                      </button>
+                    </div>
+
+                    {/* Import Confirmation Dialog */}
+                    <ConfirmDialog
+                      isOpen={showImportConfirm}
+                      title="Import Seminar Attendance"
+                      message="Please confirm the following attendees will be linked to this seminar."
+                      variant="info"
+                      confirmLabel="Import Seminar"
+                      cancelLabel="Cancel"
+                      details={[
+                        { icon: <CheckCircle className="h-4 w-4" />, label: "Confirmed Employees", count: confirmed.length, color: "emerald" },
+                        { icon: <AlertTriangle className="h-4 w-4" />, label: "Needs Review", count: needsReview.filter(a => a.status === "review").length, color: "amber" },
+                        { icon: <UserPlus className="h-4 w-4" />, label: "External Participants", count: externalList.length, color: "blue" },
+                        { icon: <X className="h-4 w-4" />, label: "Unmatched (will not import)", count: noMatch.length, color: "red" },
+                      ].filter(d => d.count > 0)}
+                      onConfirm={() => { setShowImportConfirm(false); handleExecuteImport(); }}
+                      onCancel={() => setShowImportConfirm(false)}
+                    />
                   </>
-                )}
+                );
+              })()}
 
-                {/* Empty state when no attendees */}
-                {previewData.matched.length === 0 && previewData.matchedDiff.length === 0 && previewData.unmatched.length === 0 && (!previewData.externalParticipants?.length) && (
-                  <div className="text-center py-10">
-                    <p className="text-xs text-slate-400">No attendees found in the uploaded file.</p>
-                  </div>
-                )}
-              </div>
-
-              {/* 5. Why Review Is Required */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs overflow-hidden">
-                <button
-                  type="button"
-                  onClick={() => setShowWhyReview(!showWhyReview)}
-                  className="w-full px-5 py-3 flex items-center justify-between text-xs font-semibold text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Info className="h-4 w-4 text-slate-400" />
-                    Why is manual review required?
-                  </span>
-                  <ChevronDown className={`h-4 w-4 text-slate-400 transition-transform duration-200 ${showWhyReview ? "rotate-180" : ""}`} />
-                </button>
-                {showWhyReview && (
-                  <div className="px-5 pb-4 pt-2 border-t border-slate-100 dark:border-slate-800">
-                    <div className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed space-y-2">
-                      <p>Automatic matching is designed to assist the encoder, not replace administrative verification. Manual review is important because:</p>
-                      <ul className="list-disc pl-4 space-y-0.5">
-                        <li>External participants who legitimately do not exist in the employee database.</li>
-                        <li>Employees using only their first name or abbreviated names.</li>
-                        <li>Missing middle names or suffixes (Jr., Sr., III, etc.).</li>
-                        <li>Nicknames and different capitalization or spacing.</li>
-                        <li>Typographical errors in the attendance sheet.</li>
-                        <li>Recently hired employees not yet encoded into the database.</li>
-                        <li>Employees with recently updated information.</li>
-                      </ul>
-                      <p className="font-semibold text-slate-600 dark:text-slate-300">These situations should be expected rather than treated as system failures. The goal is to help you make informed decisions while keeping you in control of the final data.</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* 6. Review Acknowledgment */}
-              <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs p-4">
-                <label className="flex items-start gap-3 cursor-pointer select-none">
-                  <input
-                    type="checkbox"
-                    checked={reviewAcknowledged}
-                    onChange={(e) => setReviewAcknowledged(e.target.checked)}
-                    className="h-4 w-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                  />
-                  <div className="space-y-0.5">
-                    <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
-                      I have reviewed all attendees and verified the seminar information.
-                    </span>
-                    <p className="text-[10px] text-slate-400 dark:text-slate-500">
-                      Please review every attendee before importing. Automatic matching is intended to reduce encoding time but should not replace administrative verification.
-                    </p>
-                  </div>
-                </label>
-              </div>
-
-              {/* 7. Action buttons */}
-              <div className="flex flex-wrap justify-end gap-3">
-                <button type="button" onClick={resetImport} className="btn-glass text-xs py-2.5 px-5 cursor-pointer font-bold rounded-xl">
-                  Discard
-                </button>
-                {previewData.rawEmployees?.length > 0 && (
-                  <button type="button" onClick={handleRematch} className="btn-glass text-xs py-2.5 px-4 cursor-pointer font-bold rounded-xl">
-                    Refresh Matches
-                  </button>
-                )}
-                <button
-                  type="button"
-                  onClick={handleExecuteImport}
-                  disabled={previewData.matched.length + previewData.matchedDiff.length + (previewData.externalParticipants?.length || 0) === 0 || !reviewAcknowledged}
-                  className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2.5 px-6 font-extrabold cursor-pointer rounded-xl transition-all duration-100 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-40 disabled:pointer-events-none"
-                >
-                  {previewData.matched.length + previewData.matchedDiff.length + (previewData.externalParticipants?.length || 0) === 0
-                    ? "No Attendees to Import"
-                    : !reviewAcknowledged
-                    ? "Review & Acknowledge to Import"
-                    : `Import (${previewData.matched.length + previewData.matchedDiff.length + (previewData.externalParticipants?.length || 0)} attendees)`
-                  }
-                </button>
-              </div>
             </div>
           )}
 
           {/* Manual Match Dialog */}
           {isManualMatchOpen && (
-            <Modal title="Match Employee" onClose={closeManualMatch}>
+            <Modal isOpen={isManualMatchOpen} title="Match Employee" onClose={closeManualMatch}>
               <div className="space-y-4 min-w-[380px]">
                 {/* Attendee being matched */}
                 {manualMatchKey && (() => {

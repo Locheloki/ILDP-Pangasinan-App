@@ -28,6 +28,7 @@ export interface Employee {
   Gender?: string;
   DateOfAssumption?: string;
   NewlyHired?: string;
+  isActive?: boolean;
 }
 
 export interface LearningNeed {

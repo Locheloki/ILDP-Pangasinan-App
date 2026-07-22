@@ -101,9 +101,6 @@ function AppContent() {
   // Edit / Form state
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
-  // Return context rematch trigger - incremented when returning from add/edit to trigger rematch in Seminars
-  const [seminarsRematchTrigger, setSeminarsRematchTrigger] = useState(0);
-
   // Summary Metrics Stats
   const [stats, setStats] = useState<DashboardStats>({
     totalEmployees: 0,
@@ -208,9 +205,7 @@ function AppContent() {
       if (ctx?.returnParams?.shouldRematch) {
         // Clear the context after consuming
         setReturnContext(null);
-        // Trigger rematch in Seminars component
-        setSeminarsRematchTrigger((k) => k + 1);
-        showToast(`Returning to import review. Refreshing matches...`, "success");
+        showToast(`Returning to import review.`, "success");
       }
     }
   }, [activeTab, consumeReturnContext]);
@@ -381,13 +376,8 @@ function AppContent() {
       // Check if we should return to a previous context (e.g., seminar import review)
       if (returnContext?.returnTab) {
         const targetTab = returnContext.returnTab;
-        const shouldRematch = returnContext.returnParams?.shouldRematch;
         setReturnContext(null);
         changeTab(targetTab);
-        // Trigger rematch if returning to seminar import
-        if (shouldRematch) {
-          setSeminarsRematchTrigger((k) => k + 1);
-        }
       } else if (isEdit) {
         changeTab("view");
       } else {
@@ -946,9 +936,6 @@ function AppContent() {
                   if (ctx?.returnTab) {
                     setReturnContext(null);
                     changeTab(ctx.returnTab);
-                    if (ctx.returnParams?.shouldRematch) {
-                      setSeminarsRematchTrigger((k) => k + 1);
-                    }
                   } else {
                     changeTab(tabBeforeEdit);
                   }
@@ -1009,8 +996,7 @@ function AppContent() {
                   setFormKey((k) => k + 1);
                   changeTab("add");
                 }}
-                rematchTrigger={seminarsRematchTrigger}
-              /></ErrorBoundary>
+                /></ErrorBoundary>
             </div>
 
             {/* Render Page 8: User Management (System Developer only) */}

@@ -415,8 +415,8 @@ const NON_PERSON_KEYWORDS = new Set([
 
 function isLikelyPersonName(text: string): boolean {
   if (!text || typeof text !== "string") return false;
-  const cleaned = text.trim();
-  if (cleaned.length < 4) return false;
+  const cleaned = text.trim().replace(/\(\d+\)/g, "").trim();
+  if (cleaned.length < 3) return false;
 
   const lower = cleaned.toLowerCase();
 
@@ -427,39 +427,11 @@ function isLikelyPersonName(text: string): boolean {
   // Skip obvious metadata phrases
   if (/^(attendance\s*sheet|training\s*title|seminar\s*title|list\s*of\s*participants|employee\s*name|employee\s*list|name\s*of\s*employee|republic\s*of\s*the\s*philippines|province\s*of|human\s*resource|administrative\s*officer|management\s*officer)$/i.test(cleaned)) return false;
 
-  // Skip if it's a known non-person keyword (exact single word match)
+  // Skip single word non-person keywords
   if (!cleaned.includes(" ") && NON_PERSON_KEYWORDS.has(lower)) return false;
 
-  // Skip if it looks like a column header section (all caps, single word, non-person meaning)
-  if (/^[A-Z\s]{4,30}$/.test(cleaned) && !cleaned.includes(" ")) {
-    // Single word all-caps: check if it contains mostly consonants (suggests label)
-    const vowelCount = (cleaned.match(/[AEIOU]/g) || []).length;
-    if (vowelCount === 0 && cleaned.length > 4) return false;
-    // Common label pattern: all caps, short, no vowels
-    if (NON_PERSON_KEYWORDS.has(lower)) return false;
-  }
-
-  // Skip single-word values that are common labels (longer than typical name length)
-  if (!cleaned.includes(" ")) {
-    if (NON_PERSON_KEYWORDS.has(lower)) return false;
-    // Skip if it's a common office/position label disguised as a name
-    if (/^(office|division|section|unit|department|position|designation|title|remarks)$/i.test(cleaned)) return false;
-  }
-
-  // Skip multi-word values where every word is a known non-person keyword
-  if (cleaned.includes(" ")) {
-    const words = cleaned.split(/\s+/).filter(Boolean);
-    const nonPersonCount = words.filter((w) => NON_PERSON_KEYWORDS.has(w.toLowerCase())).length;
-    // If ALL words in a multi-word value are non-person keywords, skip
-    if (nonPersonCount === words.length && words.length >= 2) return false;
-  }
-
-  // Must contain at least one alphabetic character
-  if (!/[A-Za-z]/.test(cleaned)) return false;
-
-  // If it contains numbers (other than roman numerals or ordinals), it's probably not a name
-  const numberPattern = /\d/;
-  if (numberPattern.test(cleaned.replace(/[IVXLCDM]+/g, ""))) return false;
+  // Must contain at least two letters (not just a symbol or digit)
+  if ((cleaned.match(/[A-Za-z]/g) || []).length < 2) return false;
 
   return true;
 }
@@ -467,18 +439,25 @@ function isLikelyPersonName(text: string): boolean {
 function matchEmployees(
   rawEmployees: { rawName: string; office: string; position?: string; employeeId?: string; manualEmployeeId?: number; _key?: string }[],
   dbEmployees: any[]
-): { matched: any[]; matchedDiff: any[]; unmatched: any[] } {
-  const matched: any[] = [];
-  const matchedDiff: any[] = [];
-  const unmatched: any[] = [];
+): { attendees: any[] } {
+  const attendees: any[] = [];
 
-  // Names map for fast exact lookup (normalized)
+  // Names map for fast exact lookup (normalized) - includes both FIRST LAST and LAST, FIRST variations
   const namesMap = new Map<string, any>();
   dbEmployees.forEach((emp: any) => {
-    const full = normalizeText(`${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName}`);
-    namesMap.set(full, emp);
-    const commaFull = normalizeText(`${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`);
-    namesMap.set(commaFull, emp);
+    const fn = emp.FirstName || "";
+    const ln = emp.LastName || "";
+    const mi = emp.MiddleInitial || "";
+
+    const fullWithMI = normalizeText(`${fn} ${mi} ${ln}`);
+    const commaWithMI = normalizeText(`${ln}, ${fn} ${mi}`);
+    const fullNoMI = normalizeText(`${fn} ${ln}`);
+    const commaNoMI = normalizeText(`${ln}, ${fn}`);
+
+    if (fullWithMI) namesMap.set(fullWithMI, emp);
+    if (commaWithMI) namesMap.set(commaWithMI, emp);
+    if (fullNoMI) namesMap.set(fullNoMI, emp);
+    if (commaNoMI) namesMap.set(commaNoMI, emp);
   });
 
   // Build EmployeeID lookup map
@@ -523,28 +502,28 @@ function matchEmployees(
       match = namesMap.get(normName);
     }
 
-    // Priority 3: Without middle initials (normalized)
+    // Priority 3: Without middle initials (normalized, both FIRST LAST and LAST, FIRST)
     if (!match) {
       const cleanName = normalizeText(normName.replace(/\b\w\.\b/g, "").replace(/\s+/g, " ").trim());
       for (const emp of dbEmployees) {
         if (match) break;
         const empFull = normalizeText(`${emp.FirstName} ${emp.LastName}`);
-        if (empFull === cleanName) {
+        const empComma = normalizeText(`${emp.LastName}, ${emp.FirstName}`);
+        if (empFull === cleanName || empComma === cleanName) {
           match = emp;
         }
       }
     }
 
-    // Priority 4: First name + Last name (any order, normalized)
+    // Priority 4: First name + Last name substring match (supports multi-word last/first names)
     if (!match) {
-      const parts = normalizeText(nameVal).split(/\s+/).filter(Boolean);
+      const normInput = normalizeText(nameVal);
       for (const emp of dbEmployees) {
         if (match) break;
         const empFirst = normalizeText(emp.FirstName || "");
         const empLast = normalizeText(emp.LastName || "");
-        if (parts.length >= 2) {
-          if ((parts[0] === empFirst && parts[parts.length - 1] === empLast) ||
-              (parts[0] === empLast && parts[parts.length - 1] === empFirst)) {
+        if (empFirst.length >= 2 && empLast.length >= 2) {
+          if (normInput.includes(empFirst) && normInput.includes(empLast)) {
             match = emp;
           }
         }
@@ -569,7 +548,6 @@ function matchEmployees(
       const differences: string[] = [];
       const matchReasons: string[] = [];
       let confidence = 0;
-      let matchedByName = false;
 
       if (matchedByManual) {
         confidence = 100;
@@ -578,24 +556,23 @@ function matchEmployees(
         confidence = 100;
         matchReasons.push("Exact Employee ID match");
       } else {
-        // Calculate confidence based on match priority
-        const normParts = normalizeText(nameVal).split(/\s+/).filter(Boolean);
+        // Calculate confidence based on name and office components
+        const normInput = normalizeText(nameVal);
+        const normParts = normInput.split(/\s+/).filter(Boolean);
         const empFirst = normalizeText(match.FirstName || "");
         const empLast = normalizeText(match.LastName || "");
         const empMI = normalizeText(match.MiddleInitial || "");
 
-        // Check name component matches
-        const firstNameMatch = normParts.some(p => p === empFirst);
-        const lastNameMatch = normParts.some(p => p === empLast);
-        const miMatch = empMI && normParts.some(p => p === empMI || p === empMI + ".");
+        // Check name component matches (supporting multi-word names)
+        const firstNameMatch = (empFirst.length >= 2 && normInput.includes(empFirst)) || normParts.some(p => p === empFirst);
+        const lastNameMatch = (empLast.length >= 2 && normInput.includes(empLast)) || normParts.some(p => p === empLast);
+        const miMatch = empMI && (normInput.includes(` ${empMI} `) || normParts.some(p => p === empMI || p === empMI + "."));
 
         if (firstNameMatch && lastNameMatch && miMatch) {
           confidence = 98;
-          matchedByName = true;
           matchReasons.push("First name, last name, and middle initial match");
         } else if (firstNameMatch && lastNameMatch) {
           confidence = 95;
-          matchedByName = true;
           matchReasons.push("First name and last name match");
         } else if (lastNameMatch && officeVal && match.Office && normalizeText(officeVal) === normalizeText(match.Office)) {
           confidence = 85;
@@ -608,54 +585,68 @@ function matchEmployees(
           matchReasons.push("Partial name match");
         }
 
-        // Check office difference
+        // Check office difference (reference only — never affects confidence or routing)
+        const positionValCheck = (entry as any).position || "";
         if (officeVal && match.Office && normalizeText(officeVal) !== normalizeText(match.Office)) {
           differences.push("Office");
-          confidence = Math.max(confidence - 10, 50);
         }
 
-        // Check position difference
-        const positionVal = (entry as any).position || "";
-        if (positionVal && match.Position && normalizeText(positionVal) !== normalizeText(match.Position)) {
+        // Check position difference (reference only — never affects confidence or routing)
+        if (positionValCheck && match.Position && normalizeText(positionValCheck) !== normalizeText(match.Position)) {
           differences.push("Position");
-          confidence = Math.max(confidence - 5, 50);
         }
       }
 
-      const base = {
+      // Determine status and confidence level
+      const confidenceLevel = confidence >= 90 ? "HIGH" : confidence >= 70 ? "MEDIUM" : "LOW";
+      const status: "matched" | "review" = confidence >= 90 ? "matched" : "review";
+      const reviewReason = confidence < 90 ? "LOW_CONFIDENCE" : undefined;
+      const positionValOut = (entry as any).position || "";
+
+      attendees.push({
         _key: _key || "",
         rawName: nameVal,
         office: officeVal,
-        position: (entry as any).position || "",
+        position: positionValOut,
+        status,
+        reviewReason,
+        confidence,
+        confidenceLevel,
         EmployeeID: String(match.EmployeeID),
         LastName: match.LastName,
         FirstName: match.FirstName,
         MiddleInitial: match.MiddleInitial,
         Office: match.Office,
         Position: match.Position,
-        confidence,
-        matchReasons
-      };
-
-      // Name-based matches always go to matched, even with metadata differences
-      if (differences.length > 0 && matchedByName) {
-        matched.push({ ...base, differences, excelOffice: officeVal, dbOffice: match.Office, excelPosition: (entry as any).position || "", dbPosition: match.Position });
-      } else if (differences.length > 0) {
-        matchedDiff.push({ ...base, differences, excelOffice: officeVal, dbOffice: match.Office, excelPosition: (entry as any).position || "", dbPosition: match.Position });
-      } else {
-        matched.push(base);
-      }
+        matchReasons,
+        differences,
+        excelOffice: officeVal,
+        dbOffice: match.Office,
+        excelPosition: positionValOut,
+        dbPosition: match.Position,
+        manualEmployeeId: manualEmployeeId || undefined
+      });
     } else {
-      unmatched.push({
+      attendees.push({
         _key: _key || "",
         rawName: nameVal,
         office: officeVal,
-        position: positionVal || ""
+        position: positionVal || "",
+        status: "unmatched",
+        reviewReason: "NO_MATCH",
+        confidence: 0,
+        confidenceLevel: "LOW",
+        matchReasons: [],
+        differences: [],
+        excelOffice: officeVal,
+        dbOffice: "",
+        excelPosition: positionVal || "",
+        dbPosition: ""
       });
     }
   }
 
-  return { matched, matchedDiff, unmatched };
+  return { attendees };
 }
 
 // ----------------------------------------------------
@@ -1157,9 +1148,14 @@ app.post("/api/employees/check-similar", (req, res) => {
 // 4. Get All Employees with filter & search
 app.get("/api/employees", (req, res) => {
   const db = readDatabase();
-  const { search = "", office = "", limit = "" } = req.query;
+  const { search = "", office = "", limit = "", includeArchived = "" } = req.query;
 
   let results = [...db.employees];
+
+  // Filter out archived employees unless explicitly requested
+  if (includeArchived !== "true") {
+    results = results.filter((emp) => emp.isActive !== false);
+  }
 
   if (search) {
     const terms = (search as string).toLowerCase().split(/\s+/).filter(t => t.length > 0);
@@ -1472,6 +1468,70 @@ app.delete("/api/employees/:id", requirePermission("employee:delete"), (req, res
   });
 
   return res.json({ message: "Employee and associated learning needs successfully deleted" });
+});
+
+// 8b. Get Archived Employees
+app.get("/api/employees/archived", (req, res) => {
+  const db = readDatabase();
+  const { search = "" } = req.query;
+
+  let results = (db.employees || []).filter((emp: any) => emp.isActive === false);
+
+  if (search) {
+    const terms = (search as string).toLowerCase().split(/\s+/).filter(t => t.length > 0);
+    if (terms.length > 0) {
+      results = results.filter((emp: any) => {
+        const searchString = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName} ${emp.Office || ""} ${emp.Position || ""}`.toLowerCase();
+        const commaName = `${emp.LastName}, ${emp.FirstName}`.toLowerCase();
+        const empId = String(emp.EmployeeID);
+        return terms.every(term => searchString.includes(term) || commaName.includes(term) || empId.includes(term));
+      });
+    }
+  }
+
+  const resultsWithCount = results.map((emp: any) => {
+    const needs = (db.learningNeeds || []).filter((ln: any) => ln.EmployeeID === emp.EmployeeID);
+    const seminarCount = (db.seminarAttendees || []).filter((sa: any) => sa.employeeId === emp.EmployeeID).length;
+    return { ...emp, needsCount: needs.length, seminarCount };
+  });
+
+  return res.json({ employees: resultsWithCount });
+});
+
+// 8c. Restore an archived employee
+app.post("/api/employees/:id/restore", (req, res) => {
+  const db = readDatabase();
+  const id = parseInt(req.params.id);
+  const emp = db.employees.find((e: any) => e.EmployeeID === id);
+
+  if (!emp) {
+    res.status(404).json({ error: "Employee not found" });
+    return;
+  }
+
+  if (emp.isActive !== false) {
+    res.status(400).json({ error: "Employee is not archived" });
+    return;
+  }
+
+  emp.isActive = true;
+  emp.UpdatedAt = new Date().toISOString();
+  emp.UpdatedBy = req.body?.performed_by || "Manual Restore";
+  writeDatabase(db);
+
+  createAuditLog({
+    module: "Employee Management",
+    action: "Employee Restored",
+    entity_type: "employee",
+    entity_id: id,
+    entity_name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+    description: `Employee restored from archive`,
+    before_data: { isActive: false },
+    after_data: { isActive: true },
+    performed_by: req.body?.performed_by || "Manual Restore",
+  });
+
+  return res.json({ message: "Employee restored successfully", employee: emp });
 });
 
 // 9. Create/Add Learning Need for Employee
@@ -2128,12 +2188,14 @@ async function parseExcelBuffer(buffer: Buffer): Promise<ParsedExcelRow[]> {
     if (cell1 !== null && cell1 !== undefined && typeof cell1 !== "number" && cell1 !== "No") {
       const text = cell1.toString().trim();
       const lower = text.toLowerCase();
+      const lowerNoHyphen = lower.replace(/-/g, "");
       if (
         lower === "casual" ||
         lower.includes("permanent") ||
         lower === "consultant" ||
         lower.includes("job order") ||
-        lower.includes("coterminous")
+        lowerNoHyphen.includes("coterminous") ||
+        lower.includes("elective official")
       ) {
         currentCategory = text;
       } else {
@@ -2147,15 +2209,27 @@ async function parseExcelBuffer(buffer: Buffer): Promise<ParsedExcelRow[]> {
       processedNames.add(lowerFullName);
 
       const parsed = parseExcelName(rawName);
-      const catLower = currentCategory.toLowerCase();
-      let employmentType = "Undefined (Pending Review)";
-      if (catLower.includes("job order")) employmentType = "Job Order";
-      else if (catLower.includes("casual")) employmentType = "Casual";
-      else if (catLower.includes("consultant")) employmentType = "Consultant";
-      else if (catLower.includes("permanent")) employmentType = "Permanent";
+      const catLower = currentCategory.toLowerCase().replace(/-/g, "");
+      const isCombinedCategory = catLower.includes("permanent") && catLower.includes("coterminous");
 
       const position = row.getCell(3).value?.toString().trim() || "Undefined (Pending Review)";
       const employmentStatus = row.getCell(4).value?.toString().trim() || "Undefined (Pending Review)";
+
+      let employmentType = "Undefined (Pending Review)";
+      if (isCombinedCategory) {
+        const esLower = employmentStatus.toLowerCase().replace(/-/g, "");
+        if (esLower.includes("coterminous")) employmentType = "Co-terminous";
+        else if (esLower.includes("permanent")) employmentType = "Permanent";
+        else if (esLower.includes("elective official")) employmentType = "Elective Official";
+      } else {
+        if (catLower.includes("job order")) employmentType = "Job Order";
+        else if (catLower.includes("casual")) employmentType = "Casual";
+        else if (catLower.includes("consultant")) employmentType = "Consultant";
+        else if (catLower.includes("permanent")) employmentType = "Permanent";
+        else if (catLower.includes("coterminous")) employmentType = "Co-terminous";
+        else if (catLower.includes("elective official")) employmentType = "Elective Official";
+      }
+
       const rawGender = row.getCell(5).value?.toString().trim();
       const gender = rawGender ? (rawGender === "Female" || rawGender === "Male" ? rawGender : "Undefined (Pending Review)") : "Undefined (Pending Review)";
       const rawDoa = row.getCell(7).value;
@@ -2182,30 +2256,41 @@ function matchScore(dbEmp: any, excelRow: ParsedExcelRow): number {
   const dbLast = cleanImportStr(dbEmp.LastName);
   const excelLast = cleanImportStr(excelRow.lastName);
   if (dbLast !== excelLast) return 0;
+
   const dbFirst = cleanImportStr(dbEmp.FirstName);
   const excelFirst = cleanImportStr(excelRow.firstName);
   let nameScore = 0;
   if (dbFirst === excelFirst) nameScore = 100;
+  else if (dbFirst === "" || excelFirst === "") nameScore = 30;
   else if (isWordBoundaryPrefix(dbFirst, excelFirst) || isWordBoundaryPrefix(excelFirst, dbFirst)) nameScore = 50;
   if (nameScore === 0) return 0;
+
+  let score = nameScore;
+
   const dbOffice = cleanImportStr(dbEmp.Office);
   const excelOffice = cleanImportStr(excelRow.office);
-  if (dbOffice === excelOffice) return nameScore + 10;
-  const officePartial = dbOffice.startsWith(excelOffice) || excelOffice.startsWith(dbOffice);
-  if (officePartial) return nameScore + 5;
+  if (dbOffice === excelOffice) score += 10;
+  else if (dbOffice.startsWith(excelOffice) || excelOffice.startsWith(dbOffice)) score += 5;
+
+  const dbET = cleanImportStr(dbEmp.EmploymentType);
+  const excelET = cleanImportStr(excelRow.employmentType);
+  if (dbET && excelET && dbET === excelET) score += 15;
+
+  if (nameScore >= 100) return score;
+
   if (nameScore >= 50) {
     const dbPos = cleanImportStr(dbEmp.Position);
     const excelPos = cleanImportStr(excelRow.position);
-    if (dbPos === excelPos) return nameScore;
+    if (dbPos === excelPos) return score;
     const dbES = cleanImportStr(dbEmp.EmploymentStatus);
     const excelES = cleanImportStr(excelRow.employmentStatus);
-    if (dbES === excelES && (dbPos.startsWith(excelPos) || excelPos.startsWith(dbPos))) return nameScore;
-    return 0;
+    if (dbES === excelES && (dbPos.startsWith(excelPos) || excelPos.startsWith(dbPos))) return score;
   }
-  return nameScore;
+
+  return score;
 }
 
-function findBestDbMatch(dbEmployees: any[], excelRow: ParsedExcelRow): any | null {
+function findBestDbMatch(dbEmployees: any[], excelRow: ParsedExcelRow, debugName?: string): any | null {
   let best: any = null;
   let bestScore = 0;
   for (const emp of dbEmployees) {
@@ -2216,6 +2301,9 @@ function findBestDbMatch(dbEmployees: any[], excelRow: ParsedExcelRow): any | nu
     }
   }
   if (bestScore === 0) return null;
+  if (bestScore < 50 && debugName) {
+    console.log(`[MATCH-LOW] "${debugName}" → best="${best.LastName}, ${best.FirstName}" score=${bestScore} et="${best.EmploymentType}" office="${best.Office}"`);
+  }
   return best;
 }
 
@@ -2239,7 +2327,7 @@ app.post("/api/import/preview", upload.single("file"), async (req, res) => {
     const toUpdate: any[] = [];
 
     for (const exRow of excelRows) {
-      const match = findBestDbMatch(dbEmployees, exRow);
+      const match = findBestDbMatch(dbEmployees, exRow, `${exRow.lastName}, ${exRow.firstName}`);
       if (match) {
         matchedDbIds.add(match.EmployeeID);
         const changes: any = {};
@@ -2264,25 +2352,27 @@ app.post("/api/import/preview", upload.single("file"), async (req, res) => {
       }
     }
 
-    const toDelete = dbEmployees
-      .filter((emp: any) => !matchedDbIds.has(emp.EmployeeID))
+    const toArchive = dbEmployees
+      .filter((emp: any) => !matchedDbIds.has(emp.EmployeeID) && emp.isActive !== false)
       .map((emp: any) => {
         const needsCount = (db.learningNeeds || []).filter((ln: any) => ln.EmployeeID === emp.EmployeeID).length;
+        const seminarCount = (db.seminarAttendees || []).filter((sa: any) => sa.employeeId === emp.EmployeeID).length;
         return {
           employeeId: emp.EmployeeID,
           name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
           office: emp.Office,
           needsCount,
+          seminarCount,
         };
       });
 
     res.json({
       totalInExcel: excelRows.length,
-      totalInDb: dbEmployees.length,
-      stats: { toAdd: toAdd.length, toUpdate: toUpdate.length, toDelete: toDelete.length },
+      totalInDb: dbEmployees.filter((e: any) => e.isActive !== false).length,
+      stats: { toAdd: toAdd.length, toUpdate: toUpdate.length, toArchive: toArchive.length },
       toAdd,
       toUpdate,
-      toDelete,
+      toArchive,
     });
   } catch (error: any) {
     console.error("Import preview error:", error);
@@ -2292,8 +2382,8 @@ app.post("/api/import/preview", upload.single("file"), async (req, res) => {
 
 app.post("/api/import/execute", requirePermission("import:data"), express.json({ limit: "50mb" }), async (req, res) => {
   try {
-    const { toAdd, toUpdate, toDelete } = req.body;
-    if (!Array.isArray(toAdd) || !Array.isArray(toUpdate) || !Array.isArray(toDelete)) {
+    const { toAdd, toUpdate, toArchive } = req.body;
+    if (!Array.isArray(toAdd) || !Array.isArray(toUpdate) || !Array.isArray(toArchive)) {
       res.status(400).json({ error: "Invalid request body" });
       return;
     }
@@ -2303,36 +2393,60 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
     fs.copyFileSync(DB_FILE, backupPath);
 
     const currentTime = new Date().toISOString();
-    const deleteIds = new Set<number>(toDelete.map((d: any) => d.employeeId));
+    const archiveIds = new Set<number>(toArchive.map((d: any) => d.employeeId));
     const updateMap = new Map<number, any>();
     for (const u of toUpdate) updateMap.set(u.employeeId, u);
 
     let createdCount = 0;
     let updatedCount = 0;
-    let deletedCount = 0;
+    let archivedCount = 0;
 
-    // 1. Delete employees and their learning needs
-    if (deleteIds.size > 0) {
-      db.employees = db.employees.filter((emp: any) => {
-        if (deleteIds.has(emp.EmployeeID)) { deletedCount++; return false; }
-        return true;
-      });
-      db.learningNeeds = (db.learningNeeds || []).filter((ln: any) => !deleteIds.has(ln.EmployeeID));
+    // 1. Archive employees (set isActive = false) — preserve learning needs & seminar attendance
+    for (const emp of db.employees) {
+      if (archiveIds.has(emp.EmployeeID)) {
+        emp.isActive = false;
+        emp.UpdatedAt = currentTime;
+        emp.UpdatedBy = "Excel Import (Archived)";
+        archivedCount++;
+        createAuditLog({
+          module: "Employee Import",
+          action: "Employee Archived",
+          entity_type: "employee",
+          entity_id: emp.EmployeeID,
+          entity_name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+          description: `Employee archived during Excel sync — no longer in source file`,
+          before_data: { Office: emp.Office, Position: emp.Position, isActive: true },
+          after_data: { isActive: false },
+          performed_by: "Excel Import",
+        });
+      }
     }
 
-    // 2. Apply updates
+    // 2. Apply updates (with individual audit logs for each field change)
     for (const emp of db.employees) {
       const update = updateMap.get(emp.EmployeeID);
       if (update) {
-        if (update.changes.Position) emp.Position = update.changes.Position.new;
-        if (update.changes.EmploymentStatus) emp.EmploymentStatus = update.changes.EmploymentStatus.new;
-        if (update.changes.Office) emp.Office = update.changes.Office.new;
-        if (update.changes.Gender) emp.Gender = update.changes.Gender.new;
-        if (update.changes.EmploymentType) emp.EmploymentType = update.changes.EmploymentType.new;
-        if (update.changes.DateOfAssumption) emp.DateOfAssumption = update.changes.DateOfAssumption.new;
+        const changedFields: string[] = [];
+        if (update.changes.Position) { emp.Position = update.changes.Position.new; changedFields.push("Position"); }
+        if (update.changes.EmploymentStatus) { emp.EmploymentStatus = update.changes.EmploymentStatus.new; changedFields.push("EmploymentStatus"); }
+        if (update.changes.Office) { emp.Office = update.changes.Office.new; changedFields.push("Office"); }
+        if (update.changes.Gender) { emp.Gender = update.changes.Gender.new; changedFields.push("Gender"); }
+        if (update.changes.EmploymentType) { emp.EmploymentType = update.changes.EmploymentType.new; changedFields.push("EmploymentType"); }
+        if (update.changes.DateOfAssumption) { emp.DateOfAssumption = update.changes.DateOfAssumption.new; changedFields.push("DateOfAssumption"); }
         emp.UpdatedAt = currentTime;
         emp.UpdatedBy = "Excel Import";
         updatedCount++;
+        createAuditLog({
+          module: "Employee Import",
+          action: "Employee Updated",
+          entity_type: "employee",
+          entity_id: emp.EmployeeID,
+          entity_name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+          description: `Updated fields: ${changedFields.join(", ")}`,
+          before_data: update.changes,
+          after_data: Object.fromEntries(Object.entries(update.changes).map(([k, v]: [string, any]) => [k, v.new])),
+          performed_by: "Excel Import",
+        });
       }
     }
 
@@ -2357,10 +2471,21 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
         UpdatedBy: "Excel Import",
         StatusChangedAt: null,
         NewlyHired: "N/A",
+        isActive: true,
       };
       db.employees.push(newEmp);
       ensureCustomOptionsExist(newEmp, [], db);
       createdCount++;
+      createAuditLog({
+        module: "Employee Import",
+        action: "Employee Added",
+        entity_type: "employee",
+        entity_id: maxId,
+        entity_name: `${newEmp.LastName}, ${newEmp.FirstName} ${newEmp.MiddleInitial || ""}`.trim(),
+        description: `New employee added from Excel import`,
+        after_data: { Office: newEmp.Office, Position: newEmp.Position },
+        performed_by: "Excel Import",
+      });
     }
 
     // 4. Update custom options for updated employees
@@ -2371,14 +2496,15 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
 
     writeDatabase(db);
 
+    // Summary audit log
     createAuditLog({
       module: "Employee Import",
-      action: "Excel Imported",
+      action: "Excel Import Completed",
       entity_type: "employee_import",
       entity_id: null,
       entity_name: `Excel Import (${currentTime.slice(0, 10)})`,
-      description: `Employee import completed: ${createdCount} created, ${updatedCount} updated, ${deletedCount} deleted`,
-      after_data: { createdCount, updatedCount, deletedCount, timestamp: currentTime },
+      description: `Import completed: ${createdCount} created, ${updatedCount} updated, ${archivedCount} archived`,
+      after_data: { createdCount, updatedCount, archivedCount, timestamp: currentTime },
       performed_by: "Excel Import",
     });
 
@@ -2386,8 +2512,8 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
       success: true,
       created: createdCount,
       updated: updatedCount,
-      deleted: deletedCount,
-      totalNow: db.employees.length,
+      archived: archivedCount,
+      totalNow: db.employees.filter((e: any) => e.isActive !== false).length,
       backup: backupPath,
     });
   } catch (error: any) {
@@ -2624,6 +2750,21 @@ app.delete("/api/seminars/:id", requirePermission("seminar:delete"), (req, res) 
   }
 });
 
+// Helper: extract plain text from any ExcelJS cell value (handles RichText, strings, numbers, etc.)
+function cellToString(val: any): string {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "string") return val;
+  if (typeof val === "number" || typeof val === "boolean") return String(val);
+  // ExcelJS RichText cells
+  if (val && typeof val === "object" && Array.isArray(val.richText)) {
+    return val.richText.map((r: any) => r.text || "").join("");
+  }
+  // ExcelJS Hyperlink cells
+  if (val && typeof val === "object" && val.text) return String(val.text);
+  // Fallback
+  return String(val);
+}
+
 // 4. Excel Import Preview
 app.post("/api/seminars/import-preview", upload.single("file"), async (req, res) => {
   try {
@@ -2636,6 +2777,20 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.load(req.file.buffer);
     const sheet = workbook.worksheets[0];
+
+    // ── DIAGNOSTIC: dump first 15 rows to trace parsing ──
+    console.log(`[IMPORT-DIAG] File: ${req.file.originalname}, Sheet: ${sheet.name}, Rows: ${sheet.rowCount}, Cols: ${sheet.columnCount}`);
+    for (let r = 1; r <= Math.min(15, sheet.rowCount); r++) {
+      const row = sheet.getRow(r);
+      const cells: string[] = [];
+      for (let c = 1; c <= Math.min(10, sheet.columnCount || 10); c++) {
+        const raw = row.getCell(c).value;
+        const str = cellToString(raw);
+        const rawType = raw === null ? "null" : raw === undefined ? "undef" : typeof raw === "object" ? (Array.isArray(raw) ? "richText" : raw.constructor?.name || "object") : typeof raw;
+        cells.push(`[${rawType}]${JSON.stringify(str).slice(0, 40)}`);
+      }
+      console.log(`[IMPORT-DIAG] Row ${r}: ${cells.join(" | ")}`);
+    }
 
     // Attempt to parse seminar metadata from sheet headers
     // Look at rows 1-6 for something like OVDS and March 23-24, 2026
@@ -2655,68 +2810,192 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
     else if (lowerName.includes("3rd quarter") || lowerName.includes("q3")) parsedQuarter = "Q3";
     else if (lowerName.includes("4th quarter") || lowerName.includes("q4")) parsedQuarter = "Q4";
 
-    for (let r = 1; r <= Math.min(10, sheet.rowCount); r++) {
+    const titleCandidates: string[] = [];
+    for (let r = 1; r <= Math.min(8, sheet.rowCount); r++) {
       const row = sheet.getRow(r);
-      for (let c = 1; c <= 10; c++) {
-        const val = row.getCell(c).value?.toString().trim();
-        if (val) {
-          if (val.includes("PROVINCE OF") || val.includes("HUMAN RESOURCE")) continue;
-          if (val.length > 3 && val.length < 150) {
-            // Find year in text
-            const yrMatch = val.match(/\b(20\d{2})\b/);
-            if (yrMatch) {
-              parsedYear = parseInt(yrMatch[1], 10);
-            }
-            // Find month date to resolve Quarter
-            // e.g. "MARCH 23-24.2026", "April 22-23 2026"
-            const monthMatches = val.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\b/i);
-            if (monthMatches) {
-              const m = monthMatches[1].toLowerCase();
-              if (["january", "february", "march", "jan", "feb", "mar"].some(x => m.startsWith(x))) parsedQuarter = "Q1";
-              else if (["april", "may", "june", "apr", "jun"].some(x => m.startsWith(x))) parsedQuarter = "Q2";
-              else if (["july", "august", "september", "jul", "aug", "sep"].some(x => m.startsWith(x))) parsedQuarter = "Q3";
-              else if (["october", "november", "december", "oct", "nov", "dec"].some(x => m.startsWith(x))) parsedQuarter = "Q4";
-            }
-            if (!parsedTitle && val.length > 5) {
-              parsedTitle = val;
-            } else if (parsedTitle && parsedTitle !== val && val.length > 5) {
-              parsedTitle = parsedTitle + " - " + val;
-            }
+      for (let c = 1; c <= 8; c++) {
+        const val = cellToString(row.getCell(c).value).trim();
+        if (!val) continue;
+
+        // Find year in text
+        const yrMatch = val.match(/\b(20\d{2})\b/);
+        if (yrMatch && !parsedYear) {
+          parsedYear = parseInt(yrMatch[1], 10);
+        }
+
+        // Find month date to resolve Quarter
+        const monthMatches = val.match(/\b(january|february|march|april|may|june|july|august|september|october|november|december|jan|feb|mar|apr|jun|jul|aug|sep|oct|nov|dec)\b/i);
+        if (monthMatches) {
+          const m = monthMatches[1].toLowerCase();
+          if (["january", "february", "march", "jan", "feb", "mar"].some(x => m.startsWith(x))) parsedQuarter = "Q1";
+          else if (["april", "may", "june", "apr", "jun"].some(x => m.startsWith(x))) parsedQuarter = "Q2";
+          else if (["july", "august", "september", "jul", "aug", "sep"].some(x => m.startsWith(x))) parsedQuarter = "Q3";
+          else if (["october", "november", "december", "oct", "nov", "dec"].some(x => m.startsWith(x))) parsedQuarter = "Q4";
+        }
+
+        // Skip generic header metadata
+        const upper = val.toUpperCase();
+        if (
+          upper.includes("PROVINCE OF") ||
+          upper.includes("REPUBLIC OF THE PHILIPPINES") ||
+          upper.includes("HUMAN RESOURCE") ||
+          upper.includes("ATTENDANCE SHEET") ||
+          upper.includes("LIST OF PARTICIPANTS") ||
+          upper.includes("SIGNATURE SHEET")
+        ) {
+          continue;
+        }
+
+        if (val.length >= 4 && val.length < 150) {
+          // Avoid duplicate/repeated strings (e.g. merged cells or repeating cell values)
+          const alreadyAdded = titleCandidates.some(
+            (t) => t.toLowerCase().includes(val.toLowerCase()) || val.toLowerCase().includes(t.toLowerCase())
+          );
+          if (!alreadyAdded) {
+            titleCandidates.push(val);
           }
         }
       }
     }
 
-    if (!parsedTitle) {
+    console.log(`[IMPORT-DIAG] titleCandidates(${titleCandidates.length}): ${titleCandidates.map(t => JSON.stringify(t.slice(0, 50))).join(" | ")}`);
+
+    if (titleCandidates.length > 0) {
+      // Pick top candidate(s), max 2 parts
+      parsedTitle = titleCandidates.slice(0, 2).join(" - ");
+    } else {
       parsedTitle = cleanOrigName;
     }
+    console.log(`[IMPORT-DIAG] parsedTitle: ${JSON.stringify(parsedTitle.slice(0, 100))}`);
 
-    // Find the header row (contains "NAMES", "No.", "EMPLOYEE", "ID", "NAME")
-    let headerRowIdx = 7;
+    // Find the header row: require 2+ column-header indicators (name + office/position/id)
+    let headerRowIdx = 0;
     let idCol = -1;
     let nameCol = -1;
     let officeCol = -1;
     let positionCol = -1;
+
+    // Pass 1: score each row for header-like content, pick the best match
+    let bestScore = 0;
+    let bestRow = 0;
+    let bestCols = { idCol: -1, nameCol: -1, officeCol: -1, positionCol: -1 };
+
     for (let i = 1; i <= Math.min(20, sheet.rowCount); i++) {
       const row = sheet.getRow(i);
       const vals = row.values;
-      for (let c = 1; c <= Math.min(vals.length, 10); c++) {
-        const v = vals[c]?.toString()?.toLowerCase()?.trim() || "";
-        if (v.includes("employee") && v.includes("id")) idCol = c;
-        if (v.includes("employee") && v.includes("no")) idCol = c;
-        if (v === "id" && idCol < 0) idCol = c;
-        if (v.includes("names") || v.includes("name of") || v === "name") nameCol = c;
-        if (v.includes("office") || v.includes("department") || v.includes("division")) officeCol = c;
-        if (v.includes("position") || v.includes("designation") || v.includes("title")) positionCol = c;
+      if (!vals) continue;
+      let rowScore = 0;
+      let rowIdCol = -1, rowNameCol = -1, rowOfficeCol = -1, rowPositionCol = -1;
+      const valArr = Array.isArray(vals) ? vals : Object.values(vals);
+      const colCount = Math.min(valArr.length, 15);
+
+      for (let c = 1; c <= colCount; c++) {
+        const cellVal = row.getCell(c).value;
+        const v = cellToString(cellVal).toLowerCase().trim();
+        if (!v) continue;
+
+        // Skip document titles and metadata headers disguised as column headers
+        if (
+          v.includes("seminar title") ||
+          v.includes("title of seminar") ||
+          v.includes("name of seminar") ||
+          v.includes("training title") ||
+          v.includes("evaluation form") ||
+          v.includes("attendance sheet") ||
+          v.includes("list of participants") ||
+          v.includes("province of") ||
+          v.includes("republic of")
+        ) {
+          continue;
+        }
+
+        // Employee ID / No. header
+        if ((v.includes("employee") && v.includes("id")) || (v.includes("employee") && v.includes("no")) || v === "id" || v === "emp id" || v === "emp no" || v === "no" || v === "no.") {
+          rowScore++;
+          if (rowIdCol < 0) rowIdCol = c;
+        }
+
+        // Name header (must not be seminar title)
+        if (
+          v === "name" || v === "names" || v === "employee name" || v === "name of employee" ||
+          v === "participant name" || v === "name of participant" || v === "full name" ||
+          v === "participant" || v === "participants" || v === "attendee" || v === "attendees" ||
+          (v.includes("name") && !v.includes("seminar") && !v.includes("training"))
+        ) {
+          rowScore++;
+          if (rowNameCol < 0) rowNameCol = c;
+        }
+
+        // Office / Department header
+        if (v === "office" || v === "department" || v === "division" || v === "agency" || v === "station" || v.includes("office") || v.includes("department") || v.includes("division")) {
+          rowScore++;
+          if (rowOfficeCol < 0) rowOfficeCol = c;
+        }
+
+        // Position / Designation header (must not be seminar title)
+        if ((v === "position" || v === "designation" || v === "job title" || v.includes("position") || v.includes("designation")) && !v.includes("seminar") && !v.includes("training")) {
+          rowScore++;
+          if (rowPositionCol < 0) rowPositionCol = c;
+        }
+
+        // Signature header
+        if (v.includes("signature") || v === "sign") {
+          rowScore++;
+        }
       }
-      const isHeader = vals.some((v: any) => v && typeof v === "string" && v.toLowerCase().includes("names"));
-      if (isHeader) {
-        headerRowIdx = i;
-        break;
+
+      // Record best scoring row that has an explicit name column
+      if (rowScore > bestScore && rowNameCol > 0) {
+        bestScore = rowScore;
+        bestRow = i;
+        bestCols = { idCol: rowIdCol, nameCol: rowNameCol, officeCol: rowOfficeCol, positionCol: rowPositionCol };
       }
     }
-    // If no explicit name column found, default to column 2
-    if (nameCol < 0) nameCol = 2;
+
+    console.log(`[IMPORT-DIAG] headerScore: bestScore=${bestScore} bestRow=${bestRow} bestCols=${JSON.stringify(bestCols)}`);
+
+    if (bestScore >= 1 && bestCols.nameCol > 0) {
+      headerRowIdx = bestRow;
+      idCol = bestCols.idCol;
+      nameCol = bestCols.nameCol;
+      officeCol = bestCols.officeCol;
+      positionCol = bestCols.positionCol;
+    } else {
+      // Fallback: search for first row containing a valid person name
+      for (let r = 1; r <= Math.min(15, sheet.rowCount); r++) {
+        const row = sheet.getRow(r);
+        for (let c = 1; c <= 5; c++) {
+          const val = cellToString(row.getCell(c).value).trim();
+          if (val && isLikelyPersonName(val)) {
+            const lowerVal = val.toLowerCase();
+            if (!lowerVal.includes("seminar") && !lowerVal.includes("training") && !lowerVal.includes("evaluation") && !lowerVal.includes("province") && !lowerVal.includes("republic")) {
+              headerRowIdx = r - 1;
+              nameCol = c;
+              if (c > 1) {
+                idCol = 1;
+                if (c === 2) officeCol = 3;
+              }
+              break;
+            }
+          }
+        }
+        if (nameCol > 0) break;
+      }
+      if (headerRowIdx < 1) headerRowIdx = 4;
+      if (nameCol < 0) nameCol = 2;
+    }
+
+    console.log(`[IMPORT-DIAG] FINAL header: row=${headerRowIdx} nameCol=${nameCol} idCol=${idCol} officeCol=${officeCol} posCol=${positionCol}`);
+
+    // Log the actual header row values
+    {
+      const hRow = sheet.getRow(headerRowIdx);
+      const hv: string[] = [];
+      for (let c = 1; c <= Math.min(10, sheet.columnCount || 10); c++) {
+        hv.push(`col${c}=${JSON.stringify(cellToString(hRow.getCell(c).value).slice(0, 30))}`);
+      }
+      console.log(`[IMPORT-DIAG] headerRow values: ${hv.join(" | ")}`);
+    }
 
     const db = readDatabase();
     const dbEmployees: any[] = db.employees || [];
@@ -2731,8 +3010,8 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
         const row = sheet.getRow(i);
         const trackedCols = [nameCol, idCol, officeCol].filter((c) => c > 0);
         const hasAnyContent = trackedCols.some((c) => {
-            const v = row.getCell(c).value;
-            return v !== null && v !== undefined && v !== "";
+            const v = cellToString(row.getCell(c).value).trim();
+            return v.length > 0;
           });
         if (!hasAnyContent) {
           emptyRun++;
@@ -2743,10 +3022,9 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
         } else {
           emptyRun = 0;
           // Check for terminator rows (summary, signatory)
-          const cn = row.getCell(nameCol).value;
-          if (cn && typeof cn === "string") {
-            const lower = cn.toString().toLowerCase().trim();
-            if (/^(total|subtotal|grand\s*total|prepared\s+by|approved\s+by|noted\s+by|attested\s+by|certified\s+by|verified\s+by|received\s+by)/i.test(lower)) {
+          const cn = cellToString(row.getCell(nameCol).value).toLowerCase().trim();
+          if (cn) {
+            if (/^(total|subtotal|grand\s*total|prepared\s+by|approved\s+by|noted\s+by|attested\s+by|certified\s+by|verified\s+by|received\s+by)/i.test(cn)) {
               tableEndRow = i - 1;
               break;
             }
@@ -2754,6 +3032,9 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
         }
       }
     }
+
+    console.log(`[IMPORT-DIAG] tableEndRow=${tableEndRow} (sheetRowCount=${sheet.rowCount})`);
+    console.log(`[IMPORT-DIAG] extraction loop: rows ${headerRowIdx + 1} to ${tableEndRow}`);
 
     for (let i = headerRowIdx + 1; i <= tableEndRow; i++) {
       const row = sheet.getRow(i);
@@ -2767,16 +3048,38 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       let officeVal = "";
       let positionVal = "";
 
-      if (cellName && typeof cellName === "string" && cellName.trim().length > 3) {
-        nameVal = cellName.trim();
+      const nameStr = cellToString(cellName).trim();
+      if (nameStr.length >= 3) {
+        nameVal = nameStr;
       }
-      if (!nameVal) continue;
+      if (!nameVal) {
+        if (i <= headerRowIdx + 5) console.log(`[IMPORT-DIAG] Row ${i}: SKIP (empty name, raw=${JSON.stringify(String(cellName)).slice(0,40)})`);
+        continue;
+      }
 
-      if (cellOffice && typeof cellOffice === "string") officeVal = cellOffice.trim();
-      if (cellPosition && typeof cellPosition === "string") positionVal = cellPosition.trim();
+      // Reject document title phrases if accidentally targeted
+      const lowerName = nameVal.toLowerCase();
+      if (
+        lowerName.includes("seminar title") ||
+        lowerName.includes("training title") ||
+        lowerName.includes("evaluation form") ||
+        lowerName.includes("attendance sheet") ||
+        lowerName.includes("list of participants") ||
+        lowerName.includes("province of") ||
+        lowerName.includes("republic of")
+      ) {
+        if (i <= headerRowIdx + 5) console.log(`[IMPORT-DIAG] Row ${i}: SKIP (title phrase) name=${JSON.stringify(nameVal).slice(0,40)}`);
+        continue;
+      }
+
+      officeVal = cellToString(cellOffice).trim();
+      positionVal = cellToString(cellPosition).trim();
 
       // Reject values that don't look like real person names
-      if (!isLikelyPersonName(nameVal)) continue;
+      if (!isLikelyPersonName(nameVal)) {
+        if (i <= headerRowIdx + 5) console.log(`[IMPORT-DIAG] Row ${i}: SKIP (isLikelyPersonName=false) name=${JSON.stringify(nameVal).slice(0,40)}`);
+        continue;
+      }
 
       const normName = normalizeText(nameVal);
       // Deduplicate same normalized names within the same file
@@ -2787,24 +3090,24 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
         rawName: nameVal,
         office: officeVal,
         position: positionVal,
-        employeeId: cellId?.toString()?.trim() || undefined,
+        employeeId: cellToString(cellId).trim() || undefined,
         _key: `emp_${i}_${normalizeText(nameVal).slice(0, 20)}`
       });
     }
 
-    const { matched, matchedDiff, unmatched } = matchEmployees(rawEmployees, dbEmployees);
+    const { attendees } = matchEmployees(rawEmployees, dbEmployees);
+
+    console.log(`[IMPORT] header=${headerRowIdx} nameCol=${nameCol} idCol=${idCol} offCol=${officeCol} posCol=${positionCol} tableEnd=${tableEndRow} raw=${rawEmployees.length} att=${attendees.length} title="${parsedTitle.slice(0, 60)}"`);
 
     res.json({
       title: parsedTitle,
       year: parsedYear,
       quarter: parsedQuarter,
       date: parsedDate,
-      totalParsed: matched.length + matchedDiff.length + unmatched.length,
-      matched,
-      matchedDiff,
-      unmatched,
+      totalParsed: attendees.length,
+      attendees,
       rawEmployees,
-      reviewRecommended: matchedDiff.length > 0 || unmatched.length > 0
+      reviewRecommended: attendees.some((a: any) => a.status === "review" || a.status === "unmatched")
     });
   } catch (error: any) {
     console.error("Seminar import preview error:", error);
@@ -2823,25 +3126,27 @@ app.post("/api/seminars/import-reprocess", requirePermission("seminar:import"), 
 
     const db = readDatabase();
     const dbEmployees: any[] = db.employees || [];
-    const { matched, matchedDiff, unmatched } = matchEmployees(employees, dbEmployees);
+    const { attendees } = matchEmployees(employees, dbEmployees);
+
+    const confirmedCount = attendees.filter((a: any) => a.status === "matched").length;
+    const reviewCount = attendees.filter((a: any) => a.status === "review").length;
+    const unmatchedCount = attendees.filter((a: any) => a.status === "unmatched").length;
 
     createAuditLog({
       module: "Seminar Import",
       action: "Employee Matched",
       entity_type: "seminar_import",
       entity_id: null,
-      entity_name: `Reprocessed matching (${matched.length + matchedDiff.length} matched, ${unmatched.length} unmatched)`,
-      description: `Reprocessed employee matching: ${matched.length} exact matches, ${matchedDiff.length} with differences, ${unmatched.length} unmatched`,
-      after_data: { matchedCount: matched.length, matchedDiffCount: matchedDiff.length, unmatchedCount: unmatched.length },
+      entity_name: `Reprocessed matching (${confirmedCount} confirmed, ${reviewCount} needs review, ${unmatchedCount} unmatched)`,
+      description: `Reprocessed employee matching: ${confirmedCount} confirmed matches, ${reviewCount} low-confidence matches, ${unmatchedCount} unmatched`,
+      after_data: { confirmedCount, reviewCount, unmatchedCount, total: attendees.length },
       performed_by: "System (Development Mode)",
     });
 
     res.json({
-      totalParsed: matched.length + matchedDiff.length + unmatched.length,
-      matched,
-      matchedDiff,
-      unmatched,
-      reviewRecommended: matchedDiff.length > 0 || unmatched.length > 0
+      totalParsed: attendees.length,
+      attendees,
+      reviewRecommended: attendees.some((a: any) => a.status === "review" || a.status === "unmatched")
     });
   } catch (error: any) {
     console.error("Seminar import reprocess error:", error);
@@ -2852,22 +3157,23 @@ app.post("/api/seminars/import-reprocess", requirePermission("seminar:import"), 
 // 5. Excel Import Execute
 app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (req, res) => {
   try {
-    const { title, year, quarter, date, location, remarks, matched, matchedDiff, unmatched, externalParticipants } = req.body;
-    if (!title || !year || !quarter) {
-      res.status(400).json({ error: "Title, year and quarter are required" });
-      return;
-    }
+    const { title, year, quarter, date, location, remarks, attendees, externalParticipants } = req.body;
+    const finalTitle = (title || "").trim() || "Imported Seminar";
+    const finalYear = Number(year) || new Date().getFullYear();
+    const finalQuarter = quarter || "Q2";
 
     const db = readDatabase();
+    if (!Array.isArray(db.seminars)) db.seminars = [];
+    if (!Array.isArray(db.seminarAttendees)) db.seminarAttendees = [];
     
     // Check for existing seminar with same name, year, and quarter to ensure idempotency
-    let sem = (db.seminars || []).find((s: any) => s.title.toLowerCase().trim() === title.toLowerCase().trim() && s.year === Number(year) && s.quarter === quarter);
+    let sem = db.seminars.find((s: any) => s.title.toLowerCase().trim() === finalTitle.toLowerCase().trim() && s.year === Number(finalYear) && s.quarter === finalQuarter);
     if (!sem) {
       sem = {
         id: "sem_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
-        title,
-        year: Number(year),
-        quarter,
+        title: finalTitle,
+        year: Number(finalYear),
+        quarter: finalQuarter,
         date: date || "",
         location: location || "",
         remarks: remarks || "",
@@ -2899,34 +3205,19 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
       }
     };
 
-    // 1. Process matched
-    if (Array.isArray(matched)) {
-      matched.forEach((m: any) => {
-        if (m.EmployeeID) {
-          addAttendee(Number(m.EmployeeID));
+    // Process attendees: import matched and review, skip unmatched (unless manually assigned)
+    if (Array.isArray(attendees)) {
+      attendees.forEach((a: any) => {
+        if (a.EmployeeID && (a.status === "matched" || a.status === "review")) {
+          addAttendee(Number(a.EmployeeID));
+        } else if (a.EmployeeID && a.status === "unmatched") {
+          // Unmatched entries only imported if they have an EmployeeID (admin override)
+          addAttendee(Number(a.EmployeeID));
         }
       });
     }
 
-    // 2. Process matched with differences
-    if (Array.isArray(matchedDiff)) {
-      matchedDiff.forEach((m: any) => {
-        if (m.EmployeeID) {
-          addAttendee(Number(m.EmployeeID));
-        }
-      });
-    }
-
-    // 3. Process unmatched containing administrative overrides
-    if (Array.isArray(unmatched)) {
-      unmatched.forEach((u: any) => {
-        if (u.EmployeeID) {
-          addAttendee(Number(u.EmployeeID));
-        }
-      });
-    }
-
-    // 4. Process external participants
+    // Process external participants
     if (Array.isArray(externalParticipants)) {
       externalParticipants.forEach((ep: any) => {
         db.seminarAttendees.push({
@@ -2944,18 +3235,18 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
       });
     }
 
-    // Audit log for name-matched-with-metadata-differences attendees
-    if (Array.isArray(matched)) {
-      matched.filter((m: any) => m.differences?.length > 0).forEach((m: any) => {
-        const diffFields = (m.differences || []).join(", ");
+    // Audit log for attendees with metadata differences
+    if (Array.isArray(attendees)) {
+      attendees.filter((a: any) => a.differences?.length > 0).forEach((a: any) => {
+        const diffFields = (a.differences || []).join(", ");
         createAuditLog({
           module: "Seminar Import",
           action: "Name Match with Metadata Difference",
           entity_type: "employee",
-          entity_id: m.EmployeeID,
-          entity_name: `${m.LastName}, ${m.FirstName}`,
-          description: `Seminar attendee "${m.rawName}" matched to employee by name despite differences in ${diffFields}.`,
-          after_data: { seminar: sem.title, rawName: m.rawName, employeeId: m.EmployeeID, differences: m.differences, excelOffice: m.excelOffice, dbOffice: m.dbOffice, excelPosition: m.excelPosition, dbPosition: m.dbPosition },
+          entity_id: a.EmployeeID,
+          entity_name: `${a.LastName}, ${a.FirstName}`,
+          description: `Seminar attendee "${a.rawName}" matched to employee by name despite differences in ${diffFields}.`,
+          after_data: { seminar: sem.title, rawName: a.rawName, employeeId: a.EmployeeID, differences: a.differences, excelOffice: a.excelOffice, dbOffice: a.dbOffice, excelPosition: a.excelPosition, dbPosition: a.dbPosition },
           performed_by: req.body?.username,
         });
       });
@@ -2963,15 +3254,15 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
 
     writeDatabase(db);
 
-    // Log the import event with details
+    // Compute summary counts from the single attendees array
     const externalCount = (externalParticipants || []).length;
-    const matchedCount = (matched || []).length;
-    const matchedDiffCount = (matchedDiff || []).length;
-    const unmatchedCount = (unmatched || []).length;
-    const matchedWithWarningsCount = (matched || []).filter((m: any) => m.differences?.length > 0).length;
-    let description = `Imported seminar "${sem.title}" — ${attendeesAdded} attendees added (${matchedCount} matched, ${matchedDiffCount} matched-diff, ${unmatchedCount} unmatched, ${externalCount} external)`;
+    const confirmedCount = (attendees || []).filter((a: any) => a.status === "matched").length;
+    const reviewCount = (attendees || []).filter((a: any) => a.status === "review").length;
+    const unmatchedCount = (attendees || []).filter((a: any) => a.status === "unmatched").length;
+    const matchedWithWarningsCount = (attendees || []).filter((a: any) => a.status !== "unmatched" && a.differences?.length > 0).length;
+    let description = `Imported seminar "${sem.title}" — ${attendeesAdded} attendees added (${confirmedCount} confirmed, ${reviewCount} needs review, ${unmatchedCount} unmatched, ${externalCount} external)`;
     if (matchedWithWarningsCount > 0) {
-      description += `. ${matchedWithWarningsCount} attendee(s) matched by name despite metadata differences (Office, Position, etc.).`;
+      description += `. ${matchedWithWarningsCount} attendee(s) matched with metadata differences (Office, Position, etc.).`;
     }
     createAuditLog({
       module: "Seminar Import",
@@ -2980,7 +3271,7 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
       entity_id: sem.id,
       entity_name: sem.title,
       description,
-      after_data: { title: sem.title, year: sem.year, quarter: sem.quarter, attendeesAdded, duplicatesSkipped, matchedCount, matchedDiffCount, matchedWithWarningsCount, unmatchedCount, externalCount },
+      after_data: { title: sem.title, year: sem.year, quarter: sem.quarter, attendeesAdded, duplicatesSkipped, confirmedCount, reviewCount, matchedWithWarningsCount, unmatchedCount, externalCount },
       performed_by: req.body?.username,
     });
 

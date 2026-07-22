@@ -5,6 +5,7 @@ import {
   Plus,
   Pencil,
   Trash2,
+  Archive,
   ChevronDown,
   ChevronRight,
   AlertTriangle,
@@ -17,17 +18,17 @@ import {
 interface ImportPreview {
   totalInExcel: number;
   totalInDb: number;
-  stats: { toAdd: number; toUpdate: number; toDelete: number; unchanged: number };
+  stats: { toAdd: number; toUpdate: number; toArchive: number; unchanged: number };
   toAdd: { lastName: string; firstName: string; middleInitial: string; position: string; employmentStatus: string; office: string; rawName: string }[];
   toUpdate: { employeeId: number; name: string; office: string; changes: Record<string, { old: string; new: string }> }[];
-  toDelete: { employeeId: number; name: string; office: string; needsCount: number }[];
+  toArchive: { employeeId: number; name: string; office: string; needsCount: number; seminarCount: number }[];
 }
 
 interface ImportResult {
   success: boolean;
   created: number;
   updated: number;
-  deleted: number;
+  archived: number;
   totalNow: number;
 }
 
@@ -95,7 +96,7 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
         body: JSON.stringify({
           toAdd: preview.toAdd,
           toUpdate: preview.toUpdate,
-          toDelete: preview.toDelete,
+          toArchive: preview.toArchive,
         }),
       });
       if (!res.ok) {
@@ -175,7 +176,7 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
               <ul className="list-disc list-inside space-y-0.5">
                 <li>Employees in the Excel but not in the database will be <strong>created</strong></li>
                 <li>Employees in both will be <strong>updated</strong> with any changes</li>
-                <li>Employees in the database but not in the Excel will be <strong>permanently deleted</strong> (along with their learning needs)</li>
+                <li>Employees in the database but not in the Excel will be <strong>archived</strong> (hidden from active lists, but history preserved)</li>
               </ul>
             </div>
           </div>
@@ -205,13 +206,13 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
               <div className="text-xs text-amber-500 dark:text-amber-400">To Update</div>
             </div>
             <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl p-4 text-center">
-              <Trash2 className="w-6 h-6 mx-auto text-red-500 mb-1" />
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{preview.stats.toDelete}</div>
-              <div className="text-xs text-red-500 dark:text-red-400">To Delete</div>
+              <Archive className="w-6 h-6 mx-auto text-red-500 mb-1" />
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{preview.stats.toArchive}</div>
+              <div className="text-xs text-red-500 dark:text-red-400">To Archive</div>
             </div>
             <div className="bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 rounded-xl p-4 text-center">
               <CheckCircle className="w-6 h-6 mx-auto text-emerald-500 mb-1" />
-              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{preview.totalInDb - preview.stats.toDelete}</div>
+              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{preview.totalInDb - preview.stats.toArchive}</div>
               <div className="text-xs text-emerald-500 dark:text-emerald-400">Remaining</div>
             </div>
           </div>
@@ -266,19 +267,19 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
               </div>
             )}
 
-            {/* To Delete */}
-            {preview.toDelete.length > 0 && (
+            {/* To Archive */}
+            {preview.toArchive.length > 0 && (
               <div className="border border-red-200 dark:border-red-800 rounded-xl overflow-hidden">
-                <button onClick={() => toggleSection("delete")} className="w-full flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm font-semibold">
-                  <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> {preview.toDelete.length} employees to delete</span>
-                  {expandedSections.delete ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                <button onClick={() => toggleSection("archive")} className="w-full flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm font-semibold">
+                  <span className="flex items-center gap-2"><Archive className="w-4 h-4" /> {preview.toArchive.length} employees to archive</span>
+                  {expandedSections.archive ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                 </button>
-                {expandedSections.delete && (
+                {expandedSections.archive && (
                   <div className="max-h-64 overflow-y-auto divide-y divide-red-100 dark:divide-red-900">
-                    {preview.toDelete.map((emp, i) => (
+                    {preview.toArchive.map((emp, i) => (
                       <div key={i} className="px-4 py-2 text-xs text-slate-700 dark:text-slate-300 flex justify-between">
                         <span>{emp.name}</span>
-                        <span className="text-red-400">{emp.needsCount} learning need{emp.needsCount !== 1 ? "s" : ""} lost</span>
+                        <span className="text-red-400">{emp.needsCount} learning need{emp.needsCount !== 1 ? "s" : ""}, {emp.seminarCount} seminar{emp.seminarCount !== 1 ? "s" : ""} preserved</span>
                       </div>
                     ))}
                   </div>
@@ -344,12 +345,12 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
               <div className="text-xs text-amber-500">Updated</div>
             </div>
             <div className="bg-red-50 dark:bg-red-950/30 rounded-xl p-4 text-center">
-              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{result.deleted}</div>
-              <div className="text-xs text-red-500">Deleted</div>
+              <div className="text-2xl font-bold text-red-600 dark:text-red-400">{result.archived}</div>
+              <div className="text-xs text-red-500">Archived</div>
             </div>
             <div className="bg-emerald-50 dark:bg-emerald-950/30 rounded-xl p-4 text-center">
               <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">{result.totalNow}</div>
-              <div className="text-xs text-emerald-500">Total Now</div>
+              <div className="text-xs text-emerald-500">Active Now</div>
             </div>
           </div>
 
@@ -404,19 +405,19 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
                 </div>
               )}
 
-              {/* Deleted */}
-              {preview.toDelete.length > 0 && (
+              {/* Archived */}
+              {preview.toArchive.length > 0 && (
                 <div className="border border-red-200 dark:border-red-800 rounded-xl overflow-hidden">
-                  <button onClick={() => toggleSection("result-delete")} className="w-full flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm font-semibold">
-                    <span className="flex items-center gap-2"><Trash2 className="w-4 h-4" /> {result.deleted} employees deleted</span>
-                    {expandedSections["result-delete"] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+                  <button onClick={() => toggleSection("result-archive")} className="w-full flex items-center justify-between px-4 py-3 bg-red-50 dark:bg-red-950/30 text-red-700 dark:text-red-300 text-sm font-semibold">
+                    <span className="flex items-center gap-2"><Archive className="w-4 h-4" /> {result.archived} employees archived</span>
+                    {expandedSections["result-archive"] ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
                   </button>
-                  {expandedSections["result-delete"] && (
+                  {expandedSections["result-archive"] && (
                     <div className="max-h-72 overflow-y-auto divide-y divide-red-100 dark:divide-red-900">
-                      {preview.toDelete.map((emp, i) => (
+                      {preview.toArchive.map((emp, i) => (
                         <div key={i} className="px-4 py-2 text-xs text-slate-700 dark:text-slate-300 flex justify-between">
                           <span>{emp.name}</span>
-                          <span className="text-red-400">{emp.needsCount} learning need{emp.needsCount !== 1 ? "s" : ""} removed</span>
+                          <span className="text-red-400">{emp.needsCount} learning need{emp.needsCount !== 1 ? "s" : ""}, {emp.seminarCount} seminar{emp.seminarCount !== 1 ? "s" : ""} preserved</span>
                         </div>
                       ))}
                     </div>
