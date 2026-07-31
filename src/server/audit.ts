@@ -67,7 +67,7 @@ export function buildChangeDescription(
 // Predefined tracked fields per entity type
 export const TRACKED_FIELDS: Record<string, string[]> = {
   employee: [
-    "FirstName", "MiddleInitial", "LastName",
+    "FirstName", "MiddleInitial", "LastName", "Suffix",
     "Office", "Position",
     "EmploymentType", "EmploymentStatus",
     "Gender", "NewlyHired",

@@ -7,9 +7,23 @@ interface StatsCardProps {
   description?: string;
   icon: LucideIcon;
   theme: "blue" | "green" | "amber" | "indigo";
+  loading?: boolean;
 }
 
-export default function DashboardStatsCard({ title, value, description, icon: Icon, theme }: StatsCardProps) {
+export default function DashboardStatsCard({ title, value, description, icon: Icon, theme, loading }: StatsCardProps) {
+  if (loading) {
+    return (
+      <div className="bg-white/60 dark:bg-slate-900/40 backdrop-blur-md p-5 rounded-xl border border-slate-200/60 dark:border-white/10 shadow-xs flex items-center animate-pulse">
+        <div className="w-12 h-12 rounded-xl bg-slate-200/60 dark:bg-slate-800 mr-4 shrink-0" />
+        <div className="space-y-2 flex-1 min-w-0">
+          <div className="h-2.5 w-20 bg-slate-200 dark:bg-slate-800 rounded" />
+          <div className="h-6 w-16 bg-slate-300 dark:bg-slate-700 rounded" />
+          <div className="h-2 w-28 bg-slate-200 dark:bg-slate-800 rounded" />
+        </div>
+      </div>
+    );
+  }
+
   const themeMap = {
     blue: {
       bg: "bg-blue-50 dark:bg-blue-950/40 text-blue-600 dark:text-blue-400 border-blue-100 dark:border-blue-900/60",

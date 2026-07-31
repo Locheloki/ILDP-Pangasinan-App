@@ -32,7 +32,7 @@ interface ImportResult {
   totalNow: number;
 }
 
-export default function ImportData({ onComplete }: { onComplete?: () => void }) {
+export default function ImportData({ onComplete, currentUser }: { onComplete?: () => void; currentUser?: any }) {
   const [phase, setPhase] = useState<"upload" | "preview" | "result" | "error">("upload");
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<ImportPreview | null>(null);
@@ -60,7 +60,11 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
     try {
       const formData = new FormData();
       formData.append("file", f);
-      const res = await fetch("/api/import/preview", { method: "POST", body: formData });
+      const headers: Record<string, string> = {};
+      if (currentUser?.id) {
+        headers["x-user-id"] = String(currentUser.id);
+      }
+      const res = await fetch("/api/import/preview", { method: "POST", headers, body: formData });
       if (!res.ok) {
         const err = await res.json();
         throw new Error(err.error || "Failed to parse file");
@@ -74,7 +78,7 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [currentUser]);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -92,7 +96,7 @@ export default function ImportData({ onComplete }: { onComplete?: () => void }) 
     try {
       const res = await fetch("/api/import/execute", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: { "Content-Type": "application/json", ...(currentUser?.id ? { "x-user-id": String(currentUser.id) } : {}) },
         body: JSON.stringify({
           toAdd: preview.toAdd,
           toUpdate: preview.toUpdate,

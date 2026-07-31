@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { ArrowLeft, Pencil } from "lucide-react";
-import { Employee, LearningNeed } from "../types";
+import { Employee, LearningNeed, formatEmployeeName } from "../types";
 import Modal from "./Modal";
 
 interface EmployeeProfileDrawerProps {
@@ -23,7 +23,7 @@ export default function EmployeeProfileDrawer({ isOpen, employee, needs, seminar
       isOpen={isOpen}
       onClose={onClose}
       maxWidth="max-w-lg"
-      ariaLabel={`Profile: ${employee.LastName}, ${employee.FirstName}`}
+      ariaLabel={`Profile: ${formatEmployeeName(employee)}`}
       header={
         <div className="flex items-center gap-3 px-6 pt-5 pb-3 shrink-0 border-b border-slate-100 dark:border-slate-800">
           <button
@@ -35,7 +35,7 @@ export default function EmployeeProfileDrawer({ isOpen, employee, needs, seminar
           </button>
           <div className="flex-1 min-w-0">
             <h3 className="text-sm font-bold text-slate-800 dark:text-white truncate">
-              {employee.LastName}, {employee.FirstName} {employee.MiddleInitial || ""}
+              {formatEmployeeName(employee)}
             </h3>
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
               Quick View
@@ -58,16 +58,27 @@ export default function EmployeeProfileDrawer({ isOpen, employee, needs, seminar
             {employee.LastName.charAt(0)}
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
-              {employee.LastName}, {employee.FirstName} {employee.MiddleInitial || ""}
-            </h2>
+            <div className="flex items-center gap-2 flex-wrap">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
+                {formatEmployeeName(employee)}
+              </h2>
+              {employee.isActive === false && (
+                <span className="bg-red-500/10 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/30 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">
+                  Archived
+                </span>
+              )}
+            </div>
             <p className="text-xs text-slate-500 dark:text-slate-400 font-medium mt-0.5">{employee.Position}</p>
             <p className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wide mt-0.5">{employee.Office}</p>
           </div>
         </div>
 
         {/* Meta details */}
-        <div className="grid grid-cols-3 gap-4 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
+        <div className="grid grid-cols-4 gap-3 bg-slate-50/40 dark:bg-slate-950/20 p-4 rounded-xl border border-slate-200/50 dark:border-slate-800">
+          <div>
+            <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500">Middle Name</span>
+            <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mt-0.5">{employee.MiddleName || employee.MiddleInitial || "N/A"}</p>
+          </div>
           <div>
             <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-500">Employment Status</span>
             <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 capitalize mt-0.5">{employee.EmploymentStatus || "N/A"}</p>

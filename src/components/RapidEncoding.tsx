@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Zap, Check, ChevronRight, ChevronLeft, AlertCircle, Plus, Trash2, Key, Filter } from "lucide-react";
-import { Employee, LearningNeed, User } from "../types";
+import { Employee, LearningNeed, User, formatEmployeeName } from "../types";
 import { getStoredLearningNeedsClipboard, getStoredLearningNeedsClipboardCount, setStoredLearningNeedsClipboard } from "../utils/learningNeedClipboard";
 import SearchableSelect from "./SearchableSelect";
 
@@ -49,6 +49,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
   const [firstName, setFirstName] = useState("");
   const [middleInitial, setMiddleInitial] = useState("");
   const [lastName, setLastName] = useState("");
+  const [suffix, setSuffix] = useState("");
   const [office, setOffice] = useState("");
   const [position, setPosition] = useState("");
   const [employmentType, setEmploymentType] = useState("Undefined (Pending Review)");
@@ -58,6 +59,8 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
   const [dateOfAssumption, setDateOfAssumption] = useState("");
   const [needs, setNeeds] = useState<LearningNeed[]>([createEmptyNeed()]);
   const [isAddingCard, setIsAddingCard] = useState(false);
+  const [editingName, setEditingName] = useState(false);
+  const nameEditRef = useRef<HTMLDivElement>(null);
   const [clipboardCount, setClipboardCount] = useState(() => getStoredLearningNeedsClipboardCount());
   const [clipboardStatus, setClipboardStatus] = useState<string>("");
   const [clipboardFeedback, setClipboardFeedback] = useState<"copy" | "paste" | null>(null);
@@ -261,6 +264,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
     setFirstName(emp.FirstName);
     setMiddleInitial(emp.MiddleInitial || "");
     setLastName(emp.LastName);
+    setSuffix(emp.Suffix || "");
     setOffice(emp.Office);
     setPosition(emp.Position);
     setEmploymentType(emp.EmploymentType || "Undefined (Pending Review)");
@@ -410,10 +414,6 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
 
     // Validate
     const cleanNeeds = needs.filter((n) => n.LearningNeed.trim() !== "");
-    if (cleanNeeds.length === 0) {
-      setError("Please specify at least one learning need before saving.");
-      return;
-    }
 
     // Check for duplicate learning needs
     const uniqueNeeds = new Set(cleanNeeds.map((n) => n.LearningNeed.trim().toLowerCase()));
@@ -429,6 +429,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
       firstName: firstName.trim(),
       middleInitial: middleInitial.trim(),
       lastName: lastName.trim(),
+      suffix: suffix.trim(),
       office: office,
       position: position,
       employmentType: employmentType,
@@ -485,6 +486,18 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
       setSaving(false);
     }
   };
+
+  // Close name edit on outside click
+  useEffect(() => {
+    if (!editingName) return;
+    const handleClick = (e: MouseEvent) => {
+      if (nameEditRef.current && !nameEditRef.current.contains(e.target as Node)) {
+        setEditingName(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClick);
+    return () => document.removeEventListener("mousedown", handleClick);
+  }, [editingName]);
 
   // Bind keyboard shortcuts: Ctrl+Enter (Save), Ctrl+Right (Skip), and Alt+N (Add need card)
   useEffect(() => {
@@ -698,7 +711,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                       >
                         <div className="min-w-0 flex-1">
                           <p className={`font-bold truncate ${isHighlighted ? "text-blue-700 dark:text-blue-300" : "text-slate-700 dark:text-slate-300"}`}>
-                            {emp.LastName}, {emp.FirstName}
+                            {formatEmployeeName(emp)}
                           </p>
                           <p className="text-[9px] text-slate-400 truncate mt-0.5 font-medium">{emp.Office}</p>
                         </div>
@@ -779,7 +792,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                       <span className="text-slate-400 dark:text-slate-500 font-mono text-[10px] mr-1.5 font-bold">
                         {(index + 1).toString().padStart(2, "0")}
                       </span>
-                      {emp.LastName}, {emp.FirstName}
+                      {formatEmployeeName(emp)}
                     </p>
                     <p className="text-[10px] text-slate-500 dark:text-slate-400 truncate mt-0.5 font-semibold uppercase tracking-wider">{emp.Office}</p>
                   </button>
@@ -839,12 +852,26 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                   </button>
                 )}
                 <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-base shrink-0">
-                  {lastName.charAt(0)}
+                  {(lastName || firstName || suffix).charAt(0) || "?"}
                 </div>
-                <div>
-                  <h3 className="font-bold text-base text-slate-800 dark:text-slate-200 leading-tight font-display">
-                    {lastName}, {firstName} {middleInitial}
-                  </h3>
+                <div className="min-w-0 flex-1">
+                  {editingName ? (
+                    <div className="flex items-center flex-wrap gap-1" ref={nameEditRef}>
+                      <input type="text" value={lastName} onChange={e => setLastName(e.target.value)} className="w-24 px-1.5 py-0.5 border border-slate-300 dark:border-slate-600 rounded text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="Last" />
+                      <span className="text-[10px] text-slate-400">,</span>
+                      <input type="text" value={firstName} onChange={e => setFirstName(e.target.value)} className="w-24 px-1.5 py-0.5 border border-slate-300 dark:border-slate-600 rounded text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500" placeholder="First" />
+                      <input type="text" value={middleInitial} onChange={e => setMiddleInitial(e.target.value)} className="w-10 px-1 py-0.5 border border-slate-300 dark:border-slate-600 rounded text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 text-center" placeholder="MI" maxLength={2} />
+                      <input type="text" value={suffix} onChange={e => setSuffix(e.target.value)} className="w-14 px-1 py-0.5 border border-slate-300 dark:border-slate-600 rounded text-xs font-semibold text-slate-800 dark:text-slate-200 bg-white dark:bg-slate-800 focus:outline-none focus:ring-1 focus:ring-blue-500 text-center" placeholder="Sfx" />
+                    </div>
+                  ) : (
+                    <h3
+                      className="font-bold text-sm text-slate-800 dark:text-slate-200 leading-tight font-display cursor-pointer hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                      onClick={() => setEditingName(true)}
+                      title="Click to edit name"
+                    >
+                      {formatEmployeeName({ LastName: lastName, FirstName: firstName, MiddleInitial: middleInitial, Suffix: suffix })}
+                    </h3>
+                  )}
                   <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest block mt-0.5">
                     Encoder Target Entry
                   </span>

@@ -22,8 +22,13 @@ import {
   Check,
   Globe,
   Lock,
+  Search,
+  ChevronRight,
+  Clock,
+  Database,
+  Bell,
 } from "lucide-react";
-import { User, DashboardStats, Employee, LearningNeed } from "./types";
+import { User, DashboardStats, Employee, LearningNeed, formatEmployeeName } from "./types";
 import LoginScreen from "./components/LoginScreen";
 import DashboardStatsCard from "./components/DashboardStatsCard";
 import EmployeeForm from "./components/EmployeeForm";
@@ -77,6 +82,13 @@ function AppContent() {
   // Active View Tab State
   const [activeTab, setActiveTab] = useState<string>("home");
   const [tabBeforeEdit, setTabBeforeEdit] = useState<string>("view");
+  const [initialFilters, setInitialFilters] = useState<{
+    employmentStatus?: string;
+    newlyHired?: string;
+    office?: string;
+    learningNeed?: string;
+  } | null>(null);
+  const [initialSearch, setInitialSearch] = useState<string | undefined>(undefined);
   const [selectedSeminarYear, setSelectedSeminarYear] = useState<number | null>(null);
   const [selectedSeminarQuarter, setSelectedSeminarQuarter] = useState<"Q1" | "Q2" | "Q3" | "Q4" | null>(null);
   const [seminarYears, setSeminarYears] = useState<number[]>([]);
@@ -104,10 +116,11 @@ function AppContent() {
   // Summary Metrics Stats
   const [stats, setStats] = useState<DashboardStats>({
     totalEmployees: 0,
+    archivedEmployees: 0,
     totalLearningNeeds: 0,
-    addedToday: 0,
-    upcomingSchedules: 0,
+    learningNeedsTodayUnique: 0,
   });
+  const [statsLoading, setStatsLoading] = useState(true);
 
   // Save Confirmation Dialog states
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
@@ -211,12 +224,14 @@ function AppContent() {
   }, [activeTab, consumeReturnContext]);
 
   const fetchStats = () => {
+    setStatsLoading(true);
     fetch("/api/dashboard/stats")
       .then((res) => res.json())
       .then((data) => {
         setStats(data);
       })
-      .catch((err) => console.error("Error loading metrics:", err));
+      .catch((err) => console.error("Error loading metrics:", err))
+      .finally(() => setStatsLoading(false));
 
     // Also fetch unique seminar years to populate sidebar
     fetch("/api/seminars/years")
@@ -233,6 +248,45 @@ function AppContent() {
       })
       .catch((err) => console.error("Error loading seminar years:", err));
   };
+
+  // Global Search states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState<any>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchFocused, setSearchFocused] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
+        e.preventDefault();
+        document.getElementById("global-search-input")?.focus();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []);
+
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+    const delayDebounce = setTimeout(() => {
+      setSearchLoading(true);
+      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
+        .then(res => res.json())
+        .then(data => {
+          setSearchResults(data);
+          setSearchLoading(false);
+        })
+        .catch(err => {
+          console.error(err);
+          setSearchLoading(false);
+        });
+    }, 300);
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
@@ -263,11 +317,14 @@ function AppContent() {
     }
     setTabBeforeEdit(activeTab);
     fetch(`/api/employees/${employeeId}`)
-      .then((res) => res.json())
+      .then((res) => {
+        if (!res.ok) throw new Error(`Server returned ${res.status}`);
+        return res.json();
+      })
       .then((emp) => {
         setEditingEmployee(emp);
         setActiveTab("add");
-        showToast(`Editing profile of ${emp.FirstName} ${emp.LastName}`, "success");
+        showToast(`Editing profile of ${formatEmployeeName(emp)}`, "success");
       })
       .catch((err) => {
         console.error("Error fetching employee details:", err);
@@ -314,12 +371,17 @@ function AppContent() {
       
       const payload = {
         firstName: empData.FirstName,
+        middleName: empData.MiddleName,
         middleInitial: empData.MiddleInitial,
         lastName: empData.LastName,
+        suffix: empData.Suffix,
         office: empData.Office,
         position: empData.Position,
-        employmentType: empData.EmploymentStatus || empData.EmploymentType,
+        employmentType: empData.EmploymentType,
         employmentStatus: empData.EmploymentStatus,
+        gender: empData.Gender,
+        dateOfAssumption: empData.DateOfAssumption,
+        newlyHired: empData.NewlyHired,
         needs: needsData,
         username: currentUser?.username || "system",
       };
@@ -348,12 +410,17 @@ function AppContent() {
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
               firstName: newEmp.FirstName,
+              middleName: newEmp.MiddleName,
               middleInitial: newEmp.MiddleInitial,
               lastName: newEmp.LastName,
+              suffix: newEmp.Suffix,
               office: newEmp.Office,
               position: newEmp.Position,
-              employmentType: newEmp.EmploymentStatus || newEmp.EmploymentType,
+              employmentType: newEmp.EmploymentType,
               employmentStatus: newEmp.EmploymentStatus,
+              gender: newEmp.Gender,
+              dateOfAssumption: newEmp.DateOfAssumption,
+              newlyHired: newEmp.NewlyHired,
               needs: needsData,
               username: currentUser?.username || "system",
             }),
@@ -628,33 +695,463 @@ function AppContent() {
             
             {/* Render Page 1: Home Dashboard */}
             <div className={`space-y-6 tab-pane-animate ${activeTab === "home" ? "" : "hidden"}`}>
-                {/* Welcome banner */}
-                <div className="sidebar-contrast-bg border border-slate-200/50 dark:border-slate-800/80 rounded-2xl p-6 sm:p-8 text-white relative overflow-hidden shadow-md flex flex-col md:flex-row items-center justify-between gap-6">
-                  <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/10 rounded-full blur-3xl pointer-events-none"></div>
-                  <div className="absolute -bottom-10 -left-10 w-80 h-80 bg-emerald-600/5 rounded-full blur-3xl pointer-events-none"></div>
-
-                  <div className="max-w-3xl space-y-3 relative z-10 flex-1">
-                    <span className="bg-blue-600/30 text-blue-300 text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full border border-blue-500/20 backdrop-blur-md">
-                      Pangasinan Provincial Portal
-                    </span>
-                    <h1>
+                {/* Header greeting & Operational Info */}
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-slate-200 dark:border-slate-800">
+                  <div>
+                    <h1 className="text-xl sm:text-2xl font-bold text-slate-800 dark:text-slate-100 font-display">
+                      {(() => {
+                        const hr = new Date().getHours();
+                        if (hr < 12) return "Good Morning";
+                        if (hr < 18) return "Good Afternoon";
+                        return "Good Evening";
+                      })()}
+                      {", "}
+                      <span className="text-blue-600 dark:text-blue-400 font-extrabold">{currentUser?.name || "User"}</span>
                     </h1>
-                    <h2 className="text-xl sm:text-2xl md:text-3xl font-bold tracking-tight font-display">
-                      ILDP Learning Needs Encoding Portal
-                    </h2>
-                    <p className="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
-                      Official workspace for the Provincial Government of Pangasinan. Manage employee learning requirements, streamline ILDP records with keyboard efficiency, and compile clean Excel summaries seamlessly.
+                    <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
+                      {new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
 
-                  <div className="relative z-10 shrink-0 hidden md:block">
-                    <div className="logo-glass p-4 rounded-full flex items-center justify-center">
-                      <img
-                        src="/pangasinan-logo.svg"
-                        alt="Pangasinan Seal Logo"
-                        className="h-24 w-24 object-contain"
+                  {/* Global Search */}
+                  <div className="relative w-full md:w-72 z-20">
+                    <div className="relative rounded-xl flex items-center shadow-xs border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900">
+                      <Search className="absolute left-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
+                      <input
+                        id="global-search-input"
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        onFocus={() => setSearchFocused(true)}
+                        onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
+                        placeholder="Search employees, seminars, learning needs..."
+                        className="w-full pl-9 pr-3 py-2 bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none"
                       />
                     </div>
+
+                    {searchFocused && searchQuery.trim().length > 0 && (
+                      <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden max-h-96 overflow-y-auto">
+                        {searchLoading ? (
+                          <div className="p-4 text-center text-xs text-slate-400">Loading results...</div>
+                        ) : !searchResults || (
+                          (!searchResults.employees || searchResults.employees.length === 0) &&
+                          (!searchResults.seminars || searchResults.seminars.length === 0) &&
+                          (!searchResults.learningNeeds || searchResults.learningNeeds.length === 0) &&
+                          (!searchResults.offices || searchResults.offices.length === 0)
+                        ) ? (
+                          <div className="p-4 text-center text-xs text-slate-400">No matches found.</div>
+                        ) : (
+                          <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
+                            {searchResults.employees && searchResults.employees.length > 0 && (
+                              <div className="p-2.5">
+                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Employees</span>
+                                <div className="space-y-0.5">
+                                  {searchResults.employees.map((emp: any) => (
+                                    <button
+                                      key={emp.id}
+                                      onClick={() => {
+                                        setInitialSearch(emp.name);
+                                        changeTab("view");
+                                        setTimeout(() => {
+                                          const event = new CustomEvent("openEmployeeDetails", { detail: { employeeId: emp.id } });
+                                          window.dispatchEvent(event);
+                                        }, 100);
+                                      }}
+                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex justify-between items-center gap-4 cursor-pointer"
+                                    >
+                                      <div className="font-semibold text-slate-700 dark:text-slate-200">{emp.name}</div>
+                                      <div className="text-[10px] text-slate-400 truncate">{emp.position}</div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {searchResults.seminars && searchResults.seminars.length > 0 && (
+                              <div className="p-2.5">
+                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Seminars</span>
+                                <div className="space-y-0.5">
+                                  {searchResults.seminars.map((sem: any) => (
+                                    <button
+                                      key={sem.id}
+                                      onClick={() => {
+                                        setSelectedSeminarYear(sem.year);
+                                        setSelectedSeminarQuarter(sem.quarter);
+                                        changeTab("seminars");
+                                        setTimeout(() => {
+                                          const customEvent = new CustomEvent("openSeminarDetails", { detail: { seminarId: sem.id } });
+                                          window.dispatchEvent(customEvent);
+                                        }, 100);
+                                      }}
+                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex justify-between items-center gap-4 cursor-pointer"
+                                    >
+                                      <div className="font-semibold text-slate-700 dark:text-slate-200 truncate">{sem.title}</div>
+                                      <div className="text-[10px] text-slate-400 shrink-0 font-bold uppercase">{sem.year} {sem.quarter}</div>
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {searchResults.learningNeeds && searchResults.learningNeeds.length > 0 && (
+                              <div className="p-2.5">
+                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Learning Needs</span>
+                                <div className="space-y-0.5">
+                                  {searchResults.learningNeeds.map((need: any) => (
+                                    <button
+                                      key={need.name}
+                                      onClick={() => {
+                                        setInitialFilters({ learningNeed: need.name });
+                                        changeTab("view");
+                                      }}
+                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex items-center justify-between cursor-pointer"
+                                    >
+                                      <div className="font-semibold text-slate-700 dark:text-slate-200">{need.name}</div>
+                                      <ChevronRight className="h-3 w-3 text-slate-400" />
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            {searchResults.offices && searchResults.offices.length > 0 && (
+                              <div className="p-2.5">
+                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Offices</span>
+                                <div className="space-y-0.5">
+                                  {searchResults.offices.map((off: any) => (
+                                    <button
+                                      key={off.name}
+                                      onClick={() => {
+                                        setInitialFilters({ office: off.name });
+                                        changeTab("view");
+                                      }}
+                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex items-center justify-between cursor-pointer"
+                                    >
+                                      <div className="font-semibold text-slate-700 dark:text-slate-200">{off.name}</div>
+                                      <ChevronRight className="h-3 w-3 text-slate-400" />
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                </div>
+
+                {/* Layout Philosophy: Row 1 */}
+                <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+                  {/* Employee Database Card (Focal Point, span 2) */}
+                  <div className="lg:col-span-2 sidebar-contrast-bg text-white border border-slate-200/50 dark:border-slate-800/80 shadow-md rounded-2xl p-6 flex flex-col justify-between transition duration-200">
+                    <div>
+                      <div className="flex items-center justify-between mb-4 border-b border-white/10 pb-3">
+                        <h3 className="font-bold text-white dark:text-white tracking-tight font-display flex items-center gap-2">
+                          <Database className="h-4.5 w-4.5 text-blue-300" />
+                          <span>Employee Database</span>
+                        </h3>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="bg-white/10 dark:bg-black/20 p-4 rounded-xl border border-white/10">
+                          {statsLoading ? (
+                            <div className="h-8 w-24 bg-white/20 animate-pulse rounded-lg my-0.5" />
+                          ) : (
+                            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                              {stats.totalEmployees?.toLocaleString() || "0"}
+                            </div>
+                          )}
+                          <div className="text-[10px] font-bold text-slate-300 uppercase tracking-wider mt-1">
+                            Total Employees
+                          </div>
+                        </div>
+
+                        <div className="bg-white/10 dark:bg-black/20 p-4 rounded-xl border border-white/10">
+                          {statsLoading ? (
+                            <div className="h-8 w-24 bg-white/20 animate-pulse rounded-lg my-0.5" />
+                          ) : (
+                            <div className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight">
+                              {stats.archivedEmployees?.toLocaleString() || "0"}
+                            </div>
+                          )}
+                          <div className="text-[10px] font-bold text-slate-300 uppercase tracking-wider mt-1">
+                            Archived Employees
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-6 pt-4 border-t border-white/10 space-y-3.5 text-xs">
+                      {statsLoading ? (
+                        <div className="space-y-2 animate-pulse">
+                          <div className="h-3 w-40 bg-white/20 rounded" />
+                          <div className="h-3 w-32 bg-white/20 rounded" />
+                        </div>
+                      ) : stats.lastActivity ? (
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Clock className="h-3.5 w-3.5 text-slate-300" />
+                            <span>Last Activity</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold text-slate-100 block text-[11px] leading-tight">
+                              {stats.lastActivity.action}
+                            </span>
+                            <span className="text-[10px] text-slate-300 block mt-0.5">
+                              {(() => {
+                                const d = new Date(stats.lastActivity.timestamp);
+                                return `Today • ${d.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" })}`;
+                              })()}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between text-slate-300">
+                          <span>Last Activity</span>
+                          <span>None logged</span>
+                        </div>
+                      )}
+
+                      {!statsLoading && (stats.lastSync ? (
+                        <div className="flex justify-between items-start gap-4">
+                          <div className="flex items-center gap-2 text-slate-300">
+                            <Server className="h-3.5 w-3.5 text-slate-300" />
+                            <span>Last Database Sync</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="font-semibold text-slate-100 block text-[11px] leading-tight">
+                              {stats.lastSync.action}
+                            </span>
+                            <span className="text-[10px] text-slate-300 block mt-0.5">
+                              {new Date(stats.lastSync.timestamp).toLocaleString("en-US", { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" })}
+                            </span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="flex justify-between text-slate-400">
+                          <span>Last Database Sync</span>
+                          <span>None logged</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Learning Needs Today Card (span 1) */}
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-sm rounded-2xl p-6 flex flex-col justify-between transition duration-200">
+                    <div>
+                      <div className="flex items-center justify-between mb-4 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
+                          <ClipboardList className="h-4.5 w-4.5 text-indigo-500" />
+                          <span>Learning Needs Today</span>
+                        </h3>
+                      </div>
+
+                      <div className="bg-indigo-500/5 dark:bg-indigo-500/10 p-6 rounded-xl border border-indigo-500/10 text-center">
+                        {statsLoading ? (
+                          <div className="h-9 w-20 bg-indigo-500/20 dark:bg-indigo-400/20 animate-pulse rounded-lg mx-auto" />
+                        ) : (
+                          <div className="text-4xl font-extrabold text-indigo-600 dark:text-indigo-400 tracking-tight">
+                            {stats.learningNeedsTodayUnique || "0"}
+                          </div>
+                        )}
+                        <div className="text-[10px] font-bold text-indigo-500/80 dark:text-indigo-400 uppercase tracking-widest mt-1.5">
+                          {stats.learningNeedsTodayUnique === 1 ? "Employee" : "Unique Employees"}
+                        </div>
+                      </div>
+                    </div>
+
+                    <p className="text-[11px] text-slate-400 dark:text-slate-500 leading-normal mt-4">
+                      Active staff members who received training/needs allocations during today's sync cycles.
+                    </p>
+                  </div>
+
+                  {/* Workforce Distribution Card (span 1) */}
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-sm rounded-2xl p-6 flex flex-col justify-between transition duration-200">
+                    <div>
+                      <div className="flex items-center justify-between mb-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                        <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display flex items-center gap-2">
+                          <Users className="h-4.5 w-4.5 text-emerald-500" />
+                          <span>Workforce Distribution</span>
+                        </h3>
+                      </div>
+
+                      {statsLoading ? (
+                        <div className="space-y-3 py-2 animate-pulse">
+                          <div className="flex justify-between items-center"><div className="h-3.5 w-20 bg-slate-200 dark:bg-slate-800 rounded" /><div className="h-3.5 w-10 bg-slate-200 dark:bg-slate-800 rounded" /></div>
+                          <div className="flex justify-between items-center"><div className="h-3.5 w-16 bg-slate-200 dark:bg-slate-800 rounded" /><div className="h-3.5 w-10 bg-slate-200 dark:bg-slate-800 rounded" /></div>
+                          <div className="flex justify-between items-center"><div className="h-3.5 w-20 bg-slate-200 dark:bg-slate-800 rounded" /><div className="h-3.5 w-10 bg-slate-200 dark:bg-slate-800 rounded" /></div>
+                          <div className="flex justify-between items-center"><div className="h-3.5 w-24 bg-slate-200 dark:bg-slate-800 rounded" /><div className="h-3.5 w-10 bg-slate-200 dark:bg-slate-800 rounded" /></div>
+                          <div className="flex justify-between items-center"><div className="h-3.5 w-18 bg-slate-200 dark:bg-slate-800 rounded" /><div className="h-3.5 w-10 bg-slate-200 dark:bg-slate-800 rounded" /></div>
+                        </div>
+                      ) : stats.workforceDistribution ? (
+                        <div className="space-y-1.5 text-xs">
+                          {/* Employment Status Section */}
+                          <div className="space-y-1.5">
+                            <div 
+                              onClick={() => {
+                                setInitialFilters({ employmentStatus: "Permanent" });
+                                changeTab("view");
+                              }}
+                              className="flex justify-between items-center py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition cursor-pointer"
+                            >
+                              <span className="text-slate-500 dark:text-slate-400 font-medium">Permanent</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">{stats.workforceDistribution.status.permanent?.toLocaleString() || "0"}</span>
+                            </div>
+
+                            <div 
+                              onClick={() => {
+                                setInitialFilters({ employmentStatus: "Casual" });
+                                changeTab("view");
+                              }}
+                              className="flex justify-between items-center py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition cursor-pointer"
+                            >
+                              <span className="text-slate-500 dark:text-slate-400 font-medium">Casual</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">{stats.workforceDistribution.status.casual?.toLocaleString() || "0"}</span>
+                            </div>
+
+                            <div 
+                              onClick={() => {
+                                setInitialFilters({ employmentStatus: "Job Order" });
+                                changeTab("view");
+                              }}
+                              className="flex justify-between items-center py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition cursor-pointer"
+                            >
+                              <span className="text-slate-500 dark:text-slate-400 font-medium">Job Order</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">{stats.workforceDistribution.status.jobOrder?.toLocaleString() || "0"}</span>
+                            </div>
+
+                            <div 
+                              onClick={() => {
+                                setInitialFilters({ employmentStatus: "Consultant" });
+                                changeTab("view");
+                              }}
+                              className="flex justify-between items-center py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition cursor-pointer"
+                            >
+                              <span className="text-slate-500 dark:text-slate-400 font-medium">Consultant</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">{stats.workforceDistribution.status.consultant?.toLocaleString() || "0"}</span>
+                            </div>
+
+                            <div 
+                              onClick={() => {
+                                setInitialFilters({ employmentStatus: "Undefined (Pending Review)" });
+                                changeTab("view");
+                              }}
+                              className="flex justify-between items-center py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition cursor-pointer"
+                            >
+                              <span className="text-slate-500 dark:text-slate-400 font-medium">Unidentified</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">{stats.workforceDistribution.status.unidentified?.toLocaleString() || "0"}</span>
+                            </div>
+                          </div>
+
+                          <hr className="border-slate-100 dark:border-slate-800/80 my-2" />
+
+                          {/* Employment Activity Section */}
+                          <div>
+                            <div className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Employment Activity</div>
+                            <div 
+                              onClick={() => {
+                                setInitialFilters({ newlyHired: "Newly Hired" });
+                                changeTab("view");
+                              }}
+                              className="flex justify-between items-center py-1 px-2 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 transition cursor-pointer"
+                            >
+                              <span className="text-slate-500 dark:text-slate-400 font-medium">Newly Hired</span>
+                              <span className="font-bold text-slate-800 dark:text-slate-200">{stats.workforceDistribution.activity.newlyHired?.toLocaleString() || "0"}</span>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="p-4 text-center text-slate-400 text-xs">Loading stats...</div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Layout Philosophy: Row 2 */}
+                <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 shadow-sm rounded-2xl p-6 transition duration-200">
+                  <h3 className="font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display mb-4 border-b border-slate-100 dark:border-slate-800 pb-3 flex items-center gap-2">
+                    <Clock className="h-4.5 w-4.5 text-indigo-500" />
+                    <span>Recent Activity</span>
+                  </h3>
+
+                  <div className="relative border-l border-slate-100 dark:border-slate-800 ml-3.5 pl-5 space-y-5">
+                    {statsLoading ? (
+                      <div className="space-y-4 animate-pulse">
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 w-48 bg-slate-200 dark:bg-slate-800 rounded" />
+                          <div className="h-3 w-64 bg-slate-200 dark:bg-slate-800 rounded" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <div className="h-3.5 w-40 bg-slate-200 dark:bg-slate-800 rounded" />
+                          <div className="h-3 w-56 bg-slate-200 dark:bg-slate-800 rounded" />
+                        </div>
+                      </div>
+                    ) : stats.recentActivity && stats.recentActivity.length > 0 ? (
+                      stats.recentActivity.map((log) => (
+                        <div 
+                          key={log.id} 
+                          className="relative group/log flex items-start gap-4 text-xs"
+                        >
+                          {/* Dot accent on the line */}
+                          <div className="absolute -left-[26px] top-1.5 w-3 h-3 rounded-full bg-blue-500 dark:bg-blue-600 border-2 border-white dark:border-slate-900 shadow-xs" />
+                          
+                          <div className="flex-1 space-y-0.5">
+                            <div className="flex items-center gap-2">
+                              <span className="font-extrabold text-slate-800 dark:text-slate-100 text-[13px]">
+                                {log.action}
+                              </span>
+                              <span className="text-[10px] text-slate-400 dark:text-slate-500">
+                                {(() => {
+                                  const date = new Date(log.timestamp);
+                                  return date.toLocaleTimeString("en-US", { hour: "numeric", minute: "2-digit" });
+                                })()}
+                              </span>
+                            </div>
+                            <p className="text-slate-500 dark:text-slate-400 text-[11px] leading-relaxed">
+                              {log.description || "No description provided."}
+                            </p>
+                            <div className="text-[10px] text-slate-400 mt-1">
+                              Performed by: <span className="font-semibold text-slate-500 dark:text-slate-400">{log.performed_by}</span>
+                            </div>
+                          </div>
+
+                          {/* Click-to-navigate action */}
+                          {log.entity_type === "employee" && log.entity_id && (
+                            <button
+                              onClick={() => {
+                                setInitialSearch(log.entity_name || "");
+                                changeTab("view");
+                                setTimeout(() => {
+                                  const event = new CustomEvent("openEmployeeDetails", { detail: { employeeId: parseInt(log.entity_id) } });
+                                  window.dispatchEvent(event);
+                                }, 100);
+                              }}
+                              className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 text-[10px] py-1 px-2.5 rounded-lg font-bold cursor-pointer transition"
+                            >
+                              View Profile
+                            </button>
+                          )}
+
+                          {log.entity_type === "seminar" && log.entity_id && log.seminarYear && log.seminarQuarter && (
+                            <button
+                              onClick={() => {
+                                setSelectedSeminarYear(log.seminarYear);
+                                setSelectedSeminarQuarter(log.seminarQuarter as any);
+                                changeTab("seminars");
+                                setTimeout(() => {
+                                  const customEvent = new CustomEvent("openSeminarDetails", { detail: { seminarId: log.entity_id } });
+                                  window.dispatchEvent(customEvent);
+                                }, 100);
+                              }}
+                              className="btn-glass bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 text-[10px] py-1 px-2.5 rounded-lg font-bold cursor-pointer transition"
+                            >
+                              View Seminar
+                            </button>
+                          )}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center text-slate-400">No activity logs recorded.</div>
+                    )}
                   </div>
                 </div>
 
@@ -702,38 +1199,6 @@ function AppContent() {
                     </div>
                   </div>
                 )}
-
-                {/* Summary metrics widgets grid */}
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
-                  <DashboardStatsCard
-                    title="Total Employees"
-                    value={stats.totalEmployees}
-                    description="Unique staff profiles"
-                    icon={Users}
-                    theme="blue"
-                  />
-                  <DashboardStatsCard
-                    title="Learning Needs Logged"
-                    value={stats.totalLearningNeeds}
-                    description="Active training plans"
-                    icon={ClipboardList}
-                    theme="indigo"
-                  />
-                  <DashboardStatsCard
-                    title="Added Today"
-                    value={stats.addedToday}
-                    description="Records past 24 hours"
-                    icon={Calendar}
-                    theme="green"
-                  />
-                  <DashboardStatsCard
-                    title="Upcoming Schedules"
-                    value={stats.upcomingSchedules}
-                    description="Active training milestones"
-                    icon={CheckSquare}
-                    theme="amber"
-                  />
-                </div>
 
                 {/* Web App Access Guidelines & Reminders */}
                 <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md p-6 sm:p-8 space-y-6 transition-all duration-300">
@@ -954,6 +1419,10 @@ function AppContent() {
                 onRefreshStats={fetchStats}
                 customOptionsVersion={customOptionsVersion}
                 onCustomOptionsChange={handleCustomOptionsChange}
+                initialFilters={initialFilters}
+                initialSearch={initialSearch}
+                onConsumeFilters={() => { setInitialFilters(null); setInitialSearch(undefined); }}
+                currentUser={currentUser}
               />
             </div>
 
@@ -970,7 +1439,7 @@ function AppContent() {
 
             {/* Render Page 5: Import Data (Admin Only) */}
             <div className={`tab-pane-animate ${activeTab === "import" ? "" : "hidden"}`}>
-              <ImportData onComplete={fetchStats} />
+              <ImportData onComplete={fetchStats} currentUser={currentUser} />
             </div>
 
             {/* Render Page 6: Audit Logs */}

@@ -8,13 +8,24 @@ export interface User {
   profilePic?: string;
   isActive?: boolean;
   createdAt?: string;
+  permissions?: string[];
+}
+
+export function formatEmployeeName(emp: { LastName: string; FirstName: string; MiddleInitial?: string; Suffix?: string }): string {
+  const parts = [emp.LastName + ","];
+  if (emp.Suffix) parts.push(emp.Suffix);
+  parts.push(emp.FirstName);
+  if (emp.MiddleInitial) parts.push(emp.MiddleInitial.endsWith(".") ? emp.MiddleInitial : emp.MiddleInitial + ".");
+  return parts.join(" ");
 }
 
 export interface Employee {
   EmployeeID: number;
   FirstName: string;
+  MiddleName?: string;
   MiddleInitial?: string;
   LastName: string;
+  Suffix?: string;
   Office: string;
   Position: string;
   EmploymentType?: string;
@@ -50,15 +61,48 @@ export interface EmployeeWithNeeds extends Employee {
 
 export interface DashboardStats {
   totalEmployees: number;
+  archivedEmployees?: number;
   totalLearningNeeds: number;
-  addedToday: number;
-  upcomingSchedules: number;
+  learningNeedsTodayUnique?: number;
   alertEmployees?: Array<{
     id: number;
     name: string;
     office: string;
     status: string;
     message: string;
+  }>;
+  workforceDistribution?: {
+    status: {
+      permanent: number;
+      casual: number;
+      jobOrder: number;
+      consultant: number;
+      unidentified: number;
+    };
+    activity: {
+      newlyHired: number;
+    };
+  };
+  lastActivity?: {
+    action: string;
+    timestamp: string;
+    performed_by: string;
+  } | null;
+  lastSync?: {
+    action: string;
+    timestamp: string;
+  } | null;
+  recentActivity?: Array<{
+    id: number;
+    action: string;
+    description: string | null;
+    performed_by: string;
+    timestamp: string;
+    entity_type: string;
+    entity_id: string | null;
+    entity_name: string | null;
+    seminarYear?: number;
+    seminarQuarter?: string;
   }>;
 }
 
@@ -78,9 +122,17 @@ export interface Seminar {
     FirstName: string;
     MiddleInitial?: string;
     LastName: string;
+    Suffix?: string;
     Office: string;
     Position: string;
   }>;
+  attachment?: {
+    originalName: string;
+    filename: string;
+    fileSize: number;
+    uploadDate: string;
+    mimeType: string;
+  };
 }
 
 export interface SeminarAttendee {

@@ -65,7 +65,7 @@ const mainMenuItems: NavItem[] = [
   { tab: "add", icon: UserPlus, label: "Add New Record", dataText: "Add New Record", color: "#8b5cf6", editLabel: "Modify Records" },
   { tab: "view", icon: Database, label: "View Records", dataText: "View Records", color: "#10b981" },
   { tab: "rapid", icon: Zap, label: "Rapid Encoding", dataText: "Rapid Encoding", color: "#f59e0b", iconClass: "fill-amber-500/10" },
-  { tab: "import", icon: Upload, label: "Import Data", dataText: "Import Data", color: "#ef4444", adminOnly: true },
+  { tab: "import", icon: Upload, label: "Import Data", dataText: "Import Data", color: "#ef4444" },
   { tab: "auditlogs", icon: History, label: "Activity & Audit Logs", dataText: "Activity & Audit Logs", color: "#6366f1", adminOnly: true },
   { tab: "usermanagement", icon: Shield, label: "User Management", dataText: "User Management", color: "#a855f7", devOnly: true },
 ];
@@ -108,10 +108,10 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`flex flex-col overflow-hidden w-full h-full text-slate-200 ${
+      className={`flex flex-col overflow-hidden text-slate-200 ${
         isMobile
-          ? `fixed inset-y-0 left-0 z-50 w-60 sidebar-contrast-bg backdrop-blur-xl transition-transform duration-300 ${isOpen ? "translate-x-0 shadow-xl" : "-translate-x-full"}`
-          : "relative z-0"
+          ? "fixed inset-y-0 left-0 z-50 w-60 h-full sidebar-contrast-bg backdrop-blur-xl transition-transform duration-300 " + (isOpen ? "translate-x-0 shadow-xl" : "-translate-x-full")
+          : "relative z-0 w-full h-full"
       }`}
     >
       {/* Header */}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Plus, Trash, Search, ArrowRight, UserCheck, AlertTriangle, Eye, ChevronDown } from "lucide-react";
-import { Employee, LearningNeed, User } from "../types";
+import { Employee, LearningNeed, User, formatEmployeeName } from "../types";
 import { OFFICES, POSITIONS, LEARNING_NEEDS, BASES, METHODOLOGIES, SCHEDULES } from "../constants";
 import { getStoredLearningNeedsClipboard, getStoredLearningNeedsClipboardCount, setStoredLearningNeedsClipboard } from "../utils/learningNeedClipboard";
 import SearchableSelect from "./SearchableSelect";
@@ -16,6 +16,7 @@ interface EmployeeFormProps {
   onCancel: () => void;
   customOptionsVersion?: number;
   onCustomOptionsChange?: () => void;
+  hideLearningNeeds?: boolean;
 }
 
 export default function EmployeeForm({ 
@@ -24,13 +25,16 @@ export default function EmployeeForm({
   onSave, 
   onCancel,
   customOptionsVersion,
-  onCustomOptionsChange
+  onCustomOptionsChange,
+  hideLearningNeeds,
 }: EmployeeFormProps) {
   const formRef = useRef<HTMLFormElement>(null);
   // Employee State
   const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
   const [middleInitial, setMiddleInitial] = useState("");
   const [lastName, setLastName] = useState("");
+  const [suffix, setSuffix] = useState("");
   const [office, setOffice] = useState("");
   const [position, setPosition] = useState("");
   const [employmentType, setEmploymentType] = useState("Undefined (Pending Review)");
@@ -107,8 +111,10 @@ export default function EmployeeForm({
   useEffect(() => {
     if (employee) {
       setFirstName(employee.FirstName);
-      setMiddleInitial(employee.MiddleInitial || "");
+      setMiddleName(employee.MiddleName || employee.MiddleInitial || "");
+      setMiddleInitial(employee.MiddleInitial || (employee.MiddleName ? employee.MiddleName.charAt(0).toUpperCase() + "." : ""));
       setLastName(employee.LastName);
+      setSuffix(employee.Suffix || "");
       setOffice(employee.Office);
       setPosition(employee.Position);
       setEmploymentType(employee.EmploymentType || "Undefined (Pending Review)");
@@ -120,7 +126,10 @@ export default function EmployeeForm({
 
       // Fetch employee's learning needs from backend
       fetch(`/api/employees/${employee.EmployeeID}`)
-        .then((res) => res.json())
+        .then((res) => {
+          if (!res.ok) throw new Error(`Failed to fetch learning needs: ${res.status}`);
+          return res.json();
+        })
         .then((data) => {
           if (data.needs) {
             setNeeds(data.needs.map((n: any) => ({
@@ -129,7 +138,8 @@ export default function EmployeeForm({
               Methodology: Array.isArray(n.Methodology) ? n.Methodology : (n.Methodology ? (n.Methodology as string).split(",").map((s: string) => s.trim()) : ["Seminar/Training"]),
             })));
           }
-        });
+        })
+        .catch((err) => console.error("Error loading learning needs:", err));
     } else {
       // Clear form for fresh input
       setFirstName("");
@@ -165,6 +175,7 @@ export default function EmployeeForm({
         setFirstName(employee.FirstName);
         setMiddleInitial(employee.MiddleInitial || "");
         setLastName(employee.LastName);
+        setSuffix(employee.Suffix || "");
         setOffice(employee.Office);
         setPosition(employee.Position);
         setEmploymentType(employee.EmploymentType || "Undefined (Pending Review)");
@@ -175,7 +186,10 @@ export default function EmployeeForm({
         setDateOfAssumption(assumptionDate);
         
         fetch(`/api/employees/${employee.EmployeeID}`)
-          .then((res) => res.json())
+          .then((res) => {
+            if (!res.ok) throw new Error(`Failed to fetch learning needs: ${res.status}`);
+            return res.json();
+          })
           .then((data) => {
             if (data.needs) {
               setNeeds(data.needs.map((n: any) => ({
@@ -184,11 +198,14 @@ export default function EmployeeForm({
                 Methodology: Array.isArray(n.Methodology) ? n.Methodology : (n.Methodology ? (n.Methodology as string).split(",").map((s: string) => s.trim()) : ["Seminar/Training"]),
               })));
             }
-          });
+          })
+          .catch((err) => console.error("Error loading learning needs on reset:", err));
       } else {
         setFirstName("");
+        setMiddleName("");
         setMiddleInitial("");
         setLastName("");
+        setSuffix("");
         setOffice("");
         setPosition("");
         setEmploymentType("Undefined (Pending Review)");
@@ -544,18 +561,20 @@ export default function EmployeeForm({
     }
 
     // Filter out completely empty learning needs (submitting employees with no learning needs is now allowed)
-    const cleanNeeds = needs.filter((n) => n.LearningNeed.trim() !== "");
+    const cleanNeeds = hideLearningNeeds && employee && (employee as any).needs
+      ? ((employee as any).needs as LearningNeed[]).filter((nd: LearningNeed) => nd.LearningNeed.trim() !== "")
+      : needs.filter((nd) => nd.LearningNeed.trim() !== "");
 
-    // Prevent duplicates within the same list
-    const seenNeeds = new Set();
+    // Prevent duplicates within the same list (skip if learning needs hidden)
     let hasDuplicateNeed = false;
-    cleanNeeds.forEach((n) => {
-      const uniqueKey = n.LearningNeed.trim().toLowerCase();
-      if (seenNeeds.has(uniqueKey)) {
-        hasDuplicateNeed = true;
-      }
-      seenNeeds.add(uniqueKey);
-    });
+    if (!hideLearningNeeds && cleanNeeds.length > 0) {
+      const seenNeeds = new Set();
+      cleanNeeds.forEach((n) => {
+        const uniqueKey = n.LearningNeed.trim().toLowerCase();
+        if (seenNeeds.has(uniqueKey)) hasDuplicateNeed = true;
+        seenNeeds.add(uniqueKey);
+      });
+    }
 
     if (hasDuplicateNeed) {
       alert("You have entered duplicate learning needs for this employee. Please remove duplicates before saving.");
@@ -566,11 +585,13 @@ export default function EmployeeForm({
     const empData: Partial<Employee> = {
       EmployeeID: employee ? employee.EmployeeID : selectedSimilar ? selectedSimilar.EmployeeID : undefined,
       FirstName: firstName.trim(),
+      MiddleName: middleName.trim(),
       MiddleInitial: middleInitial.trim(),
       LastName: lastName.trim(),
+      Suffix: suffix.trim(),
       Office: office,
       Position: position,
-      EmploymentType: employmentStatus,
+      EmploymentType: employmentType,
       EmploymentStatus: employmentStatus,
       Gender: gender,
       DateOfAssumption: dateOfAssumption ? new Date(dateOfAssumption).toISOString() : null as any,
@@ -623,7 +644,7 @@ export default function EmployeeForm({
                     onClick={() => handleUseExisting(emp)}
                     className="flex items-center gap-2 bg-white dark:bg-slate-900 hover:bg-slate-50 dark:hover:bg-slate-950 border border-amber-200 dark:border-amber-800 hover:border-amber-300 dark:hover:border-amber-700 text-slate-700 dark:text-slate-200 px-3.5 py-2 rounded-lg text-xs font-semibold shadow-sm transition text-left cursor-pointer"
                   >
-                    <span>{emp.LastName}, {emp.FirstName} ({emp.Office})</span>
+                    <span>{formatEmployeeName(emp)} ({emp.Office})</span>
                     <ArrowRight className="h-3 w-3 text-amber-600 shrink-0" />
                   </button>
                 ))}
@@ -637,7 +658,7 @@ export default function EmployeeForm({
           <div className="mx-6 mt-6 p-4 bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900/60 rounded-xl flex items-center gap-3">
             <UserCheck className="h-5 w-5 text-blue-600" />
             <div className="text-xs text-blue-800 dark:text-blue-300">
-              Selected Existing Record: <strong className="font-semibold">{selectedSimilar.FirstName} {selectedSimilar.LastName}</strong>. The system will merge these learning needs instead of creating a new employee.
+              Selected Existing Record: <strong className="font-semibold">{formatEmployeeName(selectedSimilar)}</strong>. The system will merge these learning needs instead of creating a new employee.
             </div>
             <button
               type="button"
@@ -695,26 +716,30 @@ export default function EmployeeForm({
             )}
           </div>
 
-          {/* Middle Initial */}
-          <div className="md:col-span-1">
+          {/* Middle Name */}
+          <div className="md:col-span-2">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              M.I.
+              Middle Name
             </label>
             <input
               type="text"
               ref={miInputRef}
-              maxLength={3}
-              value={middleInitial}
-              onChange={(e) => setMiddleInitial(e.target.value.toUpperCase())}
+              value={middleName}
+              onChange={(e) => {
+                const val = e.target.value;
+                setMiddleName(val);
+                const trimmed = val.trim();
+                setMiddleInitial(trimmed ? trimmed.charAt(0).toUpperCase() + "." : "");
+              }}
               onKeyDown={(e) => handleKeyDown(e, "mi")}
               onBlur={handleMiddleInitialBlur}
-              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm text-center shadow-sm transition-colors duration-200"
-              placeholder="e.g. E."
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200"
+              placeholder="e.g. Sarzaba"
             />
           </div>
 
           {/* Last Name */}
-          <div className="md:col-span-3 relative">
+          <div className="md:col-span-2 relative">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Last Name <span className="text-red-500">*</span>
             </label>
@@ -750,6 +775,20 @@ export default function EmployeeForm({
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Suffix */}
+          <div className="md:col-span-1">
+            <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
+              Suffix
+            </label>
+            <input
+              type="text"
+              value={suffix}
+              onChange={(e) => setSuffix(e.target.value)}
+              className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200"
+              placeholder="Jr., III, etc."
+            />
           </div>
 
           {/* Office (Standardized Autocomplete Search) */}
@@ -852,7 +891,7 @@ export default function EmployeeForm({
       </div>
 
       {/* Learning Needs Block */}
-      <div className="space-y-5">
+      {!hideLearningNeeds && (<div className="space-y-5">
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <h3 className="text-base font-bold text-slate-800 dark:text-slate-100 tracking-tight font-display">
@@ -1065,7 +1104,7 @@ export default function EmployeeForm({
             </div>
           ))}
         </div>
-      </div>
+      </div>)}
 
       {/* Save Button Row */}
       <div className="pt-4 border-t border-slate-200 dark:border-slate-800 flex items-center justify-end gap-3">

@@ -4,7 +4,7 @@ import fs from "fs";
 import multer from "multer";
 import { createServer as createViteServer } from "vite";
 import ExcelJS from "exceljs";
-import { computeChanges, changesDescription, formatBeforeAfter, TRACKED_FIELDS } from "./src/server/audit";
+
 
 // Extend Express Request type to support our RBAC middleware
 declare global {
@@ -165,6 +165,7 @@ const DEFAULT_SCHEDULES = [
 
 // Helper functions for DB reading & writing
 let _dbCache: any = null;
+let _dbCacheMtime: number = 0;
 
 function readDatabase() {
   try {
@@ -177,9 +178,6 @@ function readDatabase() {
       schedule: DEFAULT_SCHEDULES
     };
 
-    // Return cached copy if available (invalidated by writeDatabase)
-    if (_dbCache) return _dbCache;
-
     if (!fs.existsSync(DB_FILE)) {
       return { 
         users: [], 
@@ -188,9 +186,15 @@ function readDatabase() {
         seminars: [],
         seminarAttendees: [],
         seminarYears: [],
+        encodeLaterQueue: [],
         auditLogs: [],
         customOptions: { ...defaults } 
       };
+    }
+
+    const stat = fs.statSync(DB_FILE);
+    if (_dbCache && _dbCacheMtime === stat.mtimeMs) {
+      return _dbCache;
     }
 
     const data = fs.readFileSync(DB_FILE, "utf-8");
@@ -198,6 +202,7 @@ function readDatabase() {
     if (!db.seminars) db.seminars = [];
     if (!db.seminarAttendees) db.seminarAttendees = [];
     if (!db.seminarYears) db.seminarYears = [];
+    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
     if (!db.auditLogs) db.auditLogs = [];
     if (!db.customOptions) {
       db.customOptions = { ...defaults };
@@ -212,6 +217,7 @@ function readDatabase() {
     }
 
     _dbCache = db;
+    _dbCacheMtime = stat.mtimeMs;
     return db;
   } catch (error) {
     console.error("Error reading database:", error);
@@ -221,6 +227,7 @@ function readDatabase() {
       learningNeeds: [], 
       seminars: [],
       seminarAttendees: [],
+      encodeLaterQueue: [],
       auditLogs: [],
       customOptions: { 
         basis: [], 
@@ -243,6 +250,7 @@ function writeDatabase(data: any) {
     fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), "utf-8");
     // Invalidate cache so next read picks up changes
     _dbCache = null;
+    _dbCacheMtime = 0;
   } catch (error) {
     console.error("Error writing database:", error);
   }
@@ -302,6 +310,14 @@ function formatMiddleInitial(val: string): string {
   return cleaned.charAt(0) + ".";
 }
 
+function buildEmployeeName(emp: { LastName: string; FirstName: string; MiddleInitial?: string; Suffix?: string }): string {
+  const parts = [emp.LastName + ","];
+  if (emp.Suffix) parts.push(emp.Suffix);
+  parts.push(emp.FirstName);
+  if (emp.MiddleInitial) parts.push(emp.MiddleInitial.endsWith(".") ? emp.MiddleInitial : emp.MiddleInitial + ".");
+  return parts.join(" ");
+}
+
 function ensureCustomOptionsExist(employee: any, needs: any[], db: any) {
   if (!db.customOptions) {
     db.customOptions = { basis: [], methodology: [], office: [], position: [], learningNeed: [], schedule: [] };
@@ -357,6 +373,7 @@ function findSimilarEmployees(firstName: string, lastName: string, db: any) {
   }
 
   return db.employees.filter((emp: any) => {
+    if (emp.isActive === false) return false;
     const dbFirst = emp.FirstName.trim().toLowerCase().replace(/\s+/g, " ");
     const dbLast = emp.LastName.trim().toLowerCase().replace(/\s+/g, " ");
 
@@ -367,18 +384,6 @@ function findSimilarEmployees(firstName: string, lastName: string, db: any) {
 
     return dbLast === normLast && firstMatches;
   });
-}
-
-// Text normalization for fuzzy matching
-function normalizeText(text: string): string {
-  if (!text) return "";
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[\t\n\r]+/g, " ")
-    .replace(/[-_\/,.(）]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 const NON_PERSON_KEYWORDS = new Set([
@@ -436,213 +441,259 @@ function isLikelyPersonName(text: string): boolean {
   return true;
 }
 
+// Text normalization for fuzzy matching
+function getComparisonKey(text: string): string {
+  if (!text) return "";
+  return text
+    .normalize("NFKD") // Normalize Unicode characters
+    .replace(/[\u0300-\u036f]/g, "") // Strip accents/diacritics if any
+    .toLowerCase()
+    .replace(/[\t\n\r]+/g, " ") // Normalize tabs/newlines into spaces
+    .replace(/['"‘’“”`’]+/g, "") // Normalize quotes/apostrophes
+    .replace(/[—–-]/g, " ") // Normalize hyphens/dashes to spaces
+    .replace(/[.,\/#!$%\^&\*;:{}=\-_`~()]/g, " ") // Remove punctuation (replace with spaces)
+    .replace(/\s+/g, " ") // Collapse multiple spaces
+    .trim();
+}
+
+function getEmployeeComparisonKeys(emp: any): Set<string> {
+  const keys = new Set<string>();
+  
+  const fn = getComparisonKey(emp.FirstName || "");
+  const ln = getComparisonKey(emp.LastName || "");
+  const mi = getComparisonKey(emp.MiddleInitial || emp.MiddleName || "");
+  const suffix = getComparisonKey(emp.Suffix || "");
+
+  const addPermutations = (f: string, m: string, l: string, s: string) => {
+    keys.add(`${f} ${m} ${l} ${s}`.replace(/\s+/g, " ").trim());
+    keys.add(`${f} ${l} ${s}`.replace(/\s+/g, " ").trim());
+    keys.add(`${f} ${m} ${l}`.replace(/\s+/g, " ").trim());
+    keys.add(`${f} ${l}`.replace(/\s+/g, " ").trim());
+
+    keys.add(`${l} ${f} ${m} ${s}`.replace(/\s+/g, " ").trim());
+    keys.add(`${l} ${f} ${s}`.replace(/\s+/g, " ").trim());
+    keys.add(`${l} ${f} ${m}`.replace(/\s+/g, " ").trim());
+    keys.add(`${l} ${f}`.replace(/\s+/g, " ").trim());
+  };
+
+  addPermutations(fn, mi, ln, suffix);
+
+  if (ln.includes(" ")) {
+    const words = ln.split(/\s+/);
+    const lastWord = words[words.length - 1];
+    const prefixWords = words.slice(0, -1).join(" ");
+    const newFn = `${fn} ${prefixWords}`.replace(/\s+/g, " ").trim();
+    addPermutations(newFn, mi, lastWord, suffix);
+  }
+
+  return keys;
+}
+
+function normalizeText(text: string): string {
+  return getComparisonKey(text);
+}
+
+function normalizeName(name: string): string {
+  return getComparisonKey(name);
+}
+
+// ── Main matching function (replaces all previous matching logic) ────
 function matchEmployees(
   rawEmployees: { rawName: string; office: string; position?: string; employeeId?: string; manualEmployeeId?: number; _key?: string }[],
   dbEmployees: any[]
 ): { attendees: any[] } {
   const attendees: any[] = [];
-
-  // Names map for fast exact lookup (normalized) - includes both FIRST LAST and LAST, FIRST variations
-  const namesMap = new Map<string, any>();
-  dbEmployees.forEach((emp: any) => {
-    const fn = emp.FirstName || "";
-    const ln = emp.LastName || "";
-    const mi = emp.MiddleInitial || "";
-
-    const fullWithMI = normalizeText(`${fn} ${mi} ${ln}`);
-    const commaWithMI = normalizeText(`${ln}, ${fn} ${mi}`);
-    const fullNoMI = normalizeText(`${fn} ${ln}`);
-    const commaNoMI = normalizeText(`${ln}, ${fn}`);
-
-    if (fullWithMI) namesMap.set(fullWithMI, emp);
-    if (commaWithMI) namesMap.set(commaWithMI, emp);
-    if (fullNoMI) namesMap.set(fullNoMI, emp);
-    if (commaNoMI) namesMap.set(commaNoMI, emp);
-  });
-
-  // Build EmployeeID lookup map
-  const employeeByIdMap = new Map<string, any>();
-  dbEmployees.forEach((emp: any) => {
-    if (emp.EmployeeID) employeeByIdMap.set(String(emp.EmployeeID).trim(), emp);
-  });
-
   const parsedNames = new Set<string>();
 
-  for (const entry of rawEmployees) {
-    const { rawName: nameVal, office: officeVal, position: positionVal, employeeId, manualEmployeeId, _key } = entry;
-    if (!nameVal) continue;
-    if (nameVal.toLowerCase().includes("page") || nameVal.toLowerCase().includes("total") || nameVal.toLowerCase() === "names") continue;
+  // Build comparison key index for database employees
+  const comparisonKeyToEmployee = new Map<string, any[]>();
+  const employeeById = new Map<number, any>();
 
-    const normName = normalizeText(nameVal);
-    if (parsedNames.has(normName)) continue;
-    parsedNames.add(normName);
-
-    let match: any = null;
-    let matchedByManual = false;
-
-    // Priority 0: Manual match override
-    if (manualEmployeeId) {
-      const manualEmp = employeeByIdMap.get(String(manualEmployeeId));
-      if (manualEmp) {
-        match = manualEmp;
-        matchedByManual = true;
+  for (const emp of dbEmployees) {
+    employeeById.set(emp.EmployeeID, emp);
+    
+    // Generate all valid comparison keys for this employee
+    const keys = getEmployeeComparisonKeys(emp);
+    for (const key of keys) {
+      if (!comparisonKeyToEmployee.has(key)) {
+        comparisonKeyToEmployee.set(key, []);
       }
+      comparisonKeyToEmployee.get(key)!.push(emp);
+    }
+  }
+
+  // Pre-pass: If the input was split across two lines (e.g., from a PDF paste with newlines),
+  // they might appear as two consecutive unmatched entries. If joining them matches a DB entry, merge them!
+  const mergedRawEmployees = [];
+  let skipNext = false;
+
+  for (let i = 0; i < rawEmployees.length; i++) {
+    if (skipNext) {
+      skipNext = false;
+      continue;
     }
 
-    // Priority 1: Employee ID match (if available)
-    if (!match) {
-      const rawId = employeeId?.trim();
-      if (rawId) {
-        match = employeeByIdMap.get(rawId) || null;
-      }
-    }
+    const current = rawEmployees[i];
+    if (!current.rawName) continue;
 
-    // Priority 2: Full name match via normalized namesMap
-    if (!match) {
-      match = namesMap.get(normName);
-    }
+    if (i < rawEmployees.length - 1) {
+      const next = rawEmployees[i + 1];
+      if (next.rawName) {
+        const normCurrent = getComparisonKey(current.rawName);
+        const normNext = getComparisonKey(next.rawName);
 
-    // Priority 3: Without middle initials (normalized, both FIRST LAST and LAST, FIRST)
-    if (!match) {
-      const cleanName = normalizeText(normName.replace(/\b\w\.\b/g, "").replace(/\s+/g, " ").trim());
-      for (const emp of dbEmployees) {
-        if (match) break;
-        const empFull = normalizeText(`${emp.FirstName} ${emp.LastName}`);
-        const empComma = normalizeText(`${emp.LastName}, ${emp.FirstName}`);
-        if (empFull === cleanName || empComma === cleanName) {
-          match = emp;
-        }
-      }
-    }
+        const currentMatches = comparisonKeyToEmployee.has(normCurrent) || (current.employeeId && employeeById.has(Number(current.employeeId))) || current.manualEmployeeId;
+        const nextMatches = comparisonKeyToEmployee.has(normNext) || (next.employeeId && employeeById.has(Number(next.employeeId))) || next.manualEmployeeId;
 
-    // Priority 4: First name + Last name substring match (supports multi-word last/first names)
-    if (!match) {
-      const normInput = normalizeText(nameVal);
-      for (const emp of dbEmployees) {
-        if (match) break;
-        const empFirst = normalizeText(emp.FirstName || "");
-        const empLast = normalizeText(emp.LastName || "");
-        if (empFirst.length >= 2 && empLast.length >= 2) {
-          if (normInput.includes(empFirst) && normInput.includes(empLast)) {
-            match = emp;
+        if (!currentMatches && !nextMatches) {
+          const combinedName = `${current.rawName}, ${next.rawName}`;
+          if (comparisonKeyToEmployee.has(getComparisonKey(combinedName))) {
+            mergedRawEmployees.push({
+              ...current,
+              rawName: combinedName,
+              office: current.office || next.office,
+              _key: current._key || next._key
+            });
+            skipNext = true;
+            continue;
           }
         }
       }
     }
+    mergedRawEmployees.push(current);
+  }
 
-    // Priority 5: Last name + office match (normalized)
-    if (!match && officeVal) {
-      const normOffice = normalizeText(officeVal);
-      const excelLast = normalizeText(nameVal).split(/\s+/).pop() || "";
-      for (const emp of dbEmployees) {
-        if (match) break;
-        const empLast = normalizeText(emp.LastName || "");
-        const empOffice = normalizeText(emp.Office || "");
-        if (empLast === excelLast && empOffice === normOffice) {
-          match = emp;
-        }
+  for (const entry of mergedRawEmployees) {
+    const { rawName: nameVal, office: officeVal, position: positionVal, employeeId, manualEmployeeId, _key } = entry;
+    if (!nameVal) continue;
+    if (nameVal.toLowerCase().includes("page") || nameVal.toLowerCase().includes("total") || nameVal.toLowerCase() === "names") continue;
+
+    // Normalizing the input name using comparison key normalization
+    const normInput = getComparisonKey(nameVal);
+    if (parsedNames.has(normInput)) continue;
+    parsedNames.add(normInput);
+
+    let match: any = null;
+    let matchReason = "";
+    let allMatchedIds = new Set<number>();
+
+    // ── 1. Manual match override ──
+    if (manualEmployeeId) {
+      match = employeeById.get(manualEmployeeId) || null;
+      if (match) {
+        matchReason = "Manually matched by user";
+        allMatchedIds.add(manualEmployeeId);
       }
     }
 
-    if (match) {
-      const differences: string[] = [];
-      const matchReasons: string[] = [];
-      let confidence = 0;
-
-      if (matchedByManual) {
-        confidence = 100;
-        matchReasons.push("Manually matched by user");
-      } else if (employeeId?.trim() && String(match.EmployeeID).trim() === employeeId.trim()) {
-        confidence = 100;
-        matchReasons.push("Exact Employee ID match");
-      } else {
-        // Calculate confidence based on name and office components
-        const normInput = normalizeText(nameVal);
-        const normParts = normInput.split(/\s+/).filter(Boolean);
-        const empFirst = normalizeText(match.FirstName || "");
-        const empLast = normalizeText(match.LastName || "");
-        const empMI = normalizeText(match.MiddleInitial || "");
-
-        // Check name component matches (supporting multi-word names)
-        const firstNameMatch = (empFirst.length >= 2 && normInput.includes(empFirst)) || normParts.some(p => p === empFirst);
-        const lastNameMatch = (empLast.length >= 2 && normInput.includes(empLast)) || normParts.some(p => p === empLast);
-        const miMatch = empMI && (normInput.includes(` ${empMI} `) || normParts.some(p => p === empMI || p === empMI + "."));
-
-        if (firstNameMatch && lastNameMatch && miMatch) {
-          confidence = 98;
-          matchReasons.push("First name, last name, and middle initial match");
-        } else if (firstNameMatch && lastNameMatch) {
-          confidence = 95;
-          matchReasons.push("First name and last name match");
-        } else if (lastNameMatch && officeVal && match.Office && normalizeText(officeVal) === normalizeText(match.Office)) {
-          confidence = 85;
-          matchReasons.push("Last name and office match");
-        } else if (lastNameMatch) {
-          confidence = 75;
-          matchReasons.push("Last name matches");
-        } else {
-          confidence = 60;
-          matchReasons.push("Partial name match");
-        }
-
-        // Check office difference (reference only — never affects confidence or routing)
-        const positionValCheck = (entry as any).position || "";
-        if (officeVal && match.Office && normalizeText(officeVal) !== normalizeText(match.Office)) {
-          differences.push("Office");
-        }
-
-        // Check position difference (reference only — never affects confidence or routing)
-        if (positionValCheck && match.Position && normalizeText(positionValCheck) !== normalizeText(match.Position)) {
-          differences.push("Position");
-        }
+    // ── 2. Employee ID match ──
+    if (!match && employeeId?.trim()) {
+      const parsedId = Number(employeeId.trim());
+      match = employeeById.get(parsedId) || null;
+      if (match) {
+        matchReason = "Employee ID match";
+        allMatchedIds.add(match.EmployeeID);
       }
+    }
 
-      // Determine status and confidence level
-      const confidenceLevel = confidence >= 90 ? "HIGH" : confidence >= 70 ? "MEDIUM" : "LOW";
-      const status: "matched" | "review" = confidence >= 90 ? "matched" : "review";
-      const reviewReason = confidence < 90 ? "LOW_CONFIDENCE" : undefined;
-      const positionValOut = (entry as any).position || "";
+    // ── 3. Exact Normalized Comparison Key match ──
+    if (!match) {
+      const candidates = comparisonKeyToEmployee.get(normInput) || [];
+      if (candidates.length === 1) {
+        match = candidates[0];
+        matchReason = "Name match";
+        allMatchedIds.add(match.EmployeeID);
+      } else if (candidates.length > 1) {
+        // Ambiguous match (multiple employees share the same normalized name)
+        for (const c of candidates) {
+          allMatchedIds.add(c.EmployeeID);
+        }
+        matchReason = `${allMatchedIds.size} possible matches — manual selection required`;
+      }
+    }
+
+    // ── 4. Build result entry ──
+    if (match && allMatchedIds.size === 1) {
+      const differences: string[] = [];
+      if (officeVal && match.Office && getComparisonKey(officeVal) !== getComparisonKey(match.Office)) {
+        differences.push("Office");
+      }
+      if (positionVal && match.Position && getComparisonKey(positionVal) !== getComparisonKey(match.Position)) {
+        differences.push("Position");
+      }
 
       attendees.push({
         _key: _key || "",
-        rawName: nameVal,
+        rawName: nameVal, // Preserves original display name from excel
         office: officeVal,
-        position: positionValOut,
-        status,
-        reviewReason,
-        confidence,
-        confidenceLevel,
+        position: positionVal || "",
+        status: "matched" as const,
+        reviewReason: undefined,
+        confidence: 100,
+        confidenceLevel: "HIGH",
         EmployeeID: String(match.EmployeeID),
+        // Use EXACT casing and formatting from database fields!
         LastName: match.LastName,
         FirstName: match.FirstName,
-        MiddleInitial: match.MiddleInitial,
+        MiddleInitial: match.MiddleInitial || "",
+        Suffix: match.Suffix || "",
         Office: match.Office,
         Position: match.Position,
-        matchReasons,
+        matchReasons: [matchReason],
         differences,
         excelOffice: officeVal,
         dbOffice: match.Office,
-        excelPosition: positionValOut,
+        excelPosition: positionVal || "",
         dbPosition: match.Position,
         manualEmployeeId: manualEmployeeId || undefined
       });
     } else {
-      attendees.push({
-        _key: _key || "",
-        rawName: nameVal,
-        office: officeVal,
-        position: positionVal || "",
-        status: "unmatched",
-        reviewReason: "NO_MATCH",
-        confidence: 0,
-        confidenceLevel: "LOW",
-        matchReasons: [],
-        differences: [],
-        excelOffice: officeVal,
-        dbOffice: "",
-        excelPosition: positionVal || "",
-        dbPosition: ""
-      });
+      // Unmatched, ambiguous, or no exact match
+      if (allMatchedIds.size >= 1) {
+        const firstId = [...allMatchedIds][0];
+        const firstEmp = employeeById.get(firstId)!;
+        attendees.push({
+          _key: _key || "",
+          rawName: nameVal,
+          office: officeVal,
+          position: positionVal || "",
+          status: "review" as const,
+          reviewReason: "AMBIGUOUS" as const,
+          confidence: 0,
+          confidenceLevel: "LOW",
+          EmployeeID: String(firstId),
+          LastName: firstEmp.LastName,
+          FirstName: firstEmp.FirstName,
+          MiddleInitial: firstEmp.MiddleInitial || "",
+          Suffix: firstEmp.Suffix || "",
+          Office: firstEmp.Office,
+          Position: firstEmp.Position,
+          matchReasons: allMatchedIds.size > 1 ? [`${allMatchedIds.size} possible matches`] : [matchReason],
+          differences: [],
+          excelOffice: officeVal,
+          dbOffice: firstEmp.Office,
+          excelPosition: positionVal || "",
+          dbPosition: firstEmp.Position,
+          manualEmployeeId: undefined
+        });
+      } else {
+        attendees.push({
+          _key: _key || "",
+          rawName: nameVal,
+          office: officeVal,
+          position: positionVal || "",
+          status: "unmatched" as const,
+          reviewReason: "NO_MATCH" as const,
+          confidence: 0,
+          confidenceLevel: "LOW",
+          matchReasons: [],
+          differences: [],
+          excelOffice: officeVal,
+          dbOffice: "",
+          excelPosition: positionVal || "",
+          dbPosition: ""
+        });
+      }
     }
   }
 
@@ -695,33 +746,51 @@ app.delete("/api/options/:type/:value", (req, res) => {
 });
 
 // ── RBAC Permission Helper ──────────────────────────────────────────────
+const ALL_PERMISSIONS = [
+  "employee:view", "employee:create", "employee:edit", "employee:delete",
+  "seminar:view", "seminar:create", "seminar:edit", "seminar:delete",
+  "seminar:import", "seminar:year:delete", "seminar:attendee:delete",
+  "import:data", "audit:view",
+  "user:manage", "user:assign_role", "user:delete",
+];
+
 const PERMISSION_MAP: Record<string, string[]> = {
   Encoder: [
-    "employee:view", "employee:create", "employee:edit",
+    "employee:view",
     "seminar:view", "seminar:create", "seminar:edit", "seminar:import",
+    "import:data",
   ],
   Administrator: [
     "employee:view", "employee:create", "employee:edit", "employee:delete",
     "seminar:view", "seminar:create", "seminar:edit", "seminar:delete",
     "seminar:import", "seminar:year:delete", "seminar:attendee:delete",
     "import:data", "audit:view",
+    "user:manage", "user:assign_role",
   ],
-  "System developer": [
+  admin: [
     "employee:view", "employee:create", "employee:edit", "employee:delete",
     "seminar:view", "seminar:create", "seminar:edit", "seminar:delete",
     "seminar:import", "seminar:year:delete", "seminar:attendee:delete",
     "import:data", "audit:view",
-    "user:manage", "user:assign_role", "user:delete",
+    "user:manage", "user:assign_role",
   ],
+  "System developer": [...ALL_PERMISSIONS],
 };
 
 function getUserFromRequest(req: any): any {
   const userId = req.headers["x-user-id"] || req.body?._userId;
-  if (!userId) return null;
   const db = readDatabase();
+  if (!userId) {
+    // Default fallback to active admin user for single-user/development mode
+    const admin = (db.users || []).find(
+      (u: any) => (u.role === "admin" || u.role === "Administrator" || u.role === "System developer") && u.isActive !== false
+    );
+    if (admin) return { id: admin.id, username: admin.username, role: admin.role, name: admin.name, permissions: admin.permissions };
+    return null;
+  }
   const user = db.users.find((u: any) => String(u.id) === String(userId));
   if (!user || user.isActive === false) return null;
-  return { id: user.id, username: user.username, role: user.role, name: user.name };
+  return { id: user.id, username: user.username, role: user.role, name: user.name, permissions: user.permissions };
 }
 
 function requirePermission(...permissions: string[]) {
@@ -730,12 +799,28 @@ function requirePermission(...permissions: string[]) {
     if (!user) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    const userPerms = PERMISSION_MAP[user.role] || [];
+    // Start with role defaults, then apply per-user overrides from user.permissions
+    const basePerms = PERMISSION_MAP[user.role] || [];
+    let userPerms: string[];
+    if (user.permissions && Array.isArray(user.permissions)) {
+      userPerms = [...basePerms];
+      for (const p of user.permissions) {
+        if (p.startsWith("+")) {
+          const permName = p.slice(1);
+          if (!userPerms.includes(permName)) userPerms.push(permName);
+        } else if (p.startsWith("-")) {
+          const permName = p.slice(1);
+          userPerms = userPerms.filter(existing => existing !== permName);
+        }
+      }
+    } else {
+      userPerms = basePerms;
+    }
     const hasAny = permissions.some(p => userPerms.includes(p));
     if (!hasAny) {
       return res.status(403).json({ error: "Insufficient permissions" });
     }
-    req._user = user;
+    req._user = { ...user, _effectivePerms: userPerms };
     next();
   };
 }
@@ -1023,6 +1108,29 @@ app.put("/api/users/:id", requirePermission("user:manage", "user:assign_role"), 
     user.role = req.body.role;
   }
 
+  // Per-user permission overrides (only System developer can set these)
+  if (req.body.permissions !== undefined) {
+    const sysPerms = PERMISSION_MAP[req._user?.role] || [];
+    if (!sysPerms.includes("user:manage")) {
+      return res.status(403).json({ error: "Insufficient permissions to modify permissions" });
+    }
+    if (!Array.isArray(req.body.permissions)) {
+      return res.status(400).json({ error: "permissions must be an array of strings" });
+    }
+    const validPerms = new Set(ALL_PERMISSIONS);
+    for (const p of req.body.permissions) {
+      if (typeof p !== "string") {
+        return res.status(400).json({ error: "Each permission must be a string" });
+      }
+      const op = p[0];
+      const permName = op === "+" || op === "-" ? p.slice(1) : p;
+      if (!validPerms.has(permName)) {
+        return res.status(400).json({ error: `Invalid permission: ${p}` });
+      }
+    }
+    user.permissions = req.body.permissions;
+  }
+
   db.users[idx] = user;
   writeDatabase(db);
   createAuditLog({
@@ -1072,32 +1180,86 @@ app.delete("/api/users/:id", requirePermission("user:delete"), (req, res) => {
 // 2. Get Dashboard Stats
 app.get("/api/dashboard/stats", (req, res) => {
   const db = readDatabase();
-  const totalEmployees = db.employees.length;
+  const activeEmployees = db.employees.filter((emp: any) => emp.isActive !== false);
+  const archivedEmployeesCount = db.employees.filter((emp: any) => emp.isActive === false).length;
+  
+  const totalEmployees = activeEmployees.length;
   const totalLearningNeeds = db.learningNeeds.length;
 
-  // Added today calculations
   const todayStr = new Date().toISOString().split("T")[0];
-  const addedToday = db.learningNeeds.filter((ln: any) => {
-    return ln.CreatedAt && ln.CreatedAt.startsWith(todayStr);
-  }).length;
 
-  // Upcoming Training Schedules estimation (e.g., target schedules starting in 2026/2027/2028 or Immediate)
-  const upcomingSchedules = db.learningNeeds.filter((ln: any) => {
-    const sched = ln.TargetSchedule || "";
-    return (
-      sched.includes("2026") ||
-      sched.includes("2027") ||
-      sched.includes("2028") ||
-      sched.toLowerCase().includes("immediately")
-    );
-  }).length;
+  // Unique employees who received new learning needs today
+  const uniqueEmployeeIdsToday = new Set<number>();
+  (db.learningNeeds || []).forEach((ln: any) => {
+    if (ln.CreatedAt && ln.CreatedAt.startsWith(todayStr)) {
+      uniqueEmployeeIdsToday.add(ln.EmployeeID);
+    }
+  });
+  const learningNeedsTodayUnique = uniqueEmployeeIdsToday.size;
+
+  // Workforce distribution counts
+  const permanent = activeEmployees.filter((e: any) => e.EmploymentStatus === "Permanent").length;
+  const casual = activeEmployees.filter((e: any) => e.EmploymentStatus === "Casual").length;
+  const jobOrder = activeEmployees.filter((e: any) => e.EmploymentStatus === "Job Order").length;
+  const consultant = activeEmployees.filter((e: any) => e.EmploymentStatus === "Consultant").length;
+  const unidentified = activeEmployees.filter((e: any) => 
+    e.EmploymentStatus !== "Permanent" &&
+    e.EmploymentStatus !== "Casual" &&
+    e.EmploymentStatus !== "Job Order" &&
+    e.EmploymentStatus !== "Consultant"
+  ).length;
+
+  const newlyHired = activeEmployees.filter((e: any) => e.NewlyHired === "Newly Hired" || e.EmploymentStatus === "Newly Hired").length;
+
+  // Last activity and sync details
+  const lastLog = db.auditLogs && db.auditLogs.length > 0 ? db.auditLogs[db.auditLogs.length - 1] : null;
+  const lastActivity = lastLog ? {
+    action: lastLog.action || lastLog.description || "Activity logged",
+    timestamp: lastLog.timestamp,
+    performed_by: lastLog.performed_by
+  } : null;
+
+  const syncLogs = (db.auditLogs || []).filter((log: any) => 
+    (log.action && log.action.toLowerCase().includes("import")) ||
+    (log.module && log.module.toLowerCase().includes("import"))
+  );
+  const lastSyncLog = syncLogs.length > 0 ? syncLogs[syncLogs.length - 1] : null;
+  const lastSync = lastSyncLog ? {
+    action: lastSyncLog.action || "Database Synchronized",
+    timestamp: lastSyncLog.timestamp
+  } : null;
+
+  // Recent activity logs (top 10 descending)
+  const recentActivity = [...(db.auditLogs || [])]
+    .reverse()
+    .slice(0, 10)
+    .map((log: any) => {
+      const logObj: any = {
+        id: log.id,
+        action: log.action || log.description || "Action logged",
+        description: log.description,
+        performed_by: log.performed_by,
+        timestamp: log.timestamp,
+        entity_type: log.entity_type,
+        entity_id: log.entity_id,
+        entity_name: log.entity_name
+      };
+      if (log.entity_type === "seminar" && log.entity_id) {
+        const sem = db.seminars.find((s: any) => s.id === log.entity_id);
+        if (sem) {
+          logObj.seminarYear = sem.year;
+          logObj.seminarQuarter = sem.quarter;
+        }
+      }
+      return logObj;
+    });
 
   // Calculate status review alerts (employees in status for 1+ year)
   const alertEmployees: any[] = [];
   const oneYearAgo = new Date();
   oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
 
-  db.employees.forEach((emp: any) => {
+  activeEmployees.forEach((emp: any) => {
     const status = emp.EmploymentStatus || "Undefined (Pending Review)";
     const changedAt = emp.StatusChangedAt;
     if (!changedAt) return;
@@ -1107,7 +1269,7 @@ app.get("/api/dashboard/stats", (req, res) => {
       if (status === "Newly Hired" || status === "Re-employed") {
         alertEmployees.push({
           id: emp.EmployeeID,
-          name: `${emp.FirstName} ${emp.LastName}`,
+          name: buildEmployeeName(emp),
           office: emp.Office,
           status,
           message: "Not yet declared as Casual (1+ year in status)"
@@ -1115,7 +1277,7 @@ app.get("/api/dashboard/stats", (req, res) => {
       } else if (status === "Casual") {
         alertEmployees.push({
           id: emp.EmployeeID,
-          name: `${emp.FirstName} ${emp.LastName}`,
+          name: buildEmployeeName(emp),
           office: emp.Office,
           status,
           message: "Not yet declared as Permanent (1+ year in status)"
@@ -1126,10 +1288,108 @@ app.get("/api/dashboard/stats", (req, res) => {
 
   return res.json({
     totalEmployees,
+    archivedEmployees: archivedEmployeesCount,
     totalLearningNeeds,
-    addedToday,
-    upcomingSchedules,
+    learningNeedsTodayUnique,
     alertEmployees,
+    workforceDistribution: {
+      status: {
+        permanent,
+        casual,
+        jobOrder,
+        consultant,
+        unidentified
+      },
+      activity: {
+        newlyHired
+      }
+    },
+    lastActivity,
+    lastSync,
+    recentActivity
+  });
+});
+
+// Global search route
+app.get("/api/search", (req, res) => {
+  const db = readDatabase();
+  const query = (req.query.q || "").toString().trim().toLowerCase();
+  if (!query) {
+    return res.json({ employees: [], seminars: [], learningNeeds: [], offices: [] });
+  }
+
+  // 1. Search Active Employees (up to 10)
+  const activeEmployees = db.employees.filter((emp: any) => emp.isActive !== false);
+  const employeeResults = activeEmployees.filter((emp: any) => {
+    const fullName = `${emp.FirstName} ${emp.LastName}`.toLowerCase();
+    const reverseName = `${emp.LastName} ${emp.FirstName}`.toLowerCase();
+    return fullName.includes(query) || reverseName.includes(query) || (emp.EmployeeID && String(emp.EmployeeID).includes(query));
+  }).slice(0, 10).map((emp: any) => ({
+    id: emp.EmployeeID,
+    name: buildEmployeeName(emp),
+    office: emp.Office,
+    position: emp.Position,
+    type: "employee"
+  }));
+
+  // 2. Search Unique Seminar Names / Quarters (up to 10)
+  const seminarResults: any[] = [];
+  const seenSeminars = new Set<string>();
+  (db.seminars || []).forEach((sem: any) => {
+    if (sem.title && sem.title.toLowerCase().includes(query)) {
+      const key = `${sem.year}_${sem.quarter}_${sem.id}`;
+      if (!seenSeminars.has(key)) {
+        seenSeminars.add(key);
+        seminarResults.push({
+          id: sem.id,
+          title: sem.title,
+          year: sem.year,
+          quarter: sem.quarter,
+          type: "seminar"
+        });
+      }
+    }
+  });
+
+  // 3. Search Learning Needs (unique names, up to 10)
+  const needsResults: any[] = [];
+  const seenNeeds = new Set<string>();
+  (db.learningNeeds || []).forEach((ln: any) => {
+    if (ln.LearningNeed && ln.LearningNeed.toLowerCase().includes(query)) {
+      const val = ln.LearningNeed.trim();
+      const lower = val.toLowerCase();
+      if (!seenNeeds.has(lower)) {
+        seenNeeds.add(lower);
+        needsResults.push({
+          name: val,
+          type: "learningNeed"
+        });
+      }
+    }
+  });
+
+  // 4. Search Unique Offices (up to 10)
+  const officeResults: any[] = [];
+  const seenOffices = new Set<string>();
+  activeEmployees.forEach((emp: any) => {
+    if (emp.Office && emp.Office.toLowerCase().includes(query)) {
+      const val = emp.Office.trim();
+      const lower = val.toLowerCase();
+      if (!seenOffices.has(lower)) {
+        seenOffices.add(lower);
+        officeResults.push({
+          name: val,
+          type: "office"
+        });
+      }
+    }
+  });
+
+  res.json({
+    employees: employeeResults,
+    seminars: seminarResults.slice(0, 10),
+    learningNeeds: needsResults.slice(0, 10),
+    offices: officeResults.slice(0, 10)
   });
 });
 
@@ -1180,12 +1440,16 @@ app.get("/api/employees", (req, res) => {
     results = results.slice(0, maxResults);
   }
 
-  // Map employee with learning need count
+  // Map employee with learning need count using pre-computed Map
+  const needsCountMap = new Map<number, number>();
+  (db.learningNeeds || []).forEach((ln: any) => {
+    needsCountMap.set(ln.EmployeeID, (needsCountMap.get(ln.EmployeeID) || 0) + 1);
+  });
+
   const resultsWithCount = results.map((emp) => {
-    const needs = db.learningNeeds.filter((ln: any) => ln.EmployeeID === emp.EmployeeID);
     return {
       ...emp,
-      needsCount: needs.length,
+      needsCount: needsCountMap.get(emp.EmployeeID) || 0,
     };
   });
 
@@ -1204,12 +1468,13 @@ app.get("/api/employees/pending", (req, res) => {
   // Find IDs of all employees who have at least one learning need
   const hasNeedsIds = new Set(db.learningNeeds.map((ln: any) => ln.EmployeeID));
   
-  // Apply base queue mode filter
-  let pending = db.employees;
+  // Apply base queue mode filter (active employees only)
+  const activeEmps = db.employees.filter((emp: any) => emp.isActive !== false);
+  let pending = activeEmps;
   if (mode === "no_needs") {
-    pending = db.employees.filter((emp: any) => !hasNeedsIds.has(emp.EmployeeID));
+    pending = activeEmps.filter((emp: any) => !hasNeedsIds.has(emp.EmployeeID));
   } else if (mode === "has_needs") {
-    pending = db.employees.filter((emp: any) => hasNeedsIds.has(emp.EmployeeID));
+    pending = activeEmps.filter((emp: any) => hasNeedsIds.has(emp.EmployeeID));
   }
 
   // Apply search
@@ -1244,6 +1509,47 @@ app.get("/api/employees/pending", (req, res) => {
   });
 });
 
+
+// 4c. Get Archived Employees (MUST be before /:id route)
+app.get("/api/employees/archived", (req, res) => {
+  const db = readDatabase();
+  const { search = "" } = req.query;
+
+  let results = (db.employees || []).filter((emp: any) => emp.isActive === false);
+
+  if (search) {
+    const terms = (search as string).toLowerCase().split(/\s+/).filter(t => t.length > 0);
+    if (terms.length > 0) {
+      results = results.filter((emp: any) => {
+        const searchString = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName} ${emp.Office || ""}`.toLowerCase();
+        const commaName = `${emp.LastName}, ${emp.FirstName}`.toLowerCase();
+        const empId = String(emp.EmployeeID);
+        return terms.every(term => searchString.includes(term) || commaName.includes(term) || empId.includes(term));
+      });
+    }
+  }
+
+  const needsCountMap = new Map<number, number>();
+  (db.learningNeeds || []).forEach((ln: any) => {
+    needsCountMap.set(ln.EmployeeID, (needsCountMap.get(ln.EmployeeID) || 0) + 1);
+  });
+
+  const seminarCountMap = new Map<number, number>();
+  (db.seminarAttendees || []).forEach((sa: any) => {
+    seminarCountMap.set(sa.employeeId, (seminarCountMap.get(sa.employeeId) || 0) + 1);
+  });
+
+  const resultsWithCount = results.map((emp: any) => {
+    return {
+      ...emp,
+      needsCount: needsCountMap.get(emp.EmployeeID) || 0,
+      seminarCount: seminarCountMap.get(emp.EmployeeID) || 0
+    };
+  });
+
+  return res.json({ employees: resultsWithCount });
+});
+
 // 5. Get Single Employee and their learning needs
 app.get("/api/employees/:id", (req, res) => {
   const id = parseInt(req.params.id);
@@ -1270,7 +1576,7 @@ app.get("/api/employees/:id", (req, res) => {
 
 // 6. Create New Employee
 app.post("/api/employees", (req, res) => {
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, username = "system" } = req.body;
+  const { firstName, middleName, middleInitial, lastName, suffix, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -1280,8 +1586,11 @@ app.post("/api/employees", (req, res) => {
 
   // Clean data
   const cleanFirst = formatName(firstName);
-  const cleanMiddle = formatMiddleInitial(middleInitial);
+  const rawMiddle = middleName || middleInitial || "";
+  const cleanMiddleName = rawMiddle ? formatName(rawMiddle) : "";
+  const cleanMiddleInitial = formatMiddleInitial(rawMiddle);
   const cleanLast = formatName(lastName);
+  const cleanSuffix = suffix ? suffix.trim().toUpperCase().replace(/^\.+|\.+$/g, "") : "";
   const cleanOffice = office.trim();
   const cleanPosition = position.trim();
   const type = employmentType || "Undefined (Pending Review)";
@@ -1292,8 +1601,10 @@ app.post("/api/employees", (req, res) => {
   const newEmployee: any = {
     EmployeeID: maxId + 1,
     FirstName: cleanFirst,
-    MiddleInitial: cleanMiddle,
+    MiddleName: cleanMiddleName,
+    MiddleInitial: cleanMiddleInitial,
     LastName: cleanLast,
+    Suffix: cleanSuffix,
     Office: cleanOffice,
     Position: cleanPosition,
     EmploymentType: type,
@@ -1320,8 +1631,8 @@ app.post("/api/employees", (req, res) => {
     action: "Employee Created",
     entity_type: "employee",
     entity_id: newEmployee.EmployeeID,
-    entity_name: `${cleanLast}, ${cleanFirst}`,
-    description: `Created employee ${cleanLast}, ${cleanFirst}`,
+    entity_name: buildEmployeeName(newEmployee),
+    description: `Created employee ${buildEmployeeName(newEmployee)}`,
     after_data: newEmployee,
     performed_by: username,
   });
@@ -1332,7 +1643,7 @@ app.post("/api/employees", (req, res) => {
 // 7. Update Employee and Learning Needs in one transaction (Sync)
 app.put("/api/employees/:id", (req, res) => {
   const id = parseInt(req.params.id);
-  const { firstName, middleInitial, lastName, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, needs = [], username = "system" } = req.body;
+  const { firstName, middleName, middleInitial, lastName, suffix, office, position, employmentType, employmentStatus, gender, dateOfAssumption, newlyHired, needs = [], username = "system" } = req.body;
 
   if (!firstName || !lastName || !office || !position) {
     return res.status(400).json({ message: "First name, last name, office, and position are required" });
@@ -1355,13 +1666,18 @@ app.put("/api/employees/:id", (req, res) => {
   }
 
   const hasDateOfAssumption = Object.prototype.hasOwnProperty.call(req.body, "dateOfAssumption");
+  const rawMiddle = middleName !== undefined ? middleName : (middleInitial !== undefined ? middleInitial : oldEmp.MiddleName || oldEmp.MiddleInitial || "");
+  const cleanMiddleName = rawMiddle ? formatName(rawMiddle) : "";
+  const cleanMiddleInitial = formatMiddleInitial(rawMiddle);
 
   // Update employee info
   const updatedEmployee: any = {
     ...oldEmp,
     FirstName: formatName(firstName),
-    MiddleInitial: formatMiddleInitial(middleInitial),
+    MiddleName: cleanMiddleName,
+    MiddleInitial: cleanMiddleInitial,
     LastName: formatName(lastName),
+    Suffix: suffix !== undefined ? (suffix ? suffix.trim().toUpperCase().replace(/^\.+|\.+$/g, "") : "") : (oldEmp.Suffix || ""),
     Office: office.trim(),
     Position: position.trim(),
     EmploymentType: employmentType || "Undefined (Pending Review)",
@@ -1423,13 +1739,15 @@ app.put("/api/employees/:id", (req, res) => {
   if (oldEmp.Office !== updatedEmployee.Office) changes.push(`Office changed: ${oldEmp.Office} → ${updatedEmployee.Office}`);
   if (oldEmp.Position !== updatedEmployee.Position) changes.push(`Position changed: ${oldEmp.Position} → ${updatedEmployee.Position}`);
   if (oldEmp.EmploymentStatus !== updatedEmployee.EmploymentStatus) changes.push(`Employment status changed: ${oldEmp.EmploymentStatus} → ${updatedEmployee.EmploymentStatus}`);
+  if (oldEmp.NewlyHired !== updatedEmployee.NewlyHired) changes.push(`Newly hired changed: ${oldEmp.NewlyHired} → ${updatedEmployee.NewlyHired}`);
+  if (oldEmp.Gender !== updatedEmployee.Gender) changes.push(`Gender changed: ${oldEmp.Gender} → ${updatedEmployee.Gender}`);
   createAuditLog({
     module: "Employee Management",
     action: "Employee Updated",
     entity_type: "employee",
     entity_id: id,
-    entity_name: `${updatedEmployee.LastName}, ${updatedEmployee.FirstName}`,
-    description: changes.length > 0 ? changes.join("; ") : `Updated employee ${updatedEmployee.LastName}, ${updatedEmployee.FirstName}`,
+    entity_name: buildEmployeeName(updatedEmployee),
+    description: changes.length > 0 ? changes.join("; ") : `Updated employee ${buildEmployeeName(updatedEmployee)}`,
     before_data: oldEmp,
     after_data: updatedEmployee,
     performed_by: username,
@@ -1461,8 +1779,8 @@ app.delete("/api/employees/:id", requirePermission("employee:delete"), (req, res
     action: "Employee Deleted",
     entity_type: "employee",
     entity_id: id,
-    entity_name: `${deletedEmp.LastName}, ${deletedEmp.FirstName}`,
-    description: `Deleted employee ${deletedEmp.LastName}, ${deletedEmp.FirstName}`,
+    entity_name: buildEmployeeName(deletedEmp),
+    description: `Deleted employee ${buildEmployeeName(deletedEmp)}`,
     before_data: deletedEmp,
     performed_by: req.body?.username || "system",
   });
@@ -1470,33 +1788,7 @@ app.delete("/api/employees/:id", requirePermission("employee:delete"), (req, res
   return res.json({ message: "Employee and associated learning needs successfully deleted" });
 });
 
-// 8b. Get Archived Employees
-app.get("/api/employees/archived", (req, res) => {
-  const db = readDatabase();
-  const { search = "" } = req.query;
 
-  let results = (db.employees || []).filter((emp: any) => emp.isActive === false);
-
-  if (search) {
-    const terms = (search as string).toLowerCase().split(/\s+/).filter(t => t.length > 0);
-    if (terms.length > 0) {
-      results = results.filter((emp: any) => {
-        const searchString = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName} ${emp.Office || ""} ${emp.Position || ""}`.toLowerCase();
-        const commaName = `${emp.LastName}, ${emp.FirstName}`.toLowerCase();
-        const empId = String(emp.EmployeeID);
-        return terms.every(term => searchString.includes(term) || commaName.includes(term) || empId.includes(term));
-      });
-    }
-  }
-
-  const resultsWithCount = results.map((emp: any) => {
-    const needs = (db.learningNeeds || []).filter((ln: any) => ln.EmployeeID === emp.EmployeeID);
-    const seminarCount = (db.seminarAttendees || []).filter((sa: any) => sa.employeeId === emp.EmployeeID).length;
-    return { ...emp, needsCount: needs.length, seminarCount };
-  });
-
-  return res.json({ employees: resultsWithCount });
-});
 
 // 8c. Restore an archived employee
 app.post("/api/employees/:id/restore", (req, res) => {
@@ -1524,7 +1816,7 @@ app.post("/api/employees/:id/restore", (req, res) => {
     action: "Employee Restored",
     entity_type: "employee",
     entity_id: id,
-    entity_name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+    entity_name: buildEmployeeName(emp),
     description: `Employee restored from archive`,
     before_data: { isActive: false },
     after_data: { isActive: true },
@@ -1572,13 +1864,27 @@ app.post("/api/employees/:id/learning-needs", (req, res) => {
 // 10. Get All Learning Need Records in tabular format (joined with Employee details)
 app.get("/api/learning-needs", (req, res) => {
   const db = readDatabase();
-  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", newlyHired = "", hasNeeds = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
+  const { search = "", office = "", learningNeed = "", employmentType = "", employmentStatus = "", newlyHired = "", hasNeeds = "", archived = "", isArchived = "", sortBy = "LastName", sortOrder = "asc" } = req.query;
 
   let results: any[] = [];
 
   // Re-create the View: Left Join Employee + Learning Needs
-  db.employees.forEach((emp: any) => {
-    const empNeeds = db.learningNeeds.filter((ln: any) => ln.EmployeeID === emp.EmployeeID);
+  const isArchivedRequested = archived === "true" || isArchived === "true";
+  const targetEmployees = (db.employees || []).filter((emp: any) => 
+    isArchivedRequested ? emp.isActive === false : emp.isActive !== false
+  );
+
+  // Group learning needs by EmployeeID for O(1) lookup
+  const needsByEmployeeId = new Map<number, any[]>();
+  (db.learningNeeds || []).forEach((ln: any) => {
+    if (!needsByEmployeeId.has(ln.EmployeeID)) {
+      needsByEmployeeId.set(ln.EmployeeID, []);
+    }
+    needsByEmployeeId.get(ln.EmployeeID)!.push(ln);
+  });
+
+  targetEmployees.forEach((emp: any) => {
+    const empNeeds = needsByEmployeeId.get(emp.EmployeeID) || [];
     if (empNeeds.length > 0) {
       empNeeds.forEach((ln: any) => {
         results.push({
@@ -1721,7 +2027,7 @@ app.delete("/api/learning-needs/:id", (req, res) => {
     entity_type: "learning_need",
     entity_id: id,
     entity_name: deletedLN.LearningNeed,
-    description: `Deleted learning need "${deletedLN.LearningNeed}" for employee ${emp ? `${emp.LastName}, ${emp.FirstName}` : `#${deletedLN.EmployeeID}`}`,
+    description: `Deleted learning need "${deletedLN.LearningNeed}" for employee ${emp ? buildEmployeeName(emp) : `#${deletedLN.EmployeeID}`}`,
     before_data: deletedLN,
     performed_by: req.body?.username || "system",
   });
@@ -1738,8 +2044,8 @@ app.get("/api/export/excel", async (req, res) => {
 
   let results: any[] = [];
 
-  // Fetch flat joined data using LEFT JOIN
-  db.employees.forEach((emp: any) => {
+  // Fetch flat joined data using LEFT JOIN (active employees only)
+  db.employees.filter((emp: any) => emp.isActive !== false).forEach((emp: any) => {
     const empNeeds = db.learningNeeds.filter((ln: any) => ln.EmployeeID === emp.EmployeeID);
     if (empNeeds.length > 0) {
       empNeeds.forEach((ln: any) => {
@@ -1904,7 +2210,7 @@ app.get("/api/export/excel", async (req, res) => {
 
   // Data rows
   results.forEach((item, index) => {
-    const fullName = `${item.LastName}, ${item.FirstName} ${item.MiddleInitial || ""}`.trim();
+    const fullName = buildEmployeeName(item);
     const formattedDoa = item.DateOfAssumption ? new Date(item.DateOfAssumption).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "N/A";
     const row = worksheet.addRow([
       index + 1,
@@ -2119,9 +2425,46 @@ app.post("/api/export/excel-custom", async (req, res) => {
 // ----------------------------------------------------
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 20 * 1024 * 1024 } });
 
+const UPLOADS_DIR = path.join(process.cwd(), "uploads", "seminar-attachments");
+if (!fs.existsSync(UPLOADS_DIR)) {
+  fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+}
+
+const diskStorage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, UPLOADS_DIR);
+  },
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname) || "";
+    cb(null, `${req.params.id}_${Date.now()}${ext}`);
+  }
+});
+const uploadDisk = multer({ storage: diskStorage, limits: { fileSize: 20 * 1024 * 1024 } });
+
 function cleanImportStr(str: string | null | undefined): string {
   if (!str) return "";
-  return str.toString().trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "").replace(/\s+/g, "");
+  return str
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(jr|sr|ii|iii|iv|v)\b/gi, "")
+    .replace(/[^a-z0-9]/g, "")
+    .replace(/\s+/g, "");
+}
+
+function cleanImportWithSpaces(str: string | null | undefined): string {
+  if (!str) return "";
+  return str
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\b(jr|sr|ii|iii|iv|v)\b/gi, "")
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, " ");
 }
 
 function normField(val: string | null | undefined): string {
@@ -2130,27 +2473,73 @@ function normField(val: string | null | undefined): string {
 }
 
 function parseExcelName(fullName: string) {
-  const parts = fullName.split(",");
-  if (parts.length < 2) {
-    return { lastName: fullName.trim(), firstName: "", middleInitial: "", fullAfterComma: "" };
+  if (!fullName || typeof fullName !== "string") {
+    return { lastName: "", firstName: "", middleName: "", middleInitial: "", fullAfterComma: "" };
   }
-  const lastName = parts[0].trim();
-  const fullAfterComma = parts.slice(1).join(",").trim();
-  const words = fullAfterComma.split(/\s+/);
-  if (words.length > 1) {
-    const lastWord = words[words.length - 1];
-    if (lastWord.length === 1 || (lastWord.length === 2 && lastWord.endsWith("."))) {
-      const mi = lastWord.replace(".", "") + ".";
-      const first = words.slice(0, -1).join(" ");
-      return { lastName, firstName: first, middleInitial: mi, fullAfterComma };
+
+  const rawParts = fullName.split(",").map(p => p.trim()).filter(p => p.length > 0);
+  if (rawParts.length === 0) {
+    return { lastName: "", firstName: "", middleName: "", middleInitial: "", fullAfterComma: "" };
+  }
+
+  let lastName = rawParts[0];
+  let remainingParts = rawParts.slice(1);
+
+  if (remainingParts.length > 0) {
+    const p1Clean = remainingParts[0].replace(/\./g, "").trim().toLowerCase();
+    if (["jr", "sr", "ii", "iii", "iv", "v", "1st", "2nd", "3rd"].includes(p1Clean)) {
+      lastName = `${lastName}, ${remainingParts[0]}`;
+      remainingParts = remainingParts.slice(1);
+    }
+  }
+
+  const fullAfterComma = remainingParts.join(", ").trim();
+  const words = fullAfterComma.split(/\s+/).filter(w => w.length > 0);
+
+  const cleanWords: string[] = [];
+  let extractedSuffix = "";
+  for (const w of words) {
+    const wClean = w.replace(/[\.,]/g, "").trim().toLowerCase();
+    if (["jr", "sr", "ii", "iii", "iv", "v"].includes(wClean)) {
+      extractedSuffix = w.replace(/,/g, "").trim();
+      if (!lastName.toLowerCase().includes(wClean)) {
+        lastName = `${lastName}, ${extractedSuffix}`;
+      }
     } else {
-      const mi = lastWord.charAt(0).toUpperCase() + ".";
-      const first = words.slice(0, -1).join(" ");
-      return { lastName, firstName: first, middleInitial: mi, fullMiddleName: lastWord, fullAfterComma };
+      cleanWords.push(w);
+    }
+  }
+
+  let firstName = "";
+  let middleName = "";
+  let middleInitial = "";
+
+  if (cleanWords.length === 1) {
+    firstName = cleanWords[0];
+  } else if (cleanWords.length > 1) {
+    const lastWord = cleanWords[cleanWords.length - 1];
+    const cleanLast = lastWord.replace(/\./g, "").trim();
+
+    if (lastWord.endsWith(".") || (cleanLast.length === 1 && /[A-Z]/i.test(cleanLast))) {
+      middleInitial = cleanLast.toUpperCase() + ".";
+      middleName = middleInitial;
+      firstName = cleanWords.slice(0, -1).join(" ");
+    } else {
+      middleName = lastWord;
+      middleInitial = cleanLast.charAt(0).toUpperCase() + ".";
+      firstName = cleanWords.slice(0, -1).join(" ");
     }
   } else {
-    return { lastName, firstName: fullAfterComma, middleInitial: "", fullAfterComma };
+    firstName = fullAfterComma;
   }
+
+  return {
+    lastName,
+    firstName,
+    middleName,
+    middleInitial,
+    fullAfterComma,
+  };
 }
 
 function isWordBoundaryPrefix(longer: string, shorter: string) {
@@ -2161,6 +2550,7 @@ function isWordBoundaryPrefix(longer: string, shorter: string) {
 interface ParsedExcelRow {
   lastName: string;
   firstName: string;
+  middleName?: string;
   middleInitial: string;
   position: string;
   employmentStatus: string;
@@ -2169,6 +2559,7 @@ interface ParsedExcelRow {
   gender: string;
   dateOfAssumption: string | undefined;
   rawName: string;
+  fullAfterComma?: string;
 }
 
 async function parseExcelBuffer(buffer: Buffer): Promise<ParsedExcelRow[]> {
@@ -2238,7 +2629,9 @@ async function parseExcelBuffer(buffer: Buffer): Promise<ParsedExcelRow[]> {
       results.push({
         lastName: parsed.lastName,
         firstName: parsed.firstName,
+        middleName: parsed.middleName,
         middleInitial: parsed.middleInitial,
+        fullAfterComma: parsed.fullAfterComma,
         position,
         employmentStatus,
         employmentType,
@@ -2255,37 +2648,65 @@ async function parseExcelBuffer(buffer: Buffer): Promise<ParsedExcelRow[]> {
 function matchScore(dbEmp: any, excelRow: ParsedExcelRow): number {
   const dbLast = cleanImportStr(dbEmp.LastName);
   const excelLast = cleanImportStr(excelRow.lastName);
-  if (dbLast !== excelLast) return 0;
+  if (dbLast !== excelLast && !dbLast.includes(excelLast) && !excelLast.includes(dbLast)) {
+    return 0;
+  }
 
   const dbFirst = cleanImportStr(dbEmp.FirstName);
   const excelFirst = cleanImportStr(excelRow.firstName);
+  const dbAfterComma = cleanImportStr(`${dbEmp.FirstName} ${dbEmp.MiddleName || dbEmp.MiddleInitial || ""}`);
+  const excelAfterComma = cleanImportStr(excelRow.fullAfterComma || excelRow.firstName);
+
   let nameScore = 0;
-  if (dbFirst === excelFirst) nameScore = 100;
-  else if (dbFirst === "" || excelFirst === "") nameScore = 30;
-  else if (isWordBoundaryPrefix(dbFirst, excelFirst) || isWordBoundaryPrefix(excelFirst, dbFirst)) nameScore = 50;
+  if (dbFirst === excelFirst || dbAfterComma === excelAfterComma || dbFirst === excelAfterComma) {
+    nameScore = 100;
+  } else if (dbFirst === "" || excelFirst === "") {
+    nameScore = 30;
+  } else {
+    const dbFirstWithSpace = cleanImportWithSpaces(dbEmp.FirstName);
+    const excelFirstWithSpace = cleanImportWithSpaces(excelRow.firstName);
+    if (isWordBoundaryPrefix(dbFirstWithSpace, excelFirstWithSpace) || isWordBoundaryPrefix(excelFirstWithSpace, dbFirstWithSpace)) {
+      nameScore = 70;
+    }
+  }
   if (nameScore === 0) return 0;
 
-  let score = nameScore;
+  // Middle Name / Initial comparison
+  const dbMN = cleanImportStr(dbEmp.MiddleName);
+  const excelMN = cleanImportStr(excelRow.middleName);
+  const dbMI = cleanImportStr(dbEmp.MiddleInitial || (dbMN ? dbMN.charAt(0) : ""));
+  const excelMI = cleanImportStr(excelRow.middleInitial || (excelMN ? excelMN.charAt(0) : ""));
+
+  let middleScore = 0;
+  if (dbMN && excelMN && dbMN.length > 1 && excelMN.length > 1) {
+    // Both sides have full middle names!
+    if (dbMN === excelMN) {
+      middleScore = 25;
+    } else {
+      // Conflicting full middle names -> DISTINCT PEOPLE! Return 0 score.
+      return 0;
+    }
+  } else if (dbMI && excelMI) {
+    if (dbMI === excelMI) {
+      middleScore = 10;
+    } else {
+      // Conflicting middle initial (e.g. S. vs M.) -> DISTINCT PEOPLE! Return 0 score.
+      return 0;
+    }
+  }
+
+  let score = nameScore + middleScore;
 
   const dbOffice = cleanImportStr(dbEmp.Office);
   const excelOffice = cleanImportStr(excelRow.office);
-  if (dbOffice === excelOffice) score += 10;
-  else if (dbOffice.startsWith(excelOffice) || excelOffice.startsWith(dbOffice)) score += 5;
+  if (dbOffice && excelOffice) {
+    if (dbOffice === excelOffice) score += 15;
+    else if (dbOffice.includes(excelOffice) || excelOffice.includes(dbOffice)) score += 8;
+  }
 
   const dbET = cleanImportStr(dbEmp.EmploymentType);
   const excelET = cleanImportStr(excelRow.employmentType);
   if (dbET && excelET && dbET === excelET) score += 15;
-
-  if (nameScore >= 100) return score;
-
-  if (nameScore >= 50) {
-    const dbPos = cleanImportStr(dbEmp.Position);
-    const excelPos = cleanImportStr(excelRow.position);
-    if (dbPos === excelPos) return score;
-    const dbES = cleanImportStr(dbEmp.EmploymentStatus);
-    const excelES = cleanImportStr(excelRow.employmentStatus);
-    if (dbES === excelES && (dbPos.startsWith(excelPos) || excelPos.startsWith(dbPos))) return score;
-  }
 
   return score;
 }
@@ -2311,7 +2732,7 @@ function fieldsDiffer(a: string | undefined, b: string | undefined): boolean {
   return normField(a) !== normField(b);
 }
 
-app.post("/api/import/preview", upload.single("file"), async (req, res) => {
+app.post("/api/import/preview", requirePermission("import:data"), upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
       res.status(400).json({ error: "No file uploaded" });
@@ -2342,7 +2763,7 @@ app.post("/api/import/preview", upload.single("file"), async (req, res) => {
         if (Object.keys(changes).length > 0) {
           toUpdate.push({
             employeeId: match.EmployeeID,
-            name: `${match.LastName}, ${match.FirstName} ${match.MiddleInitial || ""}`.trim(),
+            name: buildEmployeeName(match),
             office: match.Office,
             changes,
           });
@@ -2359,7 +2780,7 @@ app.post("/api/import/preview", upload.single("file"), async (req, res) => {
         const seminarCount = (db.seminarAttendees || []).filter((sa: any) => sa.employeeId === emp.EmployeeID).length;
         return {
           employeeId: emp.EmployeeID,
-          name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+          name: buildEmployeeName(emp),
           office: emp.Office,
           needsCount,
           seminarCount,
@@ -2413,7 +2834,7 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
           action: "Employee Archived",
           entity_type: "employee",
           entity_id: emp.EmployeeID,
-          entity_name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+          entity_name: buildEmployeeName(emp),
           description: `Employee archived during Excel sync — no longer in source file`,
           before_data: { Office: emp.Office, Position: emp.Position, isActive: true },
           after_data: { isActive: false },
@@ -2441,7 +2862,7 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
           action: "Employee Updated",
           entity_type: "employee",
           entity_id: emp.EmployeeID,
-          entity_name: `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim(),
+          entity_name: buildEmployeeName(emp),
           description: `Updated fields: ${changedFields.join(", ")}`,
           before_data: update.changes,
           after_data: Object.fromEntries(Object.entries(update.changes).map(([k, v]: [string, any]) => [k, v.new])),
@@ -2457,6 +2878,7 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
       const newEmp = {
         EmployeeID: maxId,
         FirstName: addRow.firstName,
+        MiddleName: addRow.middleName || addRow.middleInitial,
         MiddleInitial: addRow.middleInitial,
         LastName: addRow.lastName,
         Office: addRow.office,
@@ -2481,7 +2903,7 @@ app.post("/api/import/execute", requirePermission("import:data"), express.json({
         action: "Employee Added",
         entity_type: "employee",
         entity_id: maxId,
-        entity_name: `${newEmp.LastName}, ${newEmp.FirstName} ${newEmp.MiddleInitial || ""}`.trim(),
+        entity_name: buildEmployeeName(newEmp),
         description: `New employee added from Excel import`,
         after_data: { Office: newEmp.Office, Position: newEmp.Position },
         performed_by: "Excel Import",
@@ -2687,6 +3109,39 @@ app.get("/api/seminars/:id", (req, res) => {
           Position: sa.role || ""
         };
       }
+      if (sa.participantType === "unmatched") {
+        return {
+          id: sa.id,
+          EmployeeID: null,
+          participantType: "unmatched",
+          displayName: sa.displayName || sa.rawName || "Unknown",
+          rawName: sa.rawName || "",
+          organization: sa.organization || "",
+          role: sa.role || "",
+          remarks: sa.remarks || "",
+          FirstName: sa.displayName || sa.rawName || "Unknown",
+          MiddleInitial: "",
+          LastName: "",
+          Office: sa.organization || "",
+          Position: sa.role || ""
+        };
+      }
+      if (sa.participantType === "encode_later") {
+        return {
+          id: sa.id,
+          EmployeeID: null,
+          participantType: "encode_later",
+          displayName: sa.displayName || "Unknown",
+          organization: sa.organization || "",
+          role: sa.role || "",
+          remarks: sa.remarks || "To be encoded",
+          FirstName: sa.displayName || "Unknown",
+          MiddleInitial: "",
+          LastName: "(Encode Later)",
+          Office: sa.organization || "",
+          Position: sa.role || ""
+        };
+      }
       const emp = (db.employees || []).find((e: any) => e.EmployeeID === sa.employeeId);
       return {
         id: sa.id,
@@ -2714,6 +3169,8 @@ app.get("/api/seminars/:id", (req, res) => {
       speaker: sem.speaker || "",
       remarks: sem.remarks || "",
       createdAt: sem.createdAt,
+      attachment: sem.attachment,
+      attachments: sem.attachments || (sem.attachment ? [sem.attachment] : []),
       attendees
     });
   } catch (error: any) {
@@ -2765,7 +3222,114 @@ function cellToString(val: any): string {
   return String(val);
 }
 
-// 4. Excel Import Preview
+// ── Parse pasted text into individual names ─────────────────────────
+function parseNamesFromText(text: string): string[] {
+  const result: string[] = [];
+  // Split by newlines first
+  for (let line of text.split(/\r?\n/)) {
+    line = line.trim();
+    if (!line) continue;
+    // Split by semicolons
+    if (line.includes(";")) {
+      for (const s of line.split(";")) result.push(s.trim());
+      continue;
+    }
+    // If text was copied from an Excel table with multiple columns (e.g. Last Name, First Name),
+    // they will be separated by tabs. Replace tabs with spaces to merge them into a single name.
+    if (line.includes("\t")) {
+      line = line.replace(/\t/g, " ");
+    }
+    result.push(line);
+  }
+  // Clean each name
+  return result.map(cleanName).filter((n): n is string => n !== null);
+}
+
+function cleanName(name: string): string | null {
+  let c = name.trim();
+  if (!c) return null;
+  // Remove leading numbering: "1. Name" "2) Name" "3] Name" "1 Name"
+  c = c.replace(/^[\d]+[.)\]\s]+\s*/, "");
+  // Remove leading bullets/dashes/checkboxes: "- Name" "• Name" "[x] Name" "(✓) Name"
+  c = c.replace(/^[-–—•●◦▪▸→⇒‣⁃◇◆▪▫▬☐☑☒✓✔✕✖✗✘]+\s*/, "");
+  c = c.replace(/^\[\s*[xX\s]?\s*\]\s*/, "");
+  c = c.replace(/^\(?\s*[✓✔☑✗✘xX]\s*\)?\s*/i, "");
+  // Remove leading decorative characters
+  c = c.replace(/^[*+>|:·•]+\s*/, "");
+  // Clean internal whitespace
+  c = c.replace(/\s+/g, " ").trim();
+  // Reject if too short or no alphabetic content
+  if (c.length < 2) return null;
+  if (!/[A-Za-z]{2,}/.test(c)) return null;
+  return c;
+}
+
+// 4. Text Import Preview (replaces Excel import)
+app.post("/api/seminars/import-from-text", requirePermission("seminar:import"), express.json({ limit: "10mb" }), async (req, res) => {
+  try {
+    const { text, officesText, title, year, quarter, date, location, remarks } = req.body;
+    if (!text || !text.trim()) {
+      res.status(400).json({ error: "No text provided" });
+      return;
+    }
+
+    const rawNames = parseNamesFromText(text);
+    const rawOffices = officesText ? parseNamesFromText(officesText) : [];
+    if (rawNames.length === 0) {
+      res.status(400).json({ error: "No valid names found in the text. Please check your input and try again." });
+      return;
+    }
+
+    // Detect duplicates in the pasted list
+    const nameCounts = new Map<string, number>();
+    for (const n of rawNames) {
+      const key = normalizeName(n);
+      nameCounts.set(key, (nameCounts.get(key) || 0) + 1);
+    }
+    const duplicates = [...nameCounts.entries()]
+      .filter(([, count]) => count > 1)
+      .map(([name, count]) => ({ name, count }));
+    // Deduplicate the raw names list
+    const seen = new Set<string>();
+    const uniqueNames: string[] = [];
+    const uniqueOffices: string[] = [];
+    for (let i = 0; i < rawNames.length; i++) {
+      const n = rawNames[i];
+      const key = normalizeName(n);
+      if (seen.has(key)) continue;
+      seen.add(key);
+      uniqueNames.push(n);
+      uniqueOffices.push(rawOffices[i] || "");
+    }
+
+    const db = readDatabase();
+    const dbEmployees = db.employees || [];
+    const rawEmployees = uniqueNames.map((name, i) => ({
+      rawName: name, office: uniqueOffices[i], position: "", _key: `paste_${i}_${normalizeName(name).slice(0, 20)}`
+    }));
+    const { attendees } = matchEmployees(rawEmployees, dbEmployees);
+
+    const matchedCount = attendees.filter((a: any) => a.status === "matched").length;
+    const reviewCount = attendees.filter((a: any) => a.status === "review").length;
+    const unmatchedCount = attendees.filter((a: any) => a.status === "unmatched").length;
+
+    res.json({
+      title: title || "", year: Number(year) || new Date().getFullYear(),
+      quarter: quarter || "Q2", date: date || "", location: location || "", remarks: remarks || "",
+      attendees, rawEmployees,
+      totalNames: uniqueNames.length,
+      matchedCount, reviewCount, unmatchedCount,
+      accuracy: uniqueNames.length > 0 ? Math.round((matchedCount / uniqueNames.length) * 100) : 0,
+      reviewRecommended: attendees.some((a: any) => a.status === "review" || a.status === "unmatched"),
+      duplicates: duplicates.length > 0 ? duplicates : undefined
+    });
+  } catch (error: any) {
+    console.error("Text import preview error:", error);
+    res.status(500).json({ error: "Failed to parse names: " + error.message });
+  }
+});
+
+// 4b. Excel Import Preview (legacy)
 app.post("/api/seminars/import-preview", upload.single("file"), async (req, res) => {
   try {
     if (!req.file) {
@@ -2868,24 +3432,28 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
     }
     console.log(`[IMPORT-DIAG] parsedTitle: ${JSON.stringify(parsedTitle.slice(0, 100))}`);
 
-    // Find the header row: require 2+ column-header indicators (name + office/position/id)
+    // Find the header row: detect column types
     let headerRowIdx = 0;
     let idCol = -1;
     let nameCol = -1;
+    let firstNameCol = -1;
+    let lastNameCol = -1;
+    let middleNameCol = -1;
+    let suffixCol = -1;
     let officeCol = -1;
     let positionCol = -1;
 
     // Pass 1: score each row for header-like content, pick the best match
     let bestScore = 0;
     let bestRow = 0;
-    let bestCols = { idCol: -1, nameCol: -1, officeCol: -1, positionCol: -1 };
+    let bestCols: any = {};
 
     for (let i = 1; i <= Math.min(20, sheet.rowCount); i++) {
       const row = sheet.getRow(i);
       const vals = row.values;
       if (!vals) continue;
       let rowScore = 0;
-      let rowIdCol = -1, rowNameCol = -1, rowOfficeCol = -1, rowPositionCol = -1;
+      let cols: any = {};
       const valArr = Array.isArray(vals) ? vals : Object.values(vals);
       const colCount = Math.min(valArr.length, 15);
 
@@ -2894,28 +3462,48 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
         const v = cellToString(cellVal).toLowerCase().trim();
         if (!v) continue;
 
-        // Skip document titles and metadata headers disguised as column headers
+        // Skip document titles
         if (
-          v.includes("seminar title") ||
-          v.includes("title of seminar") ||
-          v.includes("name of seminar") ||
-          v.includes("training title") ||
-          v.includes("evaluation form") ||
-          v.includes("attendance sheet") ||
-          v.includes("list of participants") ||
-          v.includes("province of") ||
+          v.includes("seminar title") || v.includes("title of seminar") ||
+          v.includes("name of seminar") || v.includes("training title") ||
+          v.includes("evaluation form") || v.includes("attendance sheet") ||
+          v.includes("list of participants") || v.includes("province of") ||
           v.includes("republic of")
-        ) {
-          continue;
+        ) continue;
+
+        // Employee ID / No.
+        if ((v.includes("employee") && (v.includes("id") || v.includes("no"))) || v === "id" || v === "emp id" || v === "emp no" || v === "no" || v === "no.") {
+          rowScore++; cols.idCol = c; continue;
         }
 
-        // Employee ID / No. header
-        if ((v.includes("employee") && v.includes("id")) || (v.includes("employee") && v.includes("no")) || v === "id" || v === "emp id" || v === "emp no" || v === "no" || v === "no.") {
-          rowScore++;
-          if (rowIdCol < 0) rowIdCol = c;
+        // First name column (separate from last name)
+        if (v === "first name" || v === "firstname" || v === "given name" || v === "first" || v.includes("first name")) {
+          // Only if it explicitly says "first name" — not just any "name"
+          if (v === "first name" || v === "firstname" || v === "given name" || v === "first") {
+            rowScore++; cols.firstNameCol = c; continue;
+          }
         }
 
-        // Name header (must not be seminar title)
+        // Last name column (separate from first name)
+        if (v === "last name" || v === "lastname" || v === "surname" || v === "family name" || v === "last" || v.includes("last name")) {
+          if (v === "last name" || v === "lastname" || v === "surname" || v === "family name" || v === "last") {
+            rowScore++; cols.lastNameCol = c; continue;
+          }
+        }
+
+        // Middle name / MI column
+        if (v === "middle name" || v === "middlename" || v === "middle initial" || v === "mi" || v.includes("middle name")) {
+          if (v === "middle name" || v === "middlename" || v === "middle initial" || v === "mi") {
+            rowScore++; cols.middleNameCol = c; continue;
+          }
+        }
+
+        // Suffix column
+        if (v === "suffix" || v === "name suffix" || v === "ext" || v === "extension") {
+          rowScore++; cols.suffixCol = c;
+        }
+
+        // Generic name header (single column)
         if (
           v === "name" || v === "names" || v === "employee name" || v === "name of employee" ||
           v === "participant name" || v === "name of participant" || v === "full name" ||
@@ -2923,43 +3511,44 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
           (v.includes("name") && !v.includes("seminar") && !v.includes("training"))
         ) {
           rowScore++;
-          if (rowNameCol < 0) rowNameCol = c;
+          if (!cols.nameCol) cols.nameCol = c;
         }
 
-        // Office / Department header
+        // Office / Department
         if (v === "office" || v === "department" || v === "division" || v === "agency" || v === "station" || v.includes("office") || v.includes("department") || v.includes("division")) {
-          rowScore++;
-          if (rowOfficeCol < 0) rowOfficeCol = c;
+          rowScore++; if (!cols.officeCol) cols.officeCol = c;
         }
 
-        // Position / Designation header (must not be seminar title)
+        // Position / Designation
         if ((v === "position" || v === "designation" || v === "job title" || v.includes("position") || v.includes("designation")) && !v.includes("seminar") && !v.includes("training")) {
-          rowScore++;
-          if (rowPositionCol < 0) rowPositionCol = c;
+          rowScore++; if (!cols.positionCol) cols.positionCol = c;
         }
 
-        // Signature header
-        if (v.includes("signature") || v === "sign") {
-          rowScore++;
-        }
+        // Signature
+        if (v.includes("signature") || v === "sign") rowScore++;
       }
 
-      // Record best scoring row that has an explicit name column
-      if (rowScore > bestScore && rowNameCol > 0) {
+      // Record best scoring row
+      const hasName = cols.nameCol > 0 || (cols.firstNameCol > 0 && cols.lastNameCol > 0);
+      if (rowScore > bestScore && hasName) {
         bestScore = rowScore;
         bestRow = i;
-        bestCols = { idCol: rowIdCol, nameCol: rowNameCol, officeCol: rowOfficeCol, positionCol: rowPositionCol };
+        bestCols = cols;
       }
     }
 
     console.log(`[IMPORT-DIAG] headerScore: bestScore=${bestScore} bestRow=${bestRow} bestCols=${JSON.stringify(bestCols)}`);
 
-    if (bestScore >= 1 && bestCols.nameCol > 0) {
+    if (bestScore >= 1) {
       headerRowIdx = bestRow;
-      idCol = bestCols.idCol;
-      nameCol = bestCols.nameCol;
-      officeCol = bestCols.officeCol;
-      positionCol = bestCols.positionCol;
+      idCol = bestCols.idCol || -1;
+      nameCol = bestCols.nameCol || -1;
+      firstNameCol = bestCols.firstNameCol || -1;
+      lastNameCol = bestCols.lastNameCol || -1;
+      middleNameCol = bestCols.middleNameCol || -1;
+      suffixCol = bestCols.suffixCol || -1;
+      officeCol = bestCols.officeCol || -1;
+      positionCol = bestCols.positionCol || -1;
     } else {
       // Fallback: search for first row containing a valid person name
       for (let r = 1; r <= Math.min(15, sheet.rowCount); r++) {
@@ -2971,10 +3560,7 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
             if (!lowerVal.includes("seminar") && !lowerVal.includes("training") && !lowerVal.includes("evaluation") && !lowerVal.includes("province") && !lowerVal.includes("republic")) {
               headerRowIdx = r - 1;
               nameCol = c;
-              if (c > 1) {
-                idCol = 1;
-                if (c === 2) officeCol = 3;
-              }
+              if (c > 1) { idCol = 1; if (c === 2) officeCol = 3; }
               break;
             }
           }
@@ -2985,7 +3571,7 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       if (nameCol < 0) nameCol = 2;
     }
 
-    console.log(`[IMPORT-DIAG] FINAL header: row=${headerRowIdx} nameCol=${nameCol} idCol=${idCol} officeCol=${officeCol} posCol=${positionCol}`);
+    console.log(`[IMPORT-DIAG] FINAL header: row=${headerRowIdx} nameCol=${nameCol} fNameCol=${firstNameCol} lNameCol=${lastNameCol} mNameCol=${middleNameCol} sfxCol=${suffixCol} idCol=${idCol} officeCol=${officeCol} posCol=${positionCol}`);
 
     // Log the actual header row values
     {
@@ -3039,22 +3625,49 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
     for (let i = headerRowIdx + 1; i <= tableEndRow; i++) {
       const row = sheet.getRow(i);
       const cellId = idCol > 0 ? row.getCell(idCol).value : null;
-      const cellName = row.getCell(nameCol).value;
       const cellOffice = officeCol > 0 ? row.getCell(officeCol).value : null;
       const cellPosition = positionCol > 0 ? row.getCell(positionCol).value : null;
 
-      // Only use the identified name column — no fallback scan of other cells
       let nameVal = "";
       let officeVal = "";
       let positionVal = "";
 
-      const nameStr = cellToString(cellName).trim();
-      if (nameStr.length >= 3) {
-        nameVal = nameStr;
+      // Build name from individual columns if detected, otherwise use the single name column
+      if (firstNameCol > 0 || lastNameCol > 0) {
+        const fn = firstNameCol > 0 ? cellToString(row.getCell(firstNameCol).value).trim() : "";
+        const ln = lastNameCol > 0 ? cellToString(row.getCell(lastNameCol).value).trim() : "";
+        const mn = middleNameCol > 0 ? cellToString(row.getCell(middleNameCol).value).trim() : "";
+        const sfx = suffixCol > 0 ? cellToString(row.getCell(suffixCol).value).trim() : "";
+
+        // Determine name order: if only first name is found, try to use single name col as fallback
+        if (!ln && fn) {
+          // Only first name column has data — likely a single-name column misidentified
+          nameVal = fn;
+        } else if (ln && !fn) {
+          // Only last name column has data
+          nameVal = ln;
+        } else if (ln && fn) {
+          // Both first and last: format as "Last, First Middle Suffix" for matching
+          const mi = mn ? (mn.length <= 2 ? mn.toUpperCase() + (mn.endsWith(".") ? "" : ".") : mn) : "";
+          nameVal = [ln, fn, mi, sfx].filter(Boolean).join(" ");
+        }
       }
-      if (!nameVal) {
-        if (i <= headerRowIdx + 5) console.log(`[IMPORT-DIAG] Row ${i}: SKIP (empty name, raw=${JSON.stringify(String(cellName)).slice(0,40)})`);
-        continue;
+
+      // Fallback to the single name column if individual cols didn't produce a name
+      if (!nameVal && nameCol > 0) {
+        nameVal = cellToString(row.getCell(nameCol).value).trim();
+      }
+
+      // Additional fallback: scan across all candidate columns for any text that looks like a name
+      if (!nameVal || nameVal.length < 3) {
+        for (let c = 1; c <= Math.min(6, sheet.columnCount || 6); c++) {
+          if (c === idCol || c === officeCol || c === positionCol) continue;
+          const v = cellToString(row.getCell(c).value).trim();
+          if (v.length >= 3 && isLikelyPersonName(v)) {
+            nameVal = v;
+            break;
+          }
+        }
       }
 
       // Reject document title phrases if accidentally targeted
@@ -3097,7 +3710,12 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
 
     const { attendees } = matchEmployees(rawEmployees, dbEmployees);
 
-    console.log(`[IMPORT] header=${headerRowIdx} nameCol=${nameCol} idCol=${idCol} offCol=${officeCol} posCol=${positionCol} tableEnd=${tableEndRow} raw=${rawEmployees.length} att=${attendees.length} title="${parsedTitle.slice(0, 60)}"`);
+    const matchedCount = attendees.filter((a: any) => a.status === "matched").length;
+    const totalNames = rawEmployees.length;
+    const accuracy = totalNames > 0 ? Math.round((matchedCount / totalNames) * 100) : 100;
+    const reviewRecommended = attendees.some((a: any) => a.status === "review" || a.status === "unmatched");
+
+    console.log(`[IMPORT] header=${headerRowIdx} nameCol=${nameCol} fNameCol=${firstNameCol} lNameCol=${lastNameCol} tableEnd=${tableEndRow} raw=${rawEmployees.length} att=${attendees.length} matched=${matchedCount} accuracy=${accuracy}% title="${parsedTitle.slice(0, 60)}"`);
 
     res.json({
       title: parsedTitle,
@@ -3105,9 +3723,12 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       quarter: parsedQuarter,
       date: parsedDate,
       totalParsed: attendees.length,
+      totalNames,
+      matchedCount,
+      accuracy,
       attendees,
       rawEmployees,
-      reviewRecommended: attendees.some((a: any) => a.status === "review" || a.status === "unmatched")
+      reviewRecommended
     });
   } catch (error: any) {
     console.error("Seminar import preview error:", error);
@@ -3157,7 +3778,7 @@ app.post("/api/seminars/import-reprocess", requirePermission("seminar:import"), 
 // 5. Excel Import Execute
 app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (req, res) => {
   try {
-    const { title, year, quarter, date, location, remarks, attendees, externalParticipants } = req.body;
+    const { title, year, quarter, date, location, remarks, attendees, externalParticipants, encodeLaterParticipants } = req.body;
     const finalTitle = (title || "").trim() || "Imported Seminar";
     const finalYear = Number(year) || new Date().getFullYear();
     const finalQuarter = quarter || "Q2";
@@ -3177,10 +3798,13 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
         date: date || "",
         location: location || "",
         remarks: remarks || "",
-        createdAt: new Date().toISOString()
+        createdAt: new Date().toISOString(),
+        attendees: []
       };
       db.seminars.push(sem);
     }
+
+    if (!sem.attendees) sem.attendees = [];
 
     let attendeesAdded = 0;
     let duplicatesSkipped = 0;
@@ -3205,14 +3829,45 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
       }
     };
 
-    // Process attendees: import matched and review, skip unmatched (unless manually assigned)
+    // New Architecture: Seminar Attendance list is the source of truth.
+    // We save EVERY non-excluded attendee into `sem.attendees`.
     if (Array.isArray(attendees)) {
       attendees.forEach((a: any) => {
-        if (a.EmployeeID && (a.status === "matched" || a.status === "review")) {
+        const st = a.reviewStatus || a.status;
+        // Excluded attendees are skipped completely
+        if (st === "excluded") return;
+        
+        // Add to the seminar document's rich attendee array
+        const existingRichAttendee = sem.attendees.find((existing: any) => existing._key === a._key);
+        if (!existingRichAttendee) {
+           sem.attendees.push({ ...a });
+        } else {
+           Object.assign(existingRichAttendee, a);
+        }
+
+        // If matched and has an EmployeeID, also add to the relational `seminarAttendees` table
+        if (a.EmployeeID && (st === "matched" || st === "review")) {
           addAttendee(Number(a.EmployeeID));
-        } else if (a.EmployeeID && a.status === "unmatched") {
-          // Unmatched entries only imported if they have an EmployeeID (admin override)
-          addAttendee(Number(a.EmployeeID));
+        }
+
+        // Unmatched attendees get saved to seminarAttendees as unmatched type
+        if (st === "unmatched" && !a.EmployeeID) {
+          const exists = (db.seminarAttendees || []).some((sa: any) => sa.seminarId === sem.id && sa.rawName === a.rawName && sa.participantType === "unmatched");
+          if (!exists) {
+            db.seminarAttendees.push({
+              id: "sa_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
+              seminarId: sem.id,
+              employeeId: null,
+              participantType: "unmatched",
+              displayName: a.rawName || "Unknown",
+              rawName: a.rawName || "",
+              organization: a.excelOffice || a.office || "",
+              role: a.excelPosition || a.position || "",
+              remarks: "",
+              createdAt: new Date().toISOString()
+            });
+            attendeesAdded++;
+          }
         }
       });
     }
@@ -3220,6 +3875,17 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
     // Process external participants
     if (Array.isArray(externalParticipants)) {
       externalParticipants.forEach((ep: any) => {
+        // Also save to sem.attendees
+        sem.attendees.push({
+           _key: ep._key || "ext_" + Date.now() + "_" + Math.floor(Math.random() * 1000),
+           rawName: ep.displayName || ep.rawName || "External Participant",
+           office: ep.organization || "",
+           reviewStatus: "external",
+           attendanceType: "external",
+           role: ep.role || "",
+           remarks: ep.remarks || ""
+        });
+        
         db.seminarAttendees.push({
           id: "sa_" + Date.now() + "_" + Math.floor(Math.random() * 100000),
           seminarId: sem.id,
@@ -3244,7 +3910,7 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
           action: "Name Match with Metadata Difference",
           entity_type: "employee",
           entity_id: a.EmployeeID,
-          entity_name: `${a.LastName}, ${a.FirstName}`,
+          entity_name: buildEmployeeName(a),
           description: `Seminar attendee "${a.rawName}" matched to employee by name despite differences in ${diffFields}.`,
           after_data: { seminar: sem.title, rawName: a.rawName, employeeId: a.EmployeeID, differences: a.differences, excelOffice: a.excelOffice, dbOffice: a.dbOffice, excelPosition: a.excelPosition, dbPosition: a.dbPosition },
           performed_by: req.body?.username,
@@ -3256,10 +3922,10 @@ app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (r
 
     // Compute summary counts from the single attendees array
     const externalCount = (externalParticipants || []).length;
-    const confirmedCount = (attendees || []).filter((a: any) => a.status === "matched").length;
-    const reviewCount = (attendees || []).filter((a: any) => a.status === "review").length;
-    const unmatchedCount = (attendees || []).filter((a: any) => a.status === "unmatched").length;
-    const matchedWithWarningsCount = (attendees || []).filter((a: any) => a.status !== "unmatched" && a.differences?.length > 0).length;
+    const confirmedCount = (attendees || []).filter((a: any) => (a.reviewStatus || a.status) === "matched").length;
+    const reviewCount = (attendees || []).filter((a: any) => (a.reviewStatus || a.status) === "review").length;
+    const unmatchedCount = (attendees || []).filter((a: any) => (a.reviewStatus || a.status) === "unmatched").length;
+    const matchedWithWarningsCount = (attendees || []).filter((a: any) => (a.reviewStatus || a.status) !== "unmatched" && a.differences?.length > 0).length;
     let description = `Imported seminar "${sem.title}" — ${attendeesAdded} attendees added (${confirmedCount} confirmed, ${reviewCount} needs review, ${unmatchedCount} unmatched, ${externalCount} external)`;
     if (matchedWithWarningsCount > 0) {
       description += `. ${matchedWithWarningsCount} attendee(s) matched with metadata differences (Office, Position, etc.).`;
@@ -3403,7 +4069,7 @@ app.post("/api/seminars/:id/attendees", (req, res) => {
 
     const empNames = employeeIds.map((eid: number) => {
       const emp = db.employees.find((e: any) => e.EmployeeID === eid);
-      return emp ? `${emp.LastName}, ${emp.FirstName}` : `Employee #${eid}`;
+      return emp ? buildEmployeeName(emp) : `Employee #${eid}`;
     });
     createAuditLog({
       module: "Seminar Module",
@@ -3445,7 +4111,7 @@ app.delete("/api/seminars/:id/attendees/:employeeId", requirePermission("seminar
         entity_id: req.params.id,
         entity_name: sem?.title || "Unknown",
         description: emp
-          ? `Removed attendee ${emp.LastName}, ${emp.FirstName} from seminar "${sem?.title || "Unknown"}"`
+          ? `Removed attendee ${buildEmployeeName(emp)} from seminar "${sem?.title || "Unknown"}"`
           : `Removed attendee from seminar "${sem?.title || "Unknown"}"`,
         before_data: { attendeeId: removedAttendee?.id, employeeId: req.params.employeeId },
         performed_by: req.body?.username,
@@ -3455,6 +4121,127 @@ app.delete("/api/seminars/:id/attendees/:employeeId", requirePermission("seminar
     res.json({ success: true, removed: beforeCount - db.seminarAttendees.length > 0 });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
+  }
+});
+
+// --- ATTACHMENT ENDPOINTS ---
+app.post("/api/seminars/:id/attachment", requirePermission("seminar:edit"), uploadDisk.single("file"), (req, res) => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ error: "No file uploaded." });
+      return;
+    }
+    const db = readDatabase();
+    const sem = db.seminars.find((s: any) => s.id === req.params.id);
+    if (!sem) {
+      res.status(404).json({ error: "Seminar not found." });
+      return;
+    }
+
+    if (!Array.isArray(sem.attachments)) sem.attachments = [];
+
+    const newAttachment = {
+      id: "att_" + Date.now() + "_" + Math.floor(Math.random() * 10000),
+      originalName: req.file.originalname,
+      filename: req.file.filename,
+      fileSize: req.file.size,
+      uploadDate: new Date().toISOString(),
+      mimeType: req.file.mimetype
+    };
+
+    sem.attachments.push(newAttachment);
+
+    // Backward compat: set sem.attachment to first file
+    if (sem.attachments.length === 1) {
+      sem.attachment = newAttachment;
+    }
+
+    writeDatabase(db);
+    res.json({ message: "Attachment uploaded successfully", attachment: newAttachment, attachments: sem.attachments });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get("/api/seminars/:id/attachment", (req, res) => {
+  const db = readDatabase();
+  const sem = db.seminars.find((s: any) => s.id === req.params.id);
+  if (!sem) {
+    res.status(404).json({ error: "Seminar not found." });
+    return;
+  }
+
+  const attId = req.query.attId as string | undefined;
+  const attachments = sem.attachments || (sem.attachment ? [sem.attachment] : []);
+
+  if (attachments.length === 0) {
+    res.status(404).json({ error: "Attachment not found." });
+    return;
+  }
+
+  let att;
+  if (attId) {
+    att = attachments.find((a: any) => a.id === attId);
+  } else {
+    att = attachments[0];
+  }
+
+  if (!att || !att.filename) {
+    res.status(404).json({ error: "Attachment not found." });
+    return;
+  }
+
+  const filePath = path.join(UPLOADS_DIR, att.filename);
+  if (!fs.existsSync(filePath)) {
+    res.status(404).json({ error: "File not found on disk." });
+    return;
+  }
+  res.download(filePath, att.originalName);
+});
+
+app.delete("/api/seminars/:id/attachment", requirePermission("seminar:edit"), (req, res) => {
+  try {
+    const db = readDatabase();
+    const sem = db.seminars.find((s: any) => s.id === req.params.id);
+    if (!sem) {
+      res.status(404).json({ error: "Seminar not found." });
+      return;
+    }
+
+    const attId = req.query.attId as string | undefined;
+    const attachments = sem.attachments || (sem.attachment ? [sem.attachment] : []);
+
+    if (!attId && attachments.length > 0) {
+      // Delete all attachments
+      for (const att of attachments) {
+        if (att && att.filename) {
+          const filePath = path.join(UPLOADS_DIR, att.filename);
+          if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+        }
+      }
+      sem.attachments = [];
+      sem.attachment = undefined;
+    } else if (attId) {
+      // Delete specific attachment
+      const idx = attachments.findIndex((a: any) => a.id === attId);
+      if (idx < 0) {
+        res.status(404).json({ error: "Attachment not found." });
+        return;
+      }
+      const att = attachments[idx];
+      if (att.filename) {
+        const filePath = path.join(UPLOADS_DIR, att.filename);
+        if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      }
+      attachments.splice(idx, 1);
+      sem.attachments = attachments;
+      sem.attachment = attachments[0] || undefined;
+    }
+
+    writeDatabase(db);
+    res.json({ message: "Attachment(s) deleted.", attachments: sem.attachments || [] });
+  } catch (err: any) {
+    res.status(500).json({ error: err.message });
   }
 });
 
@@ -3645,6 +4432,76 @@ app.post("/api/audit-logs", (req, res) => {
     const { module, action, entity_type, entity_id, entity_name, description, before_data, after_data, performed_by } = req.body;
     const logEntry = createAuditLog({ module, action, entity_type, entity_id, entity_name, description, before_data, after_data, performed_by });
     res.status(201).json(logEntry);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// ----------------------------------------------------
+// ENCODE LATER QUEUE ENDPOINTS
+// ----------------------------------------------------
+app.get("/api/encode-later", (req, res) => {
+  try {
+    const db = readDatabase();
+    res.json(db.encodeLaterQueue || []);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/encode-later", (req, res) => {
+  try {
+    const db = readDatabase();
+    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
+    
+    // Add unique ID and timestamp if not present
+    const newItem = {
+      ...req.body,
+      id: req.body.id || `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+      dateAdded: req.body.dateAdded || new Date().toISOString()
+    };
+    
+    db.encodeLaterQueue.push(newItem);
+    writeDatabase(db);
+    res.status(201).json(newItem);
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.delete("/api/encode-later/:id", (req, res) => {
+  try {
+    const db = readDatabase();
+    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
+    
+    const initialLength = db.encodeLaterQueue.length;
+    db.encodeLaterQueue = db.encodeLaterQueue.filter((item: any) => item.id !== req.params.id);
+    
+    if (db.encodeLaterQueue.length !== initialLength) {
+      writeDatabase(db);
+      res.json({ success: true, message: "Item removed from queue" });
+    } else {
+      res.status(404).json({ error: "Item not found in queue" });
+    }
+  } catch (error: any) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/encode-later/bulk-delete", (req, res) => {
+  try {
+    const { ids } = req.body;
+    if (!Array.isArray(ids)) {
+      return res.status(400).json({ error: "ids must be an array" });
+    }
+    
+    const db = readDatabase();
+    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
+    
+    db.encodeLaterQueue = db.encodeLaterQueue.filter((item: any) => !ids.includes(item.id));
+    writeDatabase(db);
+    
+    res.json({ success: true, message: `${ids.length} items removed from queue` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }

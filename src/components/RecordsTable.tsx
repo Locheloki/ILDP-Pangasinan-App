@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Search, Filter, Edit, Trash2, Archive, ArchiveRestore, ArrowUpDown, ChevronLeft, ChevronRight, Printer, FileSpreadsheet, Eye, AlertTriangle, ArrowLeft } from "lucide-react";
-import { Employee, LearningNeed } from "../types";
+import { Employee, LearningNeed, formatEmployeeName } from "../types";
 import { OFFICES, LEARNING_NEEDS } from "../constants";
+import { can, PERMISSIONS } from "../permissions";
 import SearchableSelect from "./SearchableSelect";
 import EmployeeProfileDrawer from "./EmployeeProfileDrawer";
 import Modal from "./Modal";
@@ -50,19 +51,41 @@ interface RecordsTableProps {
   onRefreshStats: () => void;
   customOptionsVersion?: number;
   onCustomOptionsChange?: () => void;
+  initialFilters?: {
+    employmentStatus?: string;
+    newlyHired?: string;
+    office?: string;
+    learningNeed?: string;
+  } | null;
+  initialSearch?: string;
+  onConsumeFilters?: () => void;
+  currentUser?: any;
 }
 
 export default function RecordsTable({ 
   onEditEmployee, 
   onRefreshStats,
   customOptionsVersion,
-  onCustomOptionsChange
+  onCustomOptionsChange,
+  initialFilters,
+  initialSearch,
+  onConsumeFilters,
+  currentUser
 }: RecordsTableProps) {
   const [records, setJoinedRecords] = useState<JoinedRecord[]>([]);
   const [loading, setLoading] = useState(true);
 
   // Search & Filter state
   const [searchTerm, setSearchQuery] = useState("");
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedSearchTerm(searchTerm);
+    }, 300);
+    return () => clearTimeout(handler);
+  }, [searchTerm]);
+
   const [officeFilter, setOfficeFilter] = useState("");
   const [needFilter, setNeedFilter] = useState("");
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState("");
@@ -71,6 +94,31 @@ export default function RecordsTable({
   const [hideNoNeeds, setHideNoNeeds] = useState(false);
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+
+  // Apply initial filters/search from parent dashboard
+  useEffect(() => {
+    if (initialFilters || initialSearch !== undefined) {
+      if (initialFilters) {
+        setEmploymentStatusFilter("");
+        setNewlyHiredFilter("");
+        setOfficeFilter("");
+        setNeedFilter("");
+        setSearchQuery("");
+        setDebouncedSearchTerm("");
+        if (initialFilters.employmentStatus !== undefined) setEmploymentStatusFilter(initialFilters.employmentStatus);
+        if (initialFilters.newlyHired !== undefined) setNewlyHiredFilter(initialFilters.newlyHired);
+        if (initialFilters.office !== undefined) setOfficeFilter(initialFilters.office);
+        if (initialFilters.learningNeed !== undefined) setNeedFilter(initialFilters.learningNeed);
+      }
+      if (initialSearch !== undefined) {
+        setSearchQuery(initialSearch);
+        setDebouncedSearchTerm(initialSearch);
+      }
+      if (onConsumeFilters) {
+        onConsumeFilters();
+      }
+    }
+  }, [initialFilters, initialSearch, onConsumeFilters]);
 
   // Custom Options State
   const [officeOptions, setOfficeOptions] = useState<string[]>(OFFICES);
@@ -93,6 +141,20 @@ export default function RecordsTable({
         }
       });
   }, [customOptionsVersion]);
+
+  // Open Employee Details drawer from global events (e.g. Dashboard)
+  useEffect(() => {
+    const handleOpenDetails = (e: Event) => {
+      const customEvent = e as CustomEvent;
+      if (customEvent.detail && customEvent.detail.employeeId) {
+        handleViewDetails(customEvent.detail.employeeId);
+      }
+    };
+    window.addEventListener("openEmployeeDetails", handleOpenDetails);
+    return () => {
+      window.removeEventListener("openEmployeeDetails", handleOpenDetails);
+    };
+  }, []);
 
   const handleDeleteCustomOption = (type: "office" | "learningNeed", value: string) => {
     fetch(`/api/options/${type}/${encodeURIComponent(value)}`, { method: "DELETE" })
@@ -158,11 +220,11 @@ export default function RecordsTable({
   // Fetch Joined Records on filter changes
   useEffect(() => {
     fetchRecords();
-  }, [searchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, newlyHiredFilter, hideNoNeeds, sortBy, sortOrder]);
+  }, [debouncedSearchTerm, officeFilter, needFilter, employmentTypeFilter, employmentStatusFilter, newlyHiredFilter, hideNoNeeds, sortBy, sortOrder, isArchivedView]);
 
   const fetchRecords = () => {
     setLoading(true);
-    let url = `/api/learning-needs?search=${searchTerm}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&newlyHired=${newlyHiredFilter}&hasNeeds=${hideNoNeeds ? "true" : ""}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
+    let url = `/api/learning-needs?search=${encodeURIComponent(debouncedSearchTerm)}&office=${officeFilter}&learningNeed=${needFilter}&employmentType=${employmentTypeFilter}&employmentStatus=${employmentStatusFilter}&newlyHired=${newlyHiredFilter}&hasNeeds=${hideNoNeeds ? "true" : ""}&archived=${isArchivedView ? "true" : ""}&sortBy=${sortBy}&sortOrder=${sortOrder}`;
     
     fetch(url)
       .then((res) => res.json())
@@ -187,33 +249,15 @@ export default function RecordsTable({
       });
   };
 
-  const fetchArchivedEmployees = () => {
-    setArchivedLoading(true);
-    fetch(`/api/employees/archived?search=${archivedSearch}`)
-      .then((res) => res.json())
-      .then((data) => {
-        setArchivedEmployees(data.employees || []);
-        setArchivedLoading(false);
-      })
-      .catch((err) => {
-        console.error("Error fetching archived employees:", err);
-        setArchivedLoading(false);
-      });
-  };
-
-  useEffect(() => {
-    if (isArchivedView) fetchArchivedEmployees();
-  }, [isArchivedView, archivedSearch]);
-
   const handleRestoreEmployee = async (employeeId: number) => {
     try {
       await fetch(`/api/employees/${employeeId}/restore`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ performed_by: "Admin" }),
+        body: JSON.stringify({ performed_by: currentUser?.name || currentUser?.username || "Admin" }),
       });
       setRestoreConfirmId(null);
-      fetchArchivedEmployees();
+      fetchRecords();
       onRefreshStats?.();
     } catch (err) {
       console.error("Error restoring employee:", err);
@@ -247,7 +291,7 @@ export default function RecordsTable({
 
     let rowNum = 0;
     groupedRecords.forEach((emp) => {
-      const fullName = `${emp.LastName}, ${emp.FirstName} ${emp.MiddleInitial || ""}`.trim();
+      const fullName = formatEmployeeName(emp);
       const needs = emp.Needs.length > 0 ? emp.Needs : [null];
       needs.forEach((need) => {
         rowNum++;
@@ -409,9 +453,11 @@ export default function RecordsTable({
     return Array.from(map.values());
   };
 
-  const groupedRecords = groupRecordsByEmployee(records).filter(
-    (rec) => !hideNoNeeds || rec.Needs.length > 0
-  );
+  const groupedRecords = React.useMemo(() => {
+    return groupRecordsByEmployee(records).filter(
+      (rec) => !hideNoNeeds || rec.Needs.length > 0
+    );
+  }, [records, hideNoNeeds]);
 
   // Pagination calculation
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -489,7 +535,18 @@ export default function RecordsTable({
           </div>
         </div>
 
-        {!isArchivedView && (
+        {isArchivedView && (
+          <div className="bg-amber-500/10 border border-amber-500/20 text-amber-800 dark:text-amber-300 rounded-xl p-3.5 flex items-center justify-between text-xs font-semibold">
+            <div className="flex items-center gap-2">
+              <Archive className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
+              <span>Viewing <strong>Archived Employee Records Directory</strong>. Click an employee's name to view their full details, or click Restore to re-activate them.</span>
+            </div>
+            <span className="bg-amber-200/60 dark:bg-amber-900/50 px-2.5 py-1 rounded-full text-[11px] font-bold shrink-0">
+              {groupedRecords.length} archived
+            </span>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
           {/* Search Term */}
           <div>
@@ -548,30 +605,28 @@ export default function RecordsTable({
             <SearchableSelect
               value={employmentStatusFilter || "All Statuses"}
               onChange={(val) => { setEmploymentStatusFilter(val === "All Statuses" ? "" : val); setCurrentPage(1); }}
-              options={["All Statuses", "Undefined (Pending Review)", "Newly Hired", "Re-employed", "Casual", "Permanent", "Co-Terminous", "Elective Official", "Job Order", "Consultant"]}
+              options={["All Statuses", "Undefined (Pending Review)", "Newly Hired", "Permanent", "Casual", "Coterminous", "Elective Official", "Re-employed"]}
               placeholder="All Statuses"
-              allowCustom={false}
             />
           </div>
 
           {/* Filter by Employee Entry (NewlyHired) */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              Employee Entry
+              Newly Hired Status
             </label>
             <SearchableSelect
-              value={newlyHiredFilter || "All Entries"}
-              onChange={(val) => { setNewlyHiredFilter(val === "All Entries" ? "" : val); setCurrentPage(1); }}
-              options={["All Entries", "Newly Hired", "Reemployed", "N/A"]}
-              placeholder="All Entries"
-              allowCustom={false}
+              value={newlyHiredFilter || "All Hired Types"}
+              onChange={(val) => { setNewlyHiredFilter(val === "All Hired Types" ? "" : val); setCurrentPage(1); }}
+              options={["All Hired Types", "Newly Hired", "Re-employed", "N/A"]}
+              placeholder="All Hired Types"
             />
           </div>
 
           {/* Start Date */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              Start Record Date
+              Start Date
             </label>
             <input
               type="date"
@@ -584,7 +639,7 @@ export default function RecordsTable({
           {/* End Date */}
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              End Record Date
+              End Date
             </label>
             <input
               type="date"
@@ -594,11 +649,9 @@ export default function RecordsTable({
             />
           </div>
         </div>
-        )}
       </div>
 
       {/* Main Grid View */}
-      {!isArchivedView && (
       <div ref={cardsContainerRef} className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse text-xs">
@@ -670,7 +723,7 @@ export default function RecordsTable({
                           onClick={() => handleViewDetails(rec.EmployeeID)}
                           className="font-extrabold text-slate-800 dark:text-slate-100 hover:text-blue-600 dark:hover:text-blue-400 text-[14.5px] leading-snug tracking-tight hover:underline cursor-pointer transition-colors duration-100"
                         >
-                          {rec.LastName}, {rec.FirstName}{rec.MiddleInitial ? ` ${rec.MiddleInitial}.` : ""}
+                          {formatEmployeeName(rec)}
                         </div>
                         {isRecentEntry(rec.EmployeeCreatedAt) && (
                           <div className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
@@ -702,23 +755,38 @@ export default function RecordsTable({
                       </td>
                       <td className="py-3 px-6 text-center align-middle">
                         <div className="flex items-center justify-center gap-1.5">
-                          {/* Edit Records */}
-                          <button
-                            onClick={() => onEditEmployee(rec.EmployeeID)}
-                            className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
-                            title="Edit Full Profile"
-                          >
-                            <Edit className="h-4 w-4" />
-                          </button>
+                          {isArchivedView ? (
+                            <button
+                              onClick={() => setRestoreConfirmId(rec.EmployeeID)}
+                              className="btn-glass bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 text-xs py-1.5 px-3 cursor-pointer font-bold flex items-center gap-1.5 hover:scale-105 active:scale-95 transition-all"
+                              title="Restore Employee to Active List"
+                            >
+                              <ArchiveRestore className="h-3.5 w-3.5" />
+                              <span>Restore</span>
+                            </button>
+                          ) : (
+                            <>
+                              {/* Edit Records */}
+                              <button
+                                onClick={() => onEditEmployee(rec.EmployeeID)}
+                                className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
+                                title="Edit Full Profile"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </button>
 
-                          {/* Delete Employee */}
-                          <button
-                            onClick={() => handleDeleteEmployee(rec.EmployeeID)}
-                            className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
-                            title="Delete Employee"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </button>
+                              {/* Delete Employee (admin only) */}
+                              {can(currentUser?.role, PERMISSIONS.EMPLOYEE_DELETE, currentUser?.permissions) && (
+                                <button
+                                  onClick={() => handleDeleteEmployee(rec.EmployeeID)}
+                                  className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
+                                  title="Delete Employee"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </button>
+                              )}
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -822,72 +890,7 @@ export default function RecordsTable({
           </div>
         )}
       </div>
-      )}
 
-      {/* Archived Employees View */}
-      {isArchivedView && (
-        <div className="bg-white dark:bg-slate-900 rounded-xl border border-slate-200/60 dark:border-slate-800 shadow-xs overflow-hidden transition-colors duration-200">
-          <div className="p-4 border-b border-slate-100 dark:border-slate-800 flex items-center gap-4">
-            <div className="relative flex-1 max-w-sm">
-              <Search className="absolute inset-y-0 left-3 h-4 w-4 text-slate-400 my-auto" />
-              <input
-                type="text"
-                value={archivedSearch}
-                onChange={(e) => setArchivedSearch(e.target.value)}
-                placeholder="Search archived employees..."
-                className="w-full pl-9 pr-3 py-2 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
-            </div>
-            <span className="text-xs text-slate-400">{archivedEmployees.length} archived</span>
-          </div>
-
-          {archivedLoading ? (
-            <div className="py-12 text-center">
-              <div className="w-8 h-8 border-3 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <span className="text-slate-400 font-medium text-xs mt-3 block">Loading archived employees...</span>
-            </div>
-          ) : archivedEmployees.length === 0 ? (
-            <div className="py-12 text-center text-slate-400 text-xs">
-              No archived employees found.
-            </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left border-collapse text-xs">
-                <thead>
-                  <tr className="bg-slate-50/70 dark:bg-slate-950/80 border-b border-slate-100 dark:border-slate-800 text-slate-500 dark:text-slate-400 uppercase tracking-wider font-semibold text-[10px]">
-                    <th className="py-3 px-6">Employee Name</th>
-                    <th className="py-3 px-6">Office / Department</th>
-                    <th className="py-3 px-6">Position</th>
-                    <th className="py-3 px-6 text-center">Needs</th>
-                    <th className="py-3 px-6 text-center">Seminars</th>
-                    <th className="py-3 px-6 text-center">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                  {archivedEmployees.map((emp) => (
-                    <tr key={emp.EmployeeID} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                      <td className="py-3 px-6 font-medium">{emp.LastName}, {emp.FirstName} {emp.MiddleInitial || ""}</td>
-                      <td className="py-3 px-6">{emp.Office}</td>
-                      <td className="py-3 px-6">{emp.Position}</td>
-                      <td className="py-3 px-6 text-center">{emp.needsCount || 0}</td>
-                      <td className="py-3 px-6 text-center">{emp.seminarCount || 0}</td>
-                      <td className="py-3 px-6 text-center">
-                        <button
-                          onClick={() => setRestoreConfirmId(emp.EmployeeID)}
-                          className="btn-glass bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border-emerald-200/50 dark:border-emerald-900/30 text-[10px] py-1.5 px-3 cursor-pointer font-bold flex items-center gap-1 mx-auto"
-                        >
-                          <ArchiveRestore className="h-3 w-3" />
-                          Restore
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </div>
-      )}
 
       {/* Restore Confirmation Modal */}
       <Modal

@@ -5,6 +5,40 @@ import { Shield, Plus, Pencil, Trash2, X, AlertTriangle, Key, CheckCircle, Ban }
 
 const VALID_ROLES = ["Encoder", "Administrator", "System developer"] as const;
 
+const PERMISSION_LABELS: Record<string, string> = {
+  "employee:view": "View Employees",
+  "employee:create": "Create Employees",
+  "employee:edit": "Edit Employees",
+  "employee:delete": "Delete Employees",
+  "seminar:view": "View Seminars",
+  "seminar:create": "Create Seminars",
+  "seminar:edit": "Edit Seminars",
+  "seminar:delete": "Delete Seminars",
+  "seminar:import": "Import Seminars",
+  "seminar:year:delete": "Delete Seminar Years",
+  "seminar:attendee:delete": "Delete Attendees",
+  "import:data": "Import Data",
+  "audit:view": "View Audit Logs",
+  "user:manage": "Manage Users",
+  "user:assign_role": "Assign Roles",
+  "user:delete": "Delete Users",
+};
+
+const PERMISSION_CATEGORIES: { label: string; perms: string[] }[] = [
+  {
+    label: "Employees",
+    perms: ["employee:view", "employee:create", "employee:edit", "employee:delete"],
+  },
+  {
+    label: "Seminars",
+    perms: ["seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import", "seminar:year:delete", "seminar:attendee:delete"],
+  },
+  {
+    label: "Data & System",
+    perms: ["import:data", "audit:view", "user:manage", "user:assign_role", "user:delete"],
+  },
+];
+
 interface EditableUser {
   id: number;
   username: string;
@@ -12,7 +46,42 @@ interface EditableUser {
   role: string;
   isActive: boolean;
   createdAt: string | null;
+  permissions?: string[];
 }
+
+function permToOps(perms: string[] | undefined): Record<string, boolean> {
+  const result: Record<string, boolean> = {};
+  const allPerms = Object.keys(PERMISSION_LABELS);
+  for (const p of allPerms) {
+    result[p] = true; // default to allowed
+  }
+  if (!perms) return result;
+  for (const p of perms) {
+    if (p.startsWith("+")) {
+      result[p.slice(1)] = true;
+    } else if (p.startsWith("-")) {
+      result[p.slice(1)] = false;
+    }
+  }
+  return result;
+}
+
+function opsToPerms(ops: Record<string, boolean>, role: string): string[] {
+  const result: string[] = [];
+  for (const [perm, allowed] of Object.entries(ops)) {
+    const baseAllowed = PERMISSION_MAP_BY_ROLE[role]?.includes(perm) ?? true;
+    if (allowed && !baseAllowed) result.push("+" + perm);
+    if (!allowed && baseAllowed) result.push("-" + perm);
+  }
+  return result;
+}
+
+// Inline minimal copy of the server's role defaults for UI logic
+const PERMISSION_MAP_BY_ROLE: Record<string, string[]> = {
+  Encoder: ["employee:view", "seminar:view", "seminar:create", "seminar:edit", "seminar:import", "import:data"],
+  Administrator: ["employee:view", "employee:create", "employee:edit", "employee:delete", "seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import", "seminar:year:delete", "seminar:attendee:delete", "import:data", "audit:view", "user:manage", "user:assign_role"],
+  "System developer": Object.keys(PERMISSION_LABELS),
+};
 
 export default function UserManagement({ currentUser }: { currentUser: User }) {
   const [users, setUsers] = useState<EditableUser[]>([]);
@@ -31,6 +100,7 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
 
   // Edit form
   const [editForm, setEditForm] = useState({ name: "", role: "", password: "" });
+  const [editPerms, setEditPerms] = useState<Record<string, boolean> | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -87,6 +157,7 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
   const openEdit = (user: EditableUser) => {
     setEditUser(user);
     setEditForm({ name: user.name, role: user.role, password: "" });
+    setEditPerms(permToOps(user.permissions));
     setEditOpen(true);
   };
 
@@ -97,6 +168,9 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
       const body: any = { name: editForm.name };
       if (editForm.password) body.password = editForm.password;
       if (editForm.role !== editUser.role) body.role = editForm.role;
+      if (editPerms && currentUser.role === "System developer") {
+        body.permissions = opsToPerms(editPerms, editForm.role);
+      }
 
       const res = await fetch(`/api/users/${editUser.id}`, {
         method: "PUT",
@@ -391,6 +465,48 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
               placeholder="New password (optional)"
             />
           </div>
+
+          {currentUser.role === "System developer" && editPerms && (
+            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
+              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-3">
+                <Shield className="h-3.5 w-3.5 inline mr-1" />
+                Permission Overrides <span className="font-normal text-slate-400">(leave unchecked = role default)</span>
+              </label>
+              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
+                {PERMISSION_CATEGORIES.map((cat) => (
+                  <div key={cat.label}>
+                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider mb-1.5">{cat.label}</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {cat.perms.map((perm) => {
+                        const defaultValue = PERMISSION_MAP_BY_ROLE[editForm.role]?.includes(perm) ?? true;
+                        const isOverridden = editPerms[perm] !== defaultValue;
+                        return (
+                          <label
+                            key={perm}
+                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition text-[11px] ${
+                              isOverridden
+                                ? editPerms[perm]
+                                  ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
+                                  : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
+                                : "bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
+                            }`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={editPerms[perm]}
+                              onChange={() => setEditPerms({ ...editPerms, [perm]: !editPerms[perm] })}
+                              className="rounded cursor-pointer"
+                            />
+                            <span className="font-semibold">{PERMISSION_LABELS[perm] || perm}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       </Modal>
 
