@@ -643,7 +643,11 @@ function AppContent() {
             </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            <div className="text-sm font-bold text-slate-800 dark:text-slate-100 font-mono tabular-nums tracking-wider">
+              {currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
+            </div>
+            <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></div>
             <button
               onClick={cycleTheme}
               className="btn-glass p-2.5 rounded-xl cursor-pointer hover:scale-105 active:scale-95 transition-all duration-200 border-none"
@@ -678,14 +682,6 @@ function AppContent() {
                     <p className="text-xs text-slate-400 dark:text-slate-500 font-medium">
                       {new Date().toLocaleDateString("en-US", { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
-                  </div>
-
-                  {/* Live Clock */}
-                  <div className="flex items-center gap-3">
-                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100 font-mono tabular-nums tracking-wider">
-                      {currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
-                    </div>
-                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></div>
                   </div>
 
                 </div>
