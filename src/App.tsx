@@ -22,8 +22,6 @@ import {
   Check,
   Globe,
   Lock,
-  Search,
-  ChevronRight,
   Clock,
   Database,
   Bell,
@@ -249,44 +247,13 @@ function AppContent() {
       .catch((err) => console.error("Error loading seminar years:", err));
   };
 
-  // Global Search states
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any>(null);
-  const [searchLoading, setSearchLoading] = useState(false);
-  const [searchFocused, setSearchFocused] = useState(false);
+  // Live Clock State
+  const [currentTime, setCurrentTime] = useState(() => new Date());
 
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === "k") {
-        e.preventDefault();
-        document.getElementById("global-search-input")?.focus();
-      }
-    };
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
+    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
+    return () => clearInterval(timer);
   }, []);
-
-  useEffect(() => {
-    if (!searchQuery.trim()) {
-      setSearchResults(null);
-      setSearchLoading(false);
-      return;
-    }
-    const delayDebounce = setTimeout(() => {
-      setSearchLoading(true);
-      fetch(`/api/search?q=${encodeURIComponent(searchQuery)}`)
-        .then(res => res.json())
-        .then(data => {
-          setSearchResults(data);
-          setSearchLoading(false);
-        })
-        .catch(err => {
-          console.error(err);
-          setSearchLoading(false);
-        });
-    }, 300);
-    return () => clearTimeout(delayDebounce);
-  }, [searchQuery]);
 
   const handleLoginSuccess = (user: User) => {
     setCurrentUser(user);
@@ -713,128 +680,17 @@ function AppContent() {
                     </p>
                   </div>
 
-                  {/* Global Search */}
-                  <div className="relative w-full md:w-72 z-20">
-                    <div className="relative rounded-xl flex items-center shadow-xs border border-slate-200/60 dark:border-slate-800 bg-white dark:bg-slate-900">
-                      <Search className="absolute left-3 h-4 w-4 text-slate-400 dark:text-slate-500" />
-                      <input
-                        id="global-search-input"
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        onFocus={() => setSearchFocused(true)}
-                        onBlur={() => setTimeout(() => setSearchFocused(false), 200)}
-                        placeholder="Search employees, seminars, learning needs..."
-                        className="w-full pl-9 pr-3 py-2 bg-transparent text-xs text-slate-700 dark:text-slate-200 placeholder-slate-400 focus:outline-none"
-                      />
-                    </div>
-
-                    {searchFocused && searchQuery.trim().length > 0 && (
-                      <div className="absolute top-full left-0 right-0 mt-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl shadow-xl z-50 overflow-hidden max-h-96 overflow-y-auto">
-                        {searchLoading ? (
-                          <div className="p-4 text-center text-xs text-slate-400">Loading results...</div>
-                        ) : !searchResults || (
-                          (!searchResults.employees || searchResults.employees.length === 0) &&
-                          (!searchResults.seminars || searchResults.seminars.length === 0) &&
-                          (!searchResults.learningNeeds || searchResults.learningNeeds.length === 0) &&
-                          (!searchResults.offices || searchResults.offices.length === 0)
-                        ) ? (
-                          <div className="p-4 text-center text-xs text-slate-400">No matches found.</div>
-                        ) : (
-                          <div className="divide-y divide-slate-100 dark:divide-slate-800 text-xs">
-                            {searchResults.employees && searchResults.employees.length > 0 && (
-                              <div className="p-2.5">
-                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Employees</span>
-                                <div className="space-y-0.5">
-                                  {searchResults.employees.map((emp: any) => (
-                                    <button
-                                      key={emp.id}
-                                      onClick={() => {
-                                        setInitialSearch(emp.name);
-                                        changeTab("view");
-                                        setTimeout(() => {
-                                          const event = new CustomEvent("openEmployeeDetails", { detail: { employeeId: emp.id } });
-                                          window.dispatchEvent(event);
-                                        }, 100);
-                                      }}
-                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex justify-between items-center gap-4 cursor-pointer"
-                                    >
-                                      <div className="font-semibold text-slate-700 dark:text-slate-200">{emp.name}</div>
-                                      <div className="text-[10px] text-slate-400 truncate">{emp.position}</div>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {searchResults.seminars && searchResults.seminars.length > 0 && (
-                              <div className="p-2.5">
-                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Seminars</span>
-                                <div className="space-y-0.5">
-                                  {searchResults.seminars.map((sem: any) => (
-                                    <button
-                                      key={sem.id}
-                                      onClick={() => {
-                                        setSelectedSeminarYear(sem.year);
-                                        setSelectedSeminarQuarter(sem.quarter);
-                                        changeTab("seminars");
-                                        setTimeout(() => {
-                                          const customEvent = new CustomEvent("openSeminarDetails", { detail: { seminarId: sem.id } });
-                                          window.dispatchEvent(customEvent);
-                                        }, 100);
-                                      }}
-                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex justify-between items-center gap-4 cursor-pointer"
-                                    >
-                                      <div className="font-semibold text-slate-700 dark:text-slate-200 truncate">{sem.title}</div>
-                                      <div className="text-[10px] text-slate-400 shrink-0 font-bold uppercase">{sem.year} {sem.quarter}</div>
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {searchResults.learningNeeds && searchResults.learningNeeds.length > 0 && (
-                              <div className="p-2.5">
-                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Learning Needs</span>
-                                <div className="space-y-0.5">
-                                  {searchResults.learningNeeds.map((need: any) => (
-                                    <button
-                                      key={need.name}
-                                      onClick={() => {
-                                        setInitialFilters({ learningNeed: need.name });
-                                        changeTab("view");
-                                      }}
-                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex items-center justify-between cursor-pointer"
-                                    >
-                                      <div className="font-semibold text-slate-700 dark:text-slate-200">{need.name}</div>
-                                      <ChevronRight className="h-3 w-3 text-slate-400" />
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                            {searchResults.offices && searchResults.offices.length > 0 && (
-                              <div className="p-2.5">
-                                <span className="block text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 mb-1.5">Offices</span>
-                                <div className="space-y-0.5">
-                                  {searchResults.offices.map((off: any) => (
-                                    <button
-                                      key={off.name}
-                                      onClick={() => {
-                                        setInitialFilters({ office: off.name });
-                                        changeTab("view");
-                                      }}
-                                      className="w-full text-left px-2.5 py-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-950 flex items-center justify-between cursor-pointer"
-                                    >
-                                      <div className="font-semibold text-slate-700 dark:text-slate-200">{off.name}</div>
-                                      <ChevronRight className="h-3 w-3 text-slate-400" />
-                                    </button>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
+                  {/* Live Clock */}
+                  <div className="flex items-center gap-3">
+                    <div className="text-right">
+                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100 font-mono tabular-nums tracking-wider">
+                        {currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
                       </div>
-                    )}
+                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
+                        {currentTime.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
+                      </div>
+                    </div>
+                    <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></div>
                   </div>
 
                 </div>
