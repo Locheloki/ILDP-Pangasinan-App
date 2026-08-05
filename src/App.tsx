@@ -682,13 +682,8 @@ function AppContent() {
 
                   {/* Live Clock */}
                   <div className="flex items-center gap-3">
-                    <div className="text-right">
-                      <div className="text-sm font-bold text-slate-800 dark:text-slate-100 font-mono tabular-nums tracking-wider">
-                        {currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
-                      </div>
-                      <div className="text-[10px] text-slate-400 dark:text-slate-500 font-medium">
-                        {currentTime.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}
-                      </div>
+                    <div className="text-sm font-bold text-slate-800 dark:text-slate-100 font-mono tabular-nums tracking-wider">
+                      {currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
                     </div>
                     <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_8px_#34d399] animate-pulse"></div>
                   </div>
