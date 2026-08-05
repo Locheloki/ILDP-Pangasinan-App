@@ -16,7 +16,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
   const [totalCount, setTotalCount] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
   const [loadingQueue, setLoadingQueue] = useState(false);
-  const [queueMode, setQueueMode] = useState<string>("no_needs");
+  const [queueMode, setQueueMode] = useState<string>("all");
   const [officeFilter, setOfficeFilter] = useState<string>("");
   const [employmentTypeFilter, setEmploymentTypeFilter] = useState<string>("");
   const [employmentStatusFilter, setEmploymentStatusFilter] = useState<string>("");
@@ -588,9 +588,9 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                 onChange={(e) => setQueueMode(e.target.value)}
                 className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-slate-800 dark:text-slate-100 text-xs transition duration-200"
               >
-                <option value="no_needs">No Learning Needs (Default)</option>
+                <option value="all">All Employees (Default)</option>
+                <option value="no_needs">No Learning Needs</option>
                 <option value="has_needs">With Learning Needs</option>
-                <option value="all">All Employees</option>
               </select>
             </div>
 
@@ -654,7 +654,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
 
         {/* Conditional Search & Filter Results list */}
         {(() => {
-          const isSearching = searchQuery.trim() !== "" || officeFilter !== "" || employmentTypeFilter !== "" || employmentStatusFilter !== "" || (queueMode !== "no_needs" && showFilters);
+          const isSearching = searchQuery.trim() !== "" || officeFilter !== "" || employmentTypeFilter !== "" || employmentStatusFilter !== "" || (queueMode !== "all" && showFilters);
           return isSearching && (
             <div className="border-b border-slate-200 dark:border-slate-800 bg-slate-50/10 dark:bg-slate-950/5 flex flex-col max-h-[300px] shrink-0">
               {/* Results Header */}
@@ -679,7 +679,7 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                       setOfficeFilter("");
                       setEmploymentTypeFilter("");
                       setEmploymentStatusFilter("");
-                      setQueueMode("no_needs");
+                      setQueueMode("all");
                     }}
                     className="text-[9px] font-bold text-slate-400 hover:text-slate-655 cursor-pointer font-sans"
                   >
