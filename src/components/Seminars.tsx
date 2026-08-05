@@ -693,15 +693,11 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       return;
     }
     try {
-      const res = await fetch(`/api/employees`);
+      const res = await fetch(`/api/employees?search=${encodeURIComponent(query.trim())}&limit=20`);
       if (res.ok) {
-        const all = await res.json();
-        const employees = Array.isArray(all) ? all : (all.employees || []);
-        const q = query.toLowerCase();
-        const filtered = employees.filter((emp: any) =>
-          `${emp.FirstName} ${emp.LastName} ${emp.EmployeeID}`.toLowerCase().includes(q)
-        );
-        setManualMatchResults(filtered.slice(0, 20));
+        const data = await res.json();
+        const employees = Array.isArray(data) ? data : (data.employees || []);
+        setManualMatchResults(employees);
       }
     } catch {
       setManualMatchResults([]);

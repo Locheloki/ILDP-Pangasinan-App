@@ -497,6 +497,106 @@ function normalizeName(name: string): string {
   return getComparisonKey(name);
 }
 
+// Normalize a search query string: lowercase, remove punctuation, collapse spaces
+function normalizeSearchString(str: string): string {
+  return (str || "")
+    .toLowerCase()
+    .replace(/[,\.;:]/g, "")
+    .replace(/['']/g, "'")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+// ── Shared Employee Search ─────────────────────────────────────────────
+// Used by /api/employees, /api/employees/pending, and any other employee lookup.
+// Returns employees sorted by relevance rank. Lower rank = better match.
+function searchEmployees(
+  employees: any[],
+  query: string,
+  opts?: { limit?: number; includeArchived?: boolean }
+): any[] {
+  const rawQuery = (query || "").trim();
+  if (!rawQuery) return employees;
+
+  const queryTokens = normalizeSearchString(rawQuery).split(/\s+/).filter(t => t.length > 0);
+  if (queryTokens.length === 0) return employees;
+
+  function tokenMatches(qt: string, nameToken: string): boolean {
+    if (qt === nameToken) return true;
+    if (qt.length >= 3 && nameToken.length >= 3) {
+      if (nameToken.startsWith(qt) || qt.startsWith(nameToken)) return true;
+    }
+    return false;
+  }
+
+  const scored = employees.map(emp => {
+    const firstName = normalizeSearchString(emp.FirstName || "");
+    const lastName = normalizeSearchString(emp.LastName || "");
+    const mi = normalizeSearchString(emp.MiddleInitial || "");
+    const empId = String(emp.EmployeeID);
+    const office = normalizeSearchString(emp.Office || "");
+
+    const firstNameTokens = firstName.split(/\s+/).filter(t => t);
+    const lastNameTokens = lastName.split(/\s+/).filter(t => t);
+    const miTokens = mi.split(/\s+/).filter(t => t);
+    const allNameTokens = [...new Set([...firstNameTokens, ...lastNameTokens, ...miTokens])];
+    const fullNameFlat = `${firstName} ${lastName}`;
+    const lastNameFirstName = `${lastName} ${firstName}`;
+    const firstNameLastName = `${firstName} ${lastName}`;
+    const displayName = `${lastName}, ${firstName} ${mi ? mi + "." : ""}`.trim();
+
+    const isExactId = rawQuery === empId;
+    const isExactFullName = rawQuery === fullNameFlat || rawQuery === displayName;
+    const isExactLastFirst = rawQuery === lastNameFirstName;
+    const isExactFirstLast = rawQuery === firstNameLastName;
+    const isExactLast = rawQuery === lastName;
+    const isExactFirst = rawQuery === firstName;
+
+    const allTokensMatch = queryTokens.every(qt =>
+      firstNameTokens.some(ft => tokenMatches(qt, ft)) ||
+      lastNameTokens.some(lt => tokenMatches(qt, lt)) ||
+      miTokens.some(mt => tokenMatches(qt, mt)) ||
+      qt === empId ||
+      allNameTokens.some(nt => tokenMatches(qt, nt)) ||
+      office.includes(qt)
+    );
+
+    const anyTokenMatch = queryTokens.some(qt =>
+      allNameTokens.some(nt => nt.includes(qt) || qt.includes(nt)) ||
+      empId.includes(qt) || office.includes(qt)
+    );
+
+    const firstTokenExact = queryTokens.some(qt => firstNameTokens.includes(qt));
+    const lastTokenExact = queryTokens.some(qt => lastNameTokens.includes(qt));
+
+    let rank = 99;
+    if (isExactId) rank = 0;
+    else if (isExactFullName) rank = 1;
+    else if (isExactLastFirst) rank = 2;
+    else if (isExactFirstLast) rank = 3;
+    else if (isExactLast) rank = 4;
+    else if (isExactFirst) rank = 5;
+    else if (allTokensMatch && firstTokenExact && lastTokenExact) rank = 6;
+    else if (allTokensMatch && firstTokenExact) rank = 7;
+    else if (allTokensMatch && lastTokenExact) rank = 8;
+    else if (allTokensMatch) rank = 9;
+    else if (anyTokenMatch) rank = 10;
+
+    return { emp, rank };
+  });
+
+  let results = scored
+    .filter(s => s.rank < 11)
+    .sort((a, b) => a.rank - b.rank)
+    .map(s => s.emp);
+
+  if (opts?.limit && opts.limit > 0) {
+    results = results.slice(0, opts.limit);
+  }
+
+  return results;
+}
+
 // ── Main matching function (replaces all previous matching logic) ────
 function matchEmployees(
   rawEmployees: { rawName: string; office: string; position?: string; employeeId?: string; manualEmployeeId?: number; _key?: string }[],
@@ -1418,15 +1518,8 @@ app.get("/api/employees", (req, res) => {
   }
 
   if (search) {
-    const terms = (search as string).toLowerCase().split(/\s+/).filter(t => t.length > 0);
-    if (terms.length > 0) {
-      results = results.filter((emp) => {
-        const searchString = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName} ${emp.Office || ""} ${emp.Position || ""}`.toLowerCase();
-        const commaName = `${emp.LastName}, ${emp.FirstName}`.toLowerCase();
-        const empId = String(emp.EmployeeID);
-        return terms.every(term => searchString.includes(term) || commaName.includes(term) || empId.includes(term));
-      });
-    }
+    const maxResults = limit ? parseInt(limit as string) || 50 : 0;
+    results = searchEmployees(results, search as string, { limit: maxResults > 0 ? maxResults : undefined });
   }
 
   if (office) {
@@ -1434,10 +1527,12 @@ app.get("/api/employees", (req, res) => {
     results = results.filter((emp) => emp.Office && emp.Office.toLowerCase().includes(o));
   }
 
-  // Apply result limit if specified (e.g. ?limit=30)
-  const maxResults = limit ? Math.min(parseInt(limit as string) || 50, 100) : 0;
-  if (maxResults > 0) {
-    results = results.slice(0, maxResults);
+  // Apply result limit if not already applied by search
+  if (!search) {
+    const maxResults = limit ? Math.min(parseInt(limit as string) || 50, 100) : 0;
+    if (maxResults > 0) {
+      results = results.slice(0, maxResults);
+    }
   }
 
   // Map employee with learning need count using pre-computed Map
@@ -1456,10 +1551,10 @@ app.get("/api/employees", (req, res) => {
   return res.json({ employees: resultsWithCount });
 });
 
-// 4. Get Employees with custom filters (pending/custom encoding queue)
+// 4b. Get Employees with custom filters (pending/custom encoding queue)
 app.get("/api/employees/pending", (req, res) => {
   const db = readDatabase();
-  const search = req.query.search ? (req.query.search as string).toLowerCase() : "";
+  const search = req.query.search ? (req.query.search as string) : "";
   const office = req.query.office ? (req.query.office as string).toLowerCase() : "";
   const employmentType = req.query.employmentType ? (req.query.employmentType as string).toLowerCase() : "";
   const employmentStatus = req.query.employmentStatus ? (req.query.employmentStatus as string).toLowerCase() : "";
@@ -1477,16 +1572,9 @@ app.get("/api/employees/pending", (req, res) => {
     pending = activeEmps.filter((emp: any) => hasNeedsIds.has(emp.EmployeeID));
   }
 
-  // Apply search
+  // Apply search using shared search function
   if (search) {
-    const terms = search.split(/\s+/).filter(t => t.length > 0);
-    if (terms.length > 0) {
-      pending = pending.filter((emp: any) => {
-        const searchString = `${emp.FirstName} ${emp.MiddleInitial || ""} ${emp.LastName} ${emp.Office || ""} ${emp.Position || ""}`.toLowerCase();
-        const commaName = `${emp.LastName}, ${emp.FirstName}`.toLowerCase();
-        return terms.every(term => searchString.includes(term) || commaName.includes(term));
-      });
-    }
+    pending = searchEmployees(pending, search);
   }
 
   // Apply custom filters
@@ -3778,7 +3866,7 @@ app.post("/api/seminars/import-reprocess", requirePermission("seminar:import"), 
 // 5. Excel Import Execute
 app.post("/api/seminars/import-execute", requirePermission("seminar:import"), (req, res) => {
   try {
-    const { title, year, quarter, date, location, remarks, attendees, externalParticipants, encodeLaterParticipants } = req.body;
+    const { title, year, quarter, date, location, remarks, attendees, externalParticipants } = req.body;
     const finalTitle = (title || "").trim() || "Imported Seminar";
     const finalYear = Number(year) || new Date().getFullYear();
     const finalQuarter = quarter || "Q2";
@@ -4432,76 +4520,6 @@ app.post("/api/audit-logs", (req, res) => {
     const { module, action, entity_type, entity_id, entity_name, description, before_data, after_data, performed_by } = req.body;
     const logEntry = createAuditLog({ module, action, entity_type, entity_id, entity_name, description, before_data, after_data, performed_by });
     res.status(201).json(logEntry);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-// ----------------------------------------------------
-// ENCODE LATER QUEUE ENDPOINTS
-// ----------------------------------------------------
-app.get("/api/encode-later", (req, res) => {
-  try {
-    const db = readDatabase();
-    res.json(db.encodeLaterQueue || []);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post("/api/encode-later", (req, res) => {
-  try {
-    const db = readDatabase();
-    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
-    
-    // Add unique ID and timestamp if not present
-    const newItem = {
-      ...req.body,
-      id: req.body.id || `queue_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      dateAdded: req.body.dateAdded || new Date().toISOString()
-    };
-    
-    db.encodeLaterQueue.push(newItem);
-    writeDatabase(db);
-    res.status(201).json(newItem);
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.delete("/api/encode-later/:id", (req, res) => {
-  try {
-    const db = readDatabase();
-    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
-    
-    const initialLength = db.encodeLaterQueue.length;
-    db.encodeLaterQueue = db.encodeLaterQueue.filter((item: any) => item.id !== req.params.id);
-    
-    if (db.encodeLaterQueue.length !== initialLength) {
-      writeDatabase(db);
-      res.json({ success: true, message: "Item removed from queue" });
-    } else {
-      res.status(404).json({ error: "Item not found in queue" });
-    }
-  } catch (error: any) {
-    res.status(500).json({ error: error.message });
-  }
-});
-
-app.post("/api/encode-later/bulk-delete", (req, res) => {
-  try {
-    const { ids } = req.body;
-    if (!Array.isArray(ids)) {
-      return res.status(400).json({ error: "ids must be an array" });
-    }
-    
-    const db = readDatabase();
-    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
-    
-    db.encodeLaterQueue = db.encodeLaterQueue.filter((item: any) => !ids.includes(item.id));
-    writeDatabase(db);
-    
-    res.json({ success: true, message: `${ids.length} items removed from queue` });
   } catch (error: any) {
     res.status(500).json({ error: error.message });
   }
