@@ -200331,6 +200331,44 @@
       "UpdatedAt": "2026-08-07T01:20:48.618Z",
       "CreatedBy": "jims",
       "UpdatedBy": "jims"
+    },
+    {
+      "EmployeeID": 10785,
+      "FirstName": "Mary Rose",
+      "MiddleName": "S",
+      "MiddleInitial": "S.",
+      "LastName": "Salvador",
+      "Suffix": "",
+      "Office": "Provincial Governor's Office",
+      "Position": "Administrative Aide",
+      "EmploymentType": "Undefined (Pending Review)",
+      "EmploymentStatus": "Newly Hired",
+      "StatusChangedAt": "2026-08-07T01:24:07.171Z",
+      "Gender": "Female",
+      "NewlyHired": "N/A",
+      "CreatedAt": "2026-08-07T01:24:07.171Z",
+      "UpdatedAt": "2026-08-07T01:24:07.571Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "EmployeeID": 10786,
+      "FirstName": "Ashley Judea",
+      "MiddleName": "E",
+      "MiddleInitial": "E.",
+      "LastName": "Daus",
+      "Suffix": "",
+      "Office": "Provincial Governor's Office",
+      "Position": "Administrative Aide",
+      "EmploymentType": "Undefined (Pending Review)",
+      "EmploymentStatus": "Newly Hired",
+      "StatusChangedAt": "2026-08-07T01:28:07.817Z",
+      "Gender": "Female",
+      "NewlyHired": "N/A",
+      "CreatedAt": "2026-08-07T01:28:07.817Z",
+      "UpdatedAt": "2026-08-07T01:28:08.217Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
     }
   ],
   "learningNeeds": [
@@ -202821,7 +202859,7 @@
     {
       "LearningNeedID": 296,
       "EmployeeID": 64,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge, Licensing Requirement, Updates/Learning Requirements",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "4th Quarter 2026",
@@ -202905,7 +202943,7 @@
     {
       "LearningNeedID": 303,
       "EmployeeID": 65,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge, Licensing Requirement, Orientation/Learning Requirement",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "2nd Quarter of 2026",
@@ -237309,7 +237347,7 @@
     {
       "LearningNeedID": 4636,
       "EmployeeID": 2448,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "DOH Licensing",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "2nd Quarter of 2027",
@@ -247173,7 +247211,7 @@
     {
       "LearningNeedID": 5946,
       "EmployeeID": 9855,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advanced Knowledge, Licensing Requirement",
       "Methodology": "Coaching and Mentoring",
       "TargetSchedule": "4th Quarter of 2026",
@@ -251613,7 +251651,7 @@
     {
       "LearningNeedID": 6316,
       "EmployeeID": 320,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge, Updates/Learning Requirements, Licensing Requirement",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "4th Quarter 2026",
@@ -251697,7 +251735,7 @@
     {
       "LearningNeedID": 6323,
       "EmployeeID": 321,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge, Orientation/Learning Requirement, Licensing Requirement",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "2nd Quarter of 2026",
@@ -269253,7 +269291,7 @@
     {
       "LearningNeedID": 7786,
       "EmployeeID": 594,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge in effective implementation",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "4th Quarter 2026",
@@ -269901,7 +269939,7 @@
     {
       "LearningNeedID": 7840,
       "EmployeeID": 607,
-      "LearningNeed": "performs TRIAGE",
+      "LearningNeed": "Performs Triage",
       "Basis": "Advance Knowledge",
       "Methodology": "online study on SALT mass casualty and triage training simulation on bls & acls",
       "TargetSchedule": "1st Quarter 2025-2027",
@@ -269997,7 +270035,7 @@
     {
       "LearningNeedID": 7848,
       "EmployeeID": 608,
-      "LearningNeed": "performs TRIAGE",
+      "LearningNeed": "Performs Triage",
       "Basis": "Advance Knowledge",
       "Methodology": "online study on SALT mass casualty and triage training simulation on bls & acls",
       "TargetSchedule": "1st Quarter 2025-2027",
@@ -270477,7 +270515,7 @@
     {
       "LearningNeedID": 7888,
       "EmployeeID": 627,
-      "LearningNeed": "calibration on SPMS",
+      "LearningNeed": "Calibration on SPMS",
       "Basis": "Advance Knowledge",
       "Methodology": "Coaching/Orientation",
       "TargetSchedule": "1st Quarter 2026",
@@ -272397,7 +272435,7 @@
     {
       "LearningNeedID": 8048,
       "EmployeeID": 672,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272445,7 +272483,7 @@
     {
       "LearningNeedID": 8052,
       "EmployeeID": 673,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272493,7 +272531,7 @@
     {
       "LearningNeedID": 8056,
       "EmployeeID": 674,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272541,7 +272579,7 @@
     {
       "LearningNeedID": 8060,
       "EmployeeID": 675,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272589,7 +272627,7 @@
     {
       "LearningNeedID": 8064,
       "EmployeeID": 676,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272637,7 +272675,7 @@
     {
       "LearningNeedID": 8068,
       "EmployeeID": 677,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272685,7 +272723,7 @@
     {
       "LearningNeedID": 8072,
       "EmployeeID": 678,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272733,7 +272771,7 @@
     {
       "LearningNeedID": 8076,
       "EmployeeID": 679,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272781,7 +272819,7 @@
     {
       "LearningNeedID": 8080,
       "EmployeeID": 680,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272829,7 +272867,7 @@
     {
       "LearningNeedID": 8084,
       "EmployeeID": 681,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272877,7 +272915,7 @@
     {
       "LearningNeedID": 8088,
       "EmployeeID": 682,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272925,7 +272963,7 @@
     {
       "LearningNeedID": 8092,
       "EmployeeID": 683,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -272973,7 +273011,7 @@
     {
       "LearningNeedID": 8096,
       "EmployeeID": 684,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -273021,7 +273059,7 @@
     {
       "LearningNeedID": 8100,
       "EmployeeID": 685,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -312957,7 +312995,7 @@
     {
       "LearningNeedID": 11432,
       "EmployeeID": 1435,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge in effective implementation",
       "Methodology": "Training",
       "TargetSchedule": "4th Quarter of 2026",
@@ -312969,7 +313007,7 @@
     {
       "LearningNeedID": 11433,
       "EmployeeID": 1436,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge in effective implementation",
       "Methodology": "Training",
       "TargetSchedule": "4th Quarter of 2026",
@@ -312981,7 +313019,7 @@
     {
       "LearningNeedID": 11434,
       "EmployeeID": 1437,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge in effective implementation",
       "Methodology": "Training",
       "TargetSchedule": "4th Quarter of 2026",
@@ -367497,7 +367535,7 @@
     {
       "LearningNeedID": 15977,
       "EmployeeID": 2473,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge",
       "Methodology": "Training",
       "TargetSchedule": "4th Quarter of 2026",
@@ -367521,7 +367559,7 @@
     {
       "LearningNeedID": 15979,
       "EmployeeID": 2474,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge",
       "Methodology": "Training",
       "TargetSchedule": "4th Quarter of 2026",
@@ -367545,7 +367583,7 @@
     {
       "LearningNeedID": 15981,
       "EmployeeID": 2475,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge",
       "Methodology": "Training",
       "TargetSchedule": "4th Quarter of 2026",
@@ -385161,7 +385199,7 @@
     {
       "LearningNeedID": 17489,
       "EmployeeID": 1939,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge, Updates/Learning Requirements, Licensing Requirement",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "4th Quarter 2026",
@@ -385245,7 +385283,7 @@
     {
       "LearningNeedID": 17496,
       "EmployeeID": 1946,
-      "LearningNeed": "basic Life Support",
+      "LearningNeed": "Basic Life Support",
       "Basis": "Advance Knowledge, Orientation/Learning Requirement, Licensing Requirement",
       "Methodology": "Seminar/Training",
       "TargetSchedule": "2nd Quarter of 2026",
@@ -389481,7 +389519,7 @@
     {
       "LearningNeedID": 17849,
       "EmployeeID": 760,
-      "LearningNeed": "provision of nursing care TO PATIENT",
+      "LearningNeed": "Provision of Nursing Care to Patient",
       "Basis": "Competency advancement",
       "Methodology": "Coaching & Mentoring",
       "TargetSchedule": "1st Quarter 2026",
@@ -402399,6 +402437,102 @@
       "TargetSchedule": "2nd Quarter of 2026",
       "CreatedAt": "2026-08-07T01:20:48.620Z",
       "UpdatedAt": "2026-08-07T01:20:48.620Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18898,
+      "EmployeeID": 10785,
+      "LearningNeed": "People Management Skills",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:24:07.573Z",
+      "UpdatedAt": "2026-08-07T01:24:07.573Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18899,
+      "EmployeeID": 10785,
+      "LearningNeed": "Effective Verbal Communication Skills",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:24:07.573Z",
+      "UpdatedAt": "2026-08-07T01:24:07.573Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18900,
+      "EmployeeID": 10785,
+      "LearningNeed": "Attention to Detail",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:24:07.573Z",
+      "UpdatedAt": "2026-08-07T01:24:07.573Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18901,
+      "EmployeeID": 10785,
+      "LearningNeed": "Ability to Comprehend Verbal and Written Instructions",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:24:07.573Z",
+      "UpdatedAt": "2026-08-07T01:24:07.573Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18902,
+      "EmployeeID": 10786,
+      "LearningNeed": "People Management Skills",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:28:08.219Z",
+      "UpdatedAt": "2026-08-07T01:28:08.219Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18903,
+      "EmployeeID": 10786,
+      "LearningNeed": "Effective Verbal Communication Skills",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:28:08.219Z",
+      "UpdatedAt": "2026-08-07T01:28:08.219Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18904,
+      "EmployeeID": 10786,
+      "LearningNeed": "Attention to Detail",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:28:08.219Z",
+      "UpdatedAt": "2026-08-07T01:28:08.219Z",
+      "CreatedBy": "jims",
+      "UpdatedBy": "jims"
+    },
+    {
+      "LearningNeedID": 18905,
+      "EmployeeID": 10786,
+      "LearningNeed": "Ability to Comprehend Verbal and Written Instructions",
+      "Basis": "BASIC",
+      "Methodology": "Coaching and Mentoring",
+      "TargetSchedule": "2nd Quarter of 2026",
+      "CreatedAt": "2026-08-07T01:28:08.219Z",
+      "UpdatedAt": "2026-08-07T01:28:08.219Z",
       "CreatedBy": "jims",
       "UpdatedBy": "jims"
     }
@@ -437880,6 +438014,76 @@
       "after_data": "{\"EmployeeID\":10784,\"FirstName\":\"Vanessa\",\"MiddleName\":\"P\",\"MiddleInitial\":\"P.\",\"LastName\":\"Corpuz\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:20:48.246Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:20:48.246Z\",\"UpdatedAt\":\"2026-08-07T01:20:48.246Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
       "performed_by": "jims",
       "created_at": "2026-08-07T01:20:48.441Z"
+    },
+    {
+      "id": 1258,
+      "timestamp": "2026-08-07T01:20:48.811Z",
+      "module": "Employee Management",
+      "action": "Employee Updated",
+      "entity_type": "employee",
+      "entity_id": "10784",
+      "entity_name": "Corpuz, Vanessa P.",
+      "description": "Updated employee Corpuz, Vanessa P.",
+      "before_data": "{\"EmployeeID\":10784,\"FirstName\":\"Vanessa\",\"MiddleName\":\"P\",\"MiddleInitial\":\"P.\",\"LastName\":\"Corpuz\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:20:48.246Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:20:48.246Z\",\"UpdatedAt\":\"2026-08-07T01:20:48.246Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "after_data": "{\"EmployeeID\":10784,\"FirstName\":\"Vanessa\",\"MiddleName\":\"P\",\"MiddleInitial\":\"P.\",\"LastName\":\"Corpuz\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:20:48.246Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:20:48.246Z\",\"UpdatedAt\":\"2026-08-07T01:20:48.618Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "performed_by": "jims",
+      "created_at": "2026-08-07T01:20:48.811Z"
+    },
+    {
+      "id": 1259,
+      "timestamp": "2026-08-07T01:24:07.376Z",
+      "module": "Employee Management",
+      "action": "Employee Created",
+      "entity_type": "employee",
+      "entity_id": "10785",
+      "entity_name": "Salvador, Mary Rose S.",
+      "description": "Created employee Salvador, Mary Rose S.",
+      "before_data": null,
+      "after_data": "{\"EmployeeID\":10785,\"FirstName\":\"Mary Rose\",\"MiddleName\":\"S\",\"MiddleInitial\":\"S.\",\"LastName\":\"Salvador\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:24:07.171Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:24:07.171Z\",\"UpdatedAt\":\"2026-08-07T01:24:07.171Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "performed_by": "jims",
+      "created_at": "2026-08-07T01:24:07.376Z"
+    },
+    {
+      "id": 1260,
+      "timestamp": "2026-08-07T01:24:07.657Z",
+      "module": "Employee Management",
+      "action": "Employee Updated",
+      "entity_type": "employee",
+      "entity_id": "10785",
+      "entity_name": "Salvador, Mary Rose S.",
+      "description": "Updated employee Salvador, Mary Rose S.",
+      "before_data": "{\"EmployeeID\":10785,\"FirstName\":\"Mary Rose\",\"MiddleName\":\"S\",\"MiddleInitial\":\"S.\",\"LastName\":\"Salvador\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:24:07.171Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:24:07.171Z\",\"UpdatedAt\":\"2026-08-07T01:24:07.171Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "after_data": "{\"EmployeeID\":10785,\"FirstName\":\"Mary Rose\",\"MiddleName\":\"S\",\"MiddleInitial\":\"S.\",\"LastName\":\"Salvador\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:24:07.171Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:24:07.171Z\",\"UpdatedAt\":\"2026-08-07T01:24:07.571Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "performed_by": "jims",
+      "created_at": "2026-08-07T01:24:07.657Z"
+    },
+    {
+      "id": 1261,
+      "timestamp": "2026-08-07T01:28:07.997Z",
+      "module": "Employee Management",
+      "action": "Employee Created",
+      "entity_type": "employee",
+      "entity_id": "10786",
+      "entity_name": "Daus, Ashley Judea E.",
+      "description": "Created employee Daus, Ashley Judea E.",
+      "before_data": null,
+      "after_data": "{\"EmployeeID\":10786,\"FirstName\":\"Ashley Judea\",\"MiddleName\":\"E\",\"MiddleInitial\":\"E.\",\"LastName\":\"Daus\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:28:07.817Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:28:07.817Z\",\"UpdatedAt\":\"2026-08-07T01:28:07.817Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "performed_by": "jims",
+      "created_at": "2026-08-07T01:28:07.997Z"
+    },
+    {
+      "id": 1262,
+      "timestamp": "2026-08-07T01:28:08.411Z",
+      "module": "Employee Management",
+      "action": "Employee Updated",
+      "entity_type": "employee",
+      "entity_id": "10786",
+      "entity_name": "Daus, Ashley Judea E.",
+      "description": "Updated employee Daus, Ashley Judea E.",
+      "before_data": "{\"EmployeeID\":10786,\"FirstName\":\"Ashley Judea\",\"MiddleName\":\"E\",\"MiddleInitial\":\"E.\",\"LastName\":\"Daus\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:28:07.817Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:28:07.817Z\",\"UpdatedAt\":\"2026-08-07T01:28:07.817Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "after_data": "{\"EmployeeID\":10786,\"FirstName\":\"Ashley Judea\",\"MiddleName\":\"E\",\"MiddleInitial\":\"E.\",\"LastName\":\"Daus\",\"Suffix\":\"\",\"Office\":\"Provincial Governor's Office\",\"Position\":\"Administrative Aide\",\"EmploymentType\":\"Undefined (Pending Review)\",\"EmploymentStatus\":\"Newly Hired\",\"StatusChangedAt\":\"2026-08-07T01:28:07.817Z\",\"Gender\":\"Female\",\"NewlyHired\":\"N/A\",\"CreatedAt\":\"2026-08-07T01:28:07.817Z\",\"UpdatedAt\":\"2026-08-07T01:28:08.217Z\",\"CreatedBy\":\"jims\",\"UpdatedBy\":\"jims\"}",
+      "performed_by": "jims",
+      "created_at": "2026-08-07T01:28:08.411Z"
     }
   ],
   "encodeLaterQueue": []
