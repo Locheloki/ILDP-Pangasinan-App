@@ -851,9 +851,6 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
                     <ChevronRight className="h-4.5 w-4.5" />
                   </button>
                 )}
-                <div className="w-10 h-10 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-base shrink-0">
-                  {(lastName || firstName || suffix).charAt(0) || "?"}
-                </div>
                 <div className="min-w-0 flex-1">
                   {editingName ? (
                     <div className="flex items-center flex-wrap gap-1" ref={nameEditRef}>

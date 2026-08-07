@@ -54,9 +54,6 @@ export default function EmployeeProfileDrawer({ isOpen, employee, needs, seminar
       <div className="space-y-6">
         {/* Profile Overview */}
         <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
-          <div className="w-14 h-14 rounded-full bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center font-bold text-xl uppercase tracking-wider shrink-0">
-            {employee.LastName.charAt(0)}
-          </div>
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
