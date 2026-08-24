@@ -28,7 +28,7 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
       maxWidth="max-w-md"
       ariaLabel="Save this record?"
       hideCloseButton
-      bodyClassName="space-y-5"
+      bodyClassName="pt-6 space-y-5"
       footer={
         <>
           <button
@@ -51,11 +51,11 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
         </>
       }
     >
-      <div className="flex gap-4 items-start">
-        <div className="bg-blue-50 dark:bg-blue-950/40 p-3 rounded-full text-blue-600 dark:text-blue-400 border dark:border-blue-900/40 shrink-0">
-          <AlertCircle className="h-6 w-6" />
+      <div className="flex gap-4 items-start px-1">
+        <div className="bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-full text-blue-600 dark:text-blue-400 border border-blue-100 dark:border-blue-900/40 shrink-0">
+          <AlertCircle className="h-5 w-5" />
         </div>
-        <div className="space-y-2">
+        <div className="space-y-1.5">
           <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100 tracking-tight">
             Save this record?
           </h3>
@@ -65,7 +65,7 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
         </div>
       </div>
 
-      <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl flex items-center gap-2 border dark:border-slate-800 transition-colors duration-200 mt-5">
+      <div className="bg-slate-50 dark:bg-slate-950 p-3 rounded-xl flex items-center gap-2.5 border border-slate-200/60 dark:border-slate-800 transition-colors duration-200 mt-4">
         <input
           type="checkbox"
           id="dont-ask-again"

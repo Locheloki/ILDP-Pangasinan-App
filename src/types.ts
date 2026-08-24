@@ -11,6 +11,22 @@ export interface User {
   permissions?: string[];
 }
 
+export interface DeletionRequest {
+  id: string;
+  entityType: "employee" | "seminar" | "learning-need";
+  entityId: string;
+  entityName: string;
+  requestedBy: string;
+  requestedByName: string;
+  requestedByRole: UserRole;
+  reason?: string;
+  status: "pending" | "approved" | "denied";
+  reviewedBy?: string;
+  reviewedByName?: string;
+  reviewedAt?: string;
+  createdAt: string;
+}
+
 export function formatEmployeeName(emp: { LastName: string; FirstName: string; MiddleInitial?: string; Suffix?: string }): string {
   const parts = [emp.LastName + ","];
   if (emp.Suffix) parts.push(emp.Suffix);
@@ -125,6 +141,9 @@ export interface Seminar {
     Suffix?: string;
     Office: string;
     Position: string;
+    displayName?: string;
+    rawName?: string;
+    participantType?: string;
   }>;
   attachment?: {
     originalName: string;
@@ -133,6 +152,14 @@ export interface Seminar {
     uploadDate: string;
     mimeType: string;
   };
+  attachments?: Array<{
+    id: string;
+    originalName: string;
+    filename: string;
+    fileSize: number;
+    uploadDate: string;
+    mimeType: string;
+  }>;
 }
 
 export interface SeminarAttendee {

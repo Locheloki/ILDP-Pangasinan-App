@@ -24,11 +24,9 @@ import {
   Lock,
   Clock,
   Database,
-  Bell,
 } from "lucide-react";
-import { User, DashboardStats, Employee, LearningNeed, formatEmployeeName } from "./types";
+import { User, DashboardStats, Employee, LearningNeed, DeletionRequest, formatEmployeeName } from "./types";
 import LoginScreen from "./components/LoginScreen";
-import DashboardStatsCard from "./components/DashboardStatsCard";
 import EmployeeForm from "./components/EmployeeForm";
 import RecordsTable from "./components/RecordsTable";
 import SaveConfirmDialog from "./components/SaveConfirmDialog";
@@ -40,6 +38,7 @@ import Modal from "./components/Modal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AuditLogs from "./components/AuditLogs";
 import UserManagement from "./components/UserManagement";
+import Notifications from "./components/Notifications";
 import { useNavigation } from "./NavigationContext";
 
 export default function App() {
@@ -138,6 +137,58 @@ function AppContent() {
     setCustomOptionsVersion((prev) => prev + 1);
   };
 
+  // Deletion Requests
+  const [deletionRequests, setDeletionRequests] = useState<DeletionRequest[]>([]);
+
+  const fetchDeletionRequests = React.useCallback(async () => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch("/api/deletion-requests", {
+        headers: { "x-user-id": String(currentUser.id) },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDeletionRequests(data);
+      }
+    } catch {}
+  }, [currentUser?.id]);
+
+  useEffect(() => {
+    if (!currentUser) return;
+    fetchDeletionRequests();
+    const interval = setInterval(fetchDeletionRequests, 30000);
+    return () => clearInterval(interval);
+  }, [currentUser, fetchDeletionRequests]);
+
+  const handleReviewDeletionRequest = async (id: string, status: "approved" | "denied") => {
+    if (!currentUser) return;
+    try {
+      const res = await fetch(`/api/deletion-requests/${id}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", "x-user-id": String(currentUser.id) },
+        body: JSON.stringify({ status }),
+      });
+      if (res.ok) {
+        showToast(`Request ${status}`, "success");
+        fetchDeletionRequests();
+      } else {
+        const err = await res.json().catch(() => ({ error: "Failed" }));
+        showToast(err.error || "Failed to review request", "error");
+      }
+    } catch {
+      showToast("Network error", "error");
+    }
+  };
+
+  const notificationBell = currentUser ? (
+    <Notifications
+      currentUser={currentUser}
+      requests={deletionRequests}
+      onReview={handleReviewDeletionRequest}
+      onRefresh={fetchDeletionRequests}
+    />
+  ) : null;
+
   const profileFileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleProfilePicUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,9 +197,37 @@ function AppContent() {
 
     if (!currentUser) return;
 
+    const resizeImage = (img: HTMLImageElement): string => {
+      const SIZE = 256;
+      const canvas = document.createElement("canvas");
+      canvas.width = SIZE;
+      canvas.height = SIZE;
+      const ctx = canvas.getContext("2d")!;
+      ctx.imageSmoothingEnabled = true;
+      ctx.imageSmoothingQuality = "high";
+      const min = Math.min(img.naturalWidth, img.naturalHeight);
+      const sx = (img.naturalWidth - min) / 2;
+      const sy = (img.naturalHeight - min) / 2;
+      ctx.drawImage(img, sx, sy, min, min, 0, 0, SIZE, SIZE);
+      return canvas.toDataURL("image/jpeg", 0.92);
+    };
+
     const reader = new FileReader();
     reader.onloadend = async () => {
-      const base64String = reader.result as string;
+      const dataUrl = reader.result as string;
+      let base64String: string;
+
+      try {
+        const img = new Image();
+        await new Promise<void>((resolve, reject) => {
+          img.onload = () => resolve();
+          img.onerror = reject;
+          img.src = dataUrl;
+        });
+        base64String = resizeImage(img);
+      } catch {
+        base64String = dataUrl;
+      }
 
       try {
         const response = await fetch("/api/users/profile-pic", {
@@ -644,6 +723,7 @@ function AppContent() {
           </div>
 
           <div className="flex items-center gap-3">
+            {notificationBell}
             <div className="text-sm font-bold text-slate-800 dark:text-slate-100 font-mono tabular-nums tracking-wider">
               {currentTime.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}
             </div>
@@ -1270,6 +1350,7 @@ function AppContent() {
                 initialSearch={initialSearch}
                 onConsumeFilters={() => { setInitialFilters(null); setInitialSearch(undefined); }}
                 currentUser={currentUser}
+                onToast={showToast}
               />
             </div>
 
@@ -1302,6 +1383,7 @@ function AppContent() {
                 onSelectEmployee={(empId) => handleEditEmployeeTrigger(empId, "seminars")}
                 currentUser={currentUser}
                 onSeminarChange={fetchStats}
+                onToast={showToast}
                 onAddNewRecord={() => {
                   // Save return context so we come back after creating employee
                   setReturnContext({

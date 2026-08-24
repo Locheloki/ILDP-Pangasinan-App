@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Plus, Trash, Search, ArrowRight, UserCheck, AlertTriangle, Eye, ChevronDown } from "lucide-react";
+import { Plus, Trash, ArrowRight, UserCheck, AlertTriangle } from "lucide-react";
 import { Employee, LearningNeed, User, formatEmployeeName } from "../types";
 import { OFFICES, POSITIONS, LEARNING_NEEDS, BASES, METHODOLOGIES, SCHEDULES } from "../constants";
 import { getStoredLearningNeedsClipboard, getStoredLearningNeedsClipboardCount, setStoredLearningNeedsClipboard } from "../utils/learningNeedClipboard";
@@ -566,18 +566,19 @@ export default function EmployeeForm({
       : needs.filter((nd) => nd.LearningNeed.trim() !== "");
 
     // Prevent duplicates within the same list (skip if learning needs hidden)
+    // A "true duplicate" = same learning need AND same quarter/schedule
     let hasDuplicateNeed = false;
     if (!hideLearningNeeds && cleanNeeds.length > 0) {
       const seenNeeds = new Set();
       cleanNeeds.forEach((n) => {
-        const uniqueKey = n.LearningNeed.trim().toLowerCase();
+        const uniqueKey = `${n.LearningNeed.trim().toLowerCase()}|${(n.TargetSchedule || "").trim().toLowerCase()}`;
         if (seenNeeds.has(uniqueKey)) hasDuplicateNeed = true;
         seenNeeds.add(uniqueKey);
       });
     }
 
     if (hasDuplicateNeed) {
-      alert("You have entered duplicate learning needs for this employee. Please remove duplicates before saving.");
+      alert("You have entered duplicate learning needs for the same quarter. Please remove duplicates before saving.");
       return;
     }
 

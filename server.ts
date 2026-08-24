@@ -167,6 +167,37 @@ const DEFAULT_SCHEDULES = [
 let _dbCache: any = null;
 let _dbCacheMtime: number = 0;
 
+// Pre-computed search index for fast employee search
+let _searchIndex: Map<number, any> | null = null;
+let _searchIndexGeneration = 0;
+
+function getSearchIndex(db: any): Map<number, any> {
+  if (_searchIndex) return _searchIndex;
+  _searchIndex = new Map();
+  for (const emp of db.employees) {
+    const firstName = normalizeSearchString(emp.FirstName || "");
+    const lastName = normalizeSearchString(emp.LastName || "");
+    const mi = normalizeSearchString(emp.MiddleInitial || "");
+    const empId = String(emp.EmployeeID);
+    const office = normalizeSearchString(emp.Office || "");
+    _searchIndex.set(emp.EmployeeID, {
+      firstName,
+      lastName,
+      mi,
+      empId,
+      office,
+      firstNameTokens: firstName.split(/\s+/).filter((t: string) => t),
+      lastNameTokens: lastName.split(/\s+/).filter((t: string) => t),
+      fullNameFlat: `${firstName} ${lastName}`,
+      lastNameFirstName: `${lastName} ${firstName}`,
+      firstNameLastName: `${firstName} ${lastName}`,
+      displayName: `${lastName}, ${firstName} ${mi ? mi + "." : ""}`.trim(),
+      searchableText: `${firstName} ${lastName} ${mi} ${empId}`,
+    });
+  }
+  return _searchIndex!;
+}
+
 function readDatabase() {
   try {
     const defaults = {
@@ -186,8 +217,8 @@ function readDatabase() {
         seminars: [],
         seminarAttendees: [],
         seminarYears: [],
-        encodeLaterQueue: [],
         auditLogs: [],
+        deletionRequests: [],
         customOptions: { ...defaults } 
       };
     }
@@ -202,8 +233,8 @@ function readDatabase() {
     if (!db.seminars) db.seminars = [];
     if (!db.seminarAttendees) db.seminarAttendees = [];
     if (!db.seminarYears) db.seminarYears = [];
-    if (!db.encodeLaterQueue) db.encodeLaterQueue = [];
     if (!db.auditLogs) db.auditLogs = [];
+    if (!db.deletionRequests) db.deletionRequests = [];
     if (!db.customOptions) {
       db.customOptions = { ...defaults };
     } else {
@@ -227,8 +258,9 @@ function readDatabase() {
       learningNeeds: [], 
       seminars: [],
       seminarAttendees: [],
-      encodeLaterQueue: [],
+      seminarYears: [],
       auditLogs: [],
+      deletionRequests: [],
       customOptions: { 
         basis: [], 
         methodology: [],
@@ -251,6 +283,8 @@ function writeDatabase(data: any) {
     // Invalidate cache so next read picks up changes
     _dbCache = null;
     _dbCacheMtime = 0;
+    _searchIndex = null;
+    _searchIndexGeneration++;
   } catch (error) {
     console.error("Error writing database:", error);
   }
@@ -510,6 +544,7 @@ function normalizeSearchString(str: string): string {
 // ── Shared Employee Search ─────────────────────────────────────────────
 // Used by /api/employees, /api/employees/pending, and any other employee lookup.
 // Returns employees sorted by relevance rank. Lower rank = better match.
+// Uses a pre-computed search index for O(1) field lookups per employee.
 function searchEmployees(
   employees: any[],
   query: string,
@@ -518,32 +553,33 @@ function searchEmployees(
   const rawQuery = (query || "").trim();
   if (!rawQuery) return employees;
 
-  const queryTokens = normalizeSearchString(rawQuery).split(/\s+/).filter(t => t.length > 0);
+  const normQuery = normalizeSearchString(rawQuery);
+  const queryTokens = normQuery.split(/\s+/).filter(t => t.length > 0);
   if (queryTokens.length === 0) return employees;
+
+  const db = readDatabase();
+  const index = getSearchIndex(db);
 
   function tokenMatches(qt: string, nameToken: string): boolean {
     if (qt === nameToken) return true;
-    if (qt.length >= 3 && nameToken.length >= 3) {
-      if (nameToken.startsWith(qt) || qt.startsWith(nameToken)) return true;
-    }
+    if (nameToken.startsWith(qt) || qt.startsWith(nameToken)) return true;
     return false;
   }
 
-  const scored = employees.map(emp => {
-    const firstName = normalizeSearchString(emp.FirstName || "");
-    const lastName = normalizeSearchString(emp.LastName || "");
-    const mi = normalizeSearchString(emp.MiddleInitial || "");
-    const empId = String(emp.EmployeeID);
-    const office = normalizeSearchString(emp.Office || "");
+  function tokenContains(qt: string, nameToken: string): boolean {
+    if (qt === nameToken) return true;
+    if (nameToken.startsWith(qt) || qt.startsWith(nameToken)) return true;
+    if (nameToken.includes(qt)) return true;
+    return false;
+  }
 
-    const firstNameTokens = firstName.split(/\s+/).filter(t => t);
-    const lastNameTokens = lastName.split(/\s+/).filter(t => t);
-    const miTokens = mi.split(/\s+/).filter(t => t);
-    const allNameTokens = [...new Set([...firstNameTokens, ...lastNameTokens, ...miTokens])];
-    const fullNameFlat = `${firstName} ${lastName}`;
-    const lastNameFirstName = `${lastName} ${firstName}`;
-    const firstNameLastName = `${firstName} ${lastName}`;
-    const displayName = `${lastName}, ${firstName} ${mi ? mi + "." : ""}`.trim();
+  const scored: { emp: any; rank: number }[] = [];
+
+  for (const emp of employees) {
+    const idx = index.get(emp.EmployeeID);
+    if (!idx) continue;
+
+    const { firstName, lastName, mi, empId, office, firstNameTokens, lastNameTokens, fullNameFlat, lastNameFirstName, firstNameLastName, displayName, searchableText } = idx;
 
     const isExactId = rawQuery === empId;
     const isExactFullName = rawQuery === fullNameFlat || rawQuery === displayName;
@@ -552,43 +588,59 @@ function searchEmployees(
     const isExactLast = rawQuery === lastName;
     const isExactFirst = rawQuery === firstName;
 
-    const allTokensMatch = queryTokens.every(qt =>
-      firstNameTokens.some(ft => tokenMatches(qt, ft)) ||
-      lastNameTokens.some(lt => tokenMatches(qt, lt)) ||
-      miTokens.some(mt => tokenMatches(qt, mt)) ||
-      qt === empId ||
-      allNameTokens.some(nt => tokenMatches(qt, nt)) ||
-      office.includes(qt)
-    );
+    // Quick check: if any high-rank match, skip expensive checks
+    if (isExactId || isExactFullName || isExactLastFirst || isExactFirstLast || isExactLast || isExactFirst) {
+      let rank = 0;
+      if (isExactId) rank = 0;
+      else if (isExactFullName) rank = 1;
+      else if (isExactLastFirst) rank = 2;
+      else if (isExactFirstLast) rank = 3;
+      else if (isExactLast) rank = 4;
+      else rank = 5;
+      scored.push({ emp, rank });
+      continue;
+    }
 
-    const anyTokenMatch = queryTokens.some(qt =>
-      allNameTokens.some(nt => nt.includes(qt) || qt.includes(nt)) ||
-      empId.includes(qt) || office.includes(qt)
-    );
-
+    // Rank 9: every query token matches a firstName/lastName token (prefix-based)
     const firstTokenExact = queryTokens.some(qt => firstNameTokens.includes(qt));
     const lastTokenExact = queryTokens.some(qt => lastNameTokens.includes(qt));
 
-    let rank = 99;
-    if (isExactId) rank = 0;
-    else if (isExactFullName) rank = 1;
-    else if (isExactLastFirst) rank = 2;
-    else if (isExactFirstLast) rank = 3;
-    else if (isExactLast) rank = 4;
-    else if (isExactFirst) rank = 5;
-    else if (allTokensMatch && firstTokenExact && lastTokenExact) rank = 6;
-    else if (allTokensMatch && firstTokenExact) rank = 7;
-    else if (allTokensMatch && lastTokenExact) rank = 8;
-    else if (allTokensMatch) rank = 9;
-    else if (anyTokenMatch) rank = 10;
+    const allTokensMatch = queryTokens.every(qt =>
+      firstNameTokens.some(ft => tokenMatches(qt, ft)) ||
+      lastNameTokens.some(lt => tokenMatches(qt, lt)) ||
+      qt === empId
+    );
 
-    return { emp, rank };
-  });
+    if (allTokensMatch) {
+      let rank = 9;
+      if (firstTokenExact && lastTokenExact) rank = 6;
+      else if (firstTokenExact) rank = 7;
+      else if (lastTokenExact) rank = 8;
+      scored.push({ emp, rank });
+      continue;
+    }
 
-  let results = scored
-    .filter(s => s.rank < 11)
-    .sort((a, b) => a.rank - b.rank)
-    .map(s => s.emp);
+    // Rank 10: every query token matches via substring containment
+    const allTokensContain = queryTokens.every(qt =>
+      firstNameTokens.some(ft => tokenContains(qt, ft)) ||
+      lastNameTokens.some(lt => tokenContains(qt, lt)) ||
+      empId.includes(qt)
+    );
+
+    if (allTokensContain) {
+      scored.push({ emp, rank: 10 });
+      continue;
+    }
+
+    // Rank 11: the full concatenated query appears in searchable text
+    if (searchableText.includes(normQuery)) {
+      scored.push({ emp, rank: 11 });
+      continue;
+    }
+  }
+
+  scored.sort((a, b) => a.rank - b.rank);
+  let results = scored.map(s => s.emp);
 
   if (opts?.limit && opts.limit > 0) {
     results = results.slice(0, opts.limit);
@@ -857,22 +909,17 @@ const ALL_PERMISSIONS = [
 const PERMISSION_MAP: Record<string, string[]> = {
   Encoder: [
     "employee:view",
-    "seminar:view", "seminar:create", "seminar:edit", "seminar:import",
-    "import:data",
+    "seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import",
   ],
   Administrator: [
     "employee:view", "employee:create", "employee:edit", "employee:delete",
     "seminar:view", "seminar:create", "seminar:edit", "seminar:delete",
     "seminar:import", "seminar:year:delete", "seminar:attendee:delete",
-    "import:data", "audit:view",
-    "user:manage", "user:assign_role",
   ],
   admin: [
     "employee:view", "employee:create", "employee:edit", "employee:delete",
     "seminar:view", "seminar:create", "seminar:edit", "seminar:delete",
     "seminar:import", "seminar:year:delete", "seminar:attendee:delete",
-    "import:data", "audit:view",
-    "user:manage", "user:assign_role",
   ],
   "System developer": [...ALL_PERMISSIONS],
 };
@@ -881,16 +928,15 @@ function getUserFromRequest(req: any): any {
   const userId = req.headers["x-user-id"] || req.body?._userId;
   const db = readDatabase();
   if (!userId) {
-    // Default fallback to active admin user for single-user/development mode
     const admin = (db.users || []).find(
       (u: any) => (u.role === "admin" || u.role === "Administrator" || u.role === "System developer") && u.isActive !== false
     );
-    if (admin) return { id: admin.id, username: admin.username, role: admin.role, name: admin.name, permissions: admin.permissions };
+    if (admin) return { id: admin.id, username: admin.username, role: admin.role, name: admin.name };
     return null;
   }
   const user = db.users.find((u: any) => String(u.id) === String(userId));
   if (!user || user.isActive === false) return null;
-  return { id: user.id, username: user.username, role: user.role, name: user.name, permissions: user.permissions };
+  return { id: user.id, username: user.username, role: user.role, name: user.name };
 }
 
 function requirePermission(...permissions: string[]) {
@@ -899,28 +945,12 @@ function requirePermission(...permissions: string[]) {
     if (!user) {
       return res.status(401).json({ error: "Authentication required" });
     }
-    // Start with role defaults, then apply per-user overrides from user.permissions
-    const basePerms = PERMISSION_MAP[user.role] || [];
-    let userPerms: string[];
-    if (user.permissions && Array.isArray(user.permissions)) {
-      userPerms = [...basePerms];
-      for (const p of user.permissions) {
-        if (p.startsWith("+")) {
-          const permName = p.slice(1);
-          if (!userPerms.includes(permName)) userPerms.push(permName);
-        } else if (p.startsWith("-")) {
-          const permName = p.slice(1);
-          userPerms = userPerms.filter(existing => existing !== permName);
-        }
-      }
-    } else {
-      userPerms = basePerms;
-    }
+    const userPerms = PERMISSION_MAP[user.role] || [];
     const hasAny = permissions.some(p => userPerms.includes(p));
     if (!hasAny) {
       return res.status(403).json({ error: "Insufficient permissions" });
     }
-    req._user = { ...user, _effectivePerms: userPerms };
+    req._user = user;
     next();
   };
 }
@@ -1111,6 +1141,8 @@ app.post("/api/users/profile-pic", (req, res) => {
 
 // GET /api/users — List all users (exclude passwords)
 app.get("/api/users", requirePermission("user:manage"), (req, res) => {
+  res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
   const db = readDatabase();
   const users = db.users.map((u: any) => ({
     id: u.id,
@@ -1208,29 +1240,6 @@ app.put("/api/users/:id", requirePermission("user:manage", "user:assign_role"), 
     user.role = req.body.role;
   }
 
-  // Per-user permission overrides (only System developer can set these)
-  if (req.body.permissions !== undefined) {
-    const sysPerms = PERMISSION_MAP[req._user?.role] || [];
-    if (!sysPerms.includes("user:manage")) {
-      return res.status(403).json({ error: "Insufficient permissions to modify permissions" });
-    }
-    if (!Array.isArray(req.body.permissions)) {
-      return res.status(400).json({ error: "permissions must be an array of strings" });
-    }
-    const validPerms = new Set(ALL_PERMISSIONS);
-    for (const p of req.body.permissions) {
-      if (typeof p !== "string") {
-        return res.status(400).json({ error: "Each permission must be a string" });
-      }
-      const op = p[0];
-      const permName = op === "+" || op === "-" ? p.slice(1) : p;
-      if (!validPerms.has(permName)) {
-        return res.status(400).json({ error: `Invalid permission: ${p}` });
-      }
-    }
-    user.permissions = req.body.permissions;
-  }
-
   db.users[idx] = user;
   writeDatabase(db);
   createAuditLog({
@@ -1275,6 +1284,121 @@ app.delete("/api/users/:id", requirePermission("user:delete"), (req, res) => {
     performed_by: req._user?.name || "System",
   });
   return res.json({ message: "User deleted successfully" });
+});
+
+// ── Deletion Requests ─────────────────────────────────────────────────────
+
+// POST /api/deletion-requests — Encoder requests a deletion
+app.post("/api/deletion-requests", (req, res) => {
+  const user = getUserFromRequest(req);
+  if (!user) return res.status(401).json({ error: "Authentication required" });
+  if (user.role !== "Encoder") {
+    return res.status(400).json({ error: "Only encoders can submit deletion requests" });
+  }
+  const { entityType, entityId, entityName, reason } = req.body;
+  if (!entityType || !entityId || !entityName) {
+    return res.status(400).json({ error: "entityType, entityId, and entityName are required" });
+  }
+  if (entityType !== "employee") {
+    return res.status(400).json({ error: "Only employee deletions require approval" });
+  }
+  const db = readDatabase();
+  const request = {
+    id: `dr_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+    entityType,
+    entityId: String(entityId),
+    entityName,
+    requestedBy: String(user.id),
+    requestedByName: user.name,
+    requestedByRole: user.role,
+    reason: reason || "",
+    status: "pending",
+    createdAt: new Date().toISOString(),
+  };
+  db.deletionRequests.push(request);
+  writeDatabase(db);
+  createAuditLog({
+    module: "Deletion Request",
+    action: "CREATE",
+    entity_type: "deletion_request",
+    entity_id: request.id,
+    entity_name: entityName,
+    description: `${user.name} requested deletion of ${entityType} "${entityName}"`,
+    before_data: null,
+    after_data: { entityType, entityId, status: "pending" },
+    performed_by: user.name,
+  });
+  return res.status(201).json(request);
+});
+
+// GET /api/deletion-requests — List deletion requests (admin/dev see all, encoder sees own)
+app.get("/api/deletion-requests", (req, res) => {
+  const user = getUserFromRequest(req);
+  if (!user) return res.status(401).json({ error: "Authentication required" });
+  const db = readDatabase();
+  let requests = db.deletionRequests || [];
+  if (user.role === "Encoder") {
+    requests = requests.filter((r: any) => r.requestedBy === String(user.id));
+  }
+  requests.sort((a: any, b: any) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  return res.json(requests);
+});
+
+// PUT /api/deletion-requests/:id — Approve or deny a deletion request
+app.put("/api/deletion-requests/:id", requirePermission("employee:delete", "seminar:delete"), (req, res) => {
+  const user = getUserFromRequest(req);
+  if (!user) return res.status(401).json({ error: "Authentication required" });
+  const db = readDatabase();
+  const idx = (db.deletionRequests || []).findIndex((r: any) => r.id === req.params.id);
+  if (idx === -1) return res.status(404).json({ error: "Request not found" });
+  const request = db.deletionRequests[idx];
+  if (request.status !== "pending") {
+    return res.status(400).json({ error: "Request already reviewed" });
+  }
+  const { status } = req.body;
+  if (status !== "approved" && status !== "denied") {
+    return res.status(400).json({ error: "Status must be 'approved' or 'denied'" });
+  }
+  request.status = status;
+  request.reviewedBy = String(user.id);
+  request.reviewedByName = user.name;
+  request.reviewedAt = new Date().toISOString();
+  db.deletionRequests[idx] = request;
+
+  if (status === "approved") {
+    if (request.entityType === "employee") {
+      const empIdx = db.employees.findIndex((e: any) => String(e.EmployeeID) === request.entityId);
+      if (empIdx !== -1) {
+        db.employees.splice(empIdx, 1);
+        db.learningNeeds = (db.learningNeeds || []).filter((ln: any) => String(ln.EmployeeID) !== request.entityId);
+      }
+    } else if (request.entityType === "seminar") {
+      const semIdx = db.seminars.findIndex((s: any) => String(s.id) === request.entityId);
+      if (semIdx !== -1) {
+        db.seminars.splice(semIdx, 1);
+        db.seminarAttendees = (db.seminarAttendees || []).filter((a: any) => a.seminarId !== request.entityId);
+      }
+    } else if (request.entityType === "learning-need") {
+      const lnIdx = db.learningNeeds.findIndex((ln: any) => String(ln.LearningNeedID) === request.entityId);
+      if (lnIdx !== -1) {
+        db.learningNeeds.splice(lnIdx, 1);
+      }
+    }
+  }
+
+  writeDatabase(db);
+  createAuditLog({
+    module: "Deletion Request",
+    action: status === "approved" ? "APPROVE" : "DENY",
+    entity_type: "deletion_request",
+    entity_id: request.id,
+    entity_name: request.entityName,
+    description: `${user.name} ${status} deletion of ${request.entityType} "${request.entityName}"`,
+    before_data: { status: "pending" },
+    after_data: { status, reviewedBy: user.name },
+    performed_by: user.name,
+  });
+  return res.json(request);
 });
 
 // 2. Get Dashboard Stats
@@ -2121,8 +2245,6 @@ app.delete("/api/learning-needs/:id", (req, res) => {
   });
 
   return res.json({ message: "Learning need deleted successfully" });
-
-  return res.json({ message: "Learning need deleted successfully" });
 });
 
 // 12. Excel Export using ExcelJS
@@ -2810,9 +2932,6 @@ function findBestDbMatch(dbEmployees: any[], excelRow: ParsedExcelRow, debugName
     }
   }
   if (bestScore === 0) return null;
-  if (bestScore < 50 && debugName) {
-    console.log(`[MATCH-LOW] "${debugName}" → best="${best.LastName}, ${best.FirstName}" score=${bestScore} et="${best.EmploymentType}" office="${best.Office}"`);
-  }
   return best;
 }
 
@@ -3430,19 +3549,7 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
     await workbook.xlsx.load(req.file.buffer);
     const sheet = workbook.worksheets[0];
 
-    // ── DIAGNOSTIC: dump first 15 rows to trace parsing ──
-    console.log(`[IMPORT-DIAG] File: ${req.file.originalname}, Sheet: ${sheet.name}, Rows: ${sheet.rowCount}, Cols: ${sheet.columnCount}`);
-    for (let r = 1; r <= Math.min(15, sheet.rowCount); r++) {
-      const row = sheet.getRow(r);
-      const cells: string[] = [];
-      for (let c = 1; c <= Math.min(10, sheet.columnCount || 10); c++) {
-        const raw = row.getCell(c).value;
-        const str = cellToString(raw);
-        const rawType = raw === null ? "null" : raw === undefined ? "undef" : typeof raw === "object" ? (Array.isArray(raw) ? "richText" : raw.constructor?.name || "object") : typeof raw;
-        cells.push(`[${rawType}]${JSON.stringify(str).slice(0, 40)}`);
-      }
-      console.log(`[IMPORT-DIAG] Row ${r}: ${cells.join(" | ")}`);
-    }
+
 
     // Attempt to parse seminar metadata from sheet headers
     // Look at rows 1-6 for something like OVDS and March 23-24, 2026
@@ -3510,16 +3617,12 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       }
     }
 
-    console.log(`[IMPORT-DIAG] titleCandidates(${titleCandidates.length}): ${titleCandidates.map(t => JSON.stringify(t.slice(0, 50))).join(" | ")}`);
-
     if (titleCandidates.length > 0) {
       // Pick top candidate(s), max 2 parts
       parsedTitle = titleCandidates.slice(0, 2).join(" - ");
     } else {
       parsedTitle = cleanOrigName;
     }
-    console.log(`[IMPORT-DIAG] parsedTitle: ${JSON.stringify(parsedTitle.slice(0, 100))}`);
-
     // Find the header row: detect column types
     let headerRowIdx = 0;
     let idCol = -1;
@@ -3625,8 +3728,6 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       }
     }
 
-    console.log(`[IMPORT-DIAG] headerScore: bestScore=${bestScore} bestRow=${bestRow} bestCols=${JSON.stringify(bestCols)}`);
-
     if (bestScore >= 1) {
       headerRowIdx = bestRow;
       idCol = bestCols.idCol || -1;
@@ -3659,17 +3760,7 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
       if (nameCol < 0) nameCol = 2;
     }
 
-    console.log(`[IMPORT-DIAG] FINAL header: row=${headerRowIdx} nameCol=${nameCol} fNameCol=${firstNameCol} lNameCol=${lastNameCol} mNameCol=${middleNameCol} sfxCol=${suffixCol} idCol=${idCol} officeCol=${officeCol} posCol=${positionCol}`);
 
-    // Log the actual header row values
-    {
-      const hRow = sheet.getRow(headerRowIdx);
-      const hv: string[] = [];
-      for (let c = 1; c <= Math.min(10, sheet.columnCount || 10); c++) {
-        hv.push(`col${c}=${JSON.stringify(cellToString(hRow.getCell(c).value).slice(0, 30))}`);
-      }
-      console.log(`[IMPORT-DIAG] headerRow values: ${hv.join(" | ")}`);
-    }
 
     const db = readDatabase();
     const dbEmployees: any[] = db.employees || [];
@@ -3706,9 +3797,6 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
         }
       }
     }
-
-    console.log(`[IMPORT-DIAG] tableEndRow=${tableEndRow} (sheetRowCount=${sheet.rowCount})`);
-    console.log(`[IMPORT-DIAG] extraction loop: rows ${headerRowIdx + 1} to ${tableEndRow}`);
 
     for (let i = headerRowIdx + 1; i <= tableEndRow; i++) {
       const row = sheet.getRow(i);
@@ -3769,7 +3857,6 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
         lowerName.includes("province of") ||
         lowerName.includes("republic of")
       ) {
-        if (i <= headerRowIdx + 5) console.log(`[IMPORT-DIAG] Row ${i}: SKIP (title phrase) name=${JSON.stringify(nameVal).slice(0,40)}`);
         continue;
       }
 
@@ -3778,7 +3865,6 @@ app.post("/api/seminars/import-preview", upload.single("file"), async (req, res)
 
       // Reject values that don't look like real person names
       if (!isLikelyPersonName(nameVal)) {
-        if (i <= headerRowIdx + 5) console.log(`[IMPORT-DIAG] Row ${i}: SKIP (isLikelyPersonName=false) name=${JSON.stringify(nameVal).slice(0,40)}`);
         continue;
       }
 

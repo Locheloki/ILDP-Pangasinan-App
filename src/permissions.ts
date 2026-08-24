@@ -21,42 +21,16 @@ export const PERMISSIONS = {
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
-const allPermissions: Permission[] = Object.values(PERMISSIONS);
-
-const ROLE_PERMISSION_MAP: Record<string, Permission[]> = {
-  Encoder: allPermissions,
-  Administrator: allPermissions,
-  "System developer": allPermissions,
+const ROLE_DEFAULTS: Record<string, Permission[]> = {
+  Encoder: ["employee:view", "seminar:view", "seminar:create", "seminar:edit", "seminar:import"],
+  Administrator: ["employee:view", "employee:create", "employee:edit", "employee:delete", "seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import", "seminar:year:delete", "seminar:attendee:delete"],
+  "System developer": Object.values(PERMISSIONS),
 };
-
-export function hasPermission(role: string | undefined, permission: Permission): boolean {
-  if (!role) return false;
-  const perms = ROLE_PERMISSION_MAP[role];
-  if (!perms) return false;
-  return perms.includes(permission);
-}
 
 export function can(
   role: string | undefined,
   permission: string,
-  overridePerms?: string[]
 ): boolean {
   if (!role) return false;
-  // Start with role defaults
-  const basePerms = ROLE_PERMISSION_MAP[role];
-  if (!basePerms) return false;
-
-  let effectivePerms: string[] = basePerms;
-  if (overridePerms && Array.isArray(overridePerms)) {
-    effectivePerms = [...basePerms];
-    for (const p of overridePerms) {
-      if (p.startsWith("+") && !effectivePerms.includes(p.slice(1))) {
-        effectivePerms.push(p.slice(1));
-      } else if (p.startsWith("-")) {
-        effectivePerms = effectivePerms.filter(e => e !== p.slice(1));
-      }
-    }
-  }
-
-  return effectivePerms.includes(permission);
+  return ((ROLE_DEFAULTS[role] || []) as string[]).includes(permission);
 }

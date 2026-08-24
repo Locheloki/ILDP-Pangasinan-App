@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Search, Zap, Check, ChevronRight, ChevronLeft, AlertCircle, Plus, Trash2, Key, Filter } from "lucide-react";
 import { Employee, LearningNeed, User, formatEmployeeName } from "../types";
 import { getStoredLearningNeedsClipboard, getStoredLearningNeedsClipboardCount, setStoredLearningNeedsClipboard } from "../utils/learningNeedClipboard";
@@ -84,38 +84,46 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
   const searchResultsListRef = useRef<HTMLDivElement | null>(null);
 
   // 1. Fetch queue list (custom pending queue)
-  const fetchQueue = async (query: string = "") => {
+  // Uses refs for filters so the debounced effect never hits stale closures
+  const queueModeRef = useRef(queueMode);
+  const officeFilterRef = useRef(officeFilter);
+  const empTypeFilterRef = useRef(employmentTypeFilter);
+  const empStatusFilterRef = useRef(employmentStatusFilter);
+  queueModeRef.current = queueMode;
+  officeFilterRef.current = officeFilter;
+  empTypeFilterRef.current = employmentTypeFilter;
+  empStatusFilterRef.current = employmentStatusFilter;
+
+  const fetchQueue = useCallback(async (query: string = "") => {
     setLoadingQueue(true);
     try {
-      const response = await fetch(
-        `/api/employees/pending?search=${encodeURIComponent(query)}&office=${encodeURIComponent(officeFilter)}&employmentType=${encodeURIComponent(employmentTypeFilter)}&employmentStatus=${encodeURIComponent(employmentStatusFilter)}&mode=${queueMode}`
-      );
+      const params = new URLSearchParams({
+        search: query,
+        office: officeFilterRef.current,
+        employmentType: empTypeFilterRef.current,
+        employmentStatus: empStatusFilterRef.current,
+        mode: queueModeRef.current,
+      });
+      const response = await fetch(`/api/employees/pending?${params.toString()}`);
       if (response.ok) {
         const data = await response.json();
         setEmployees(data.employees || []);
         setTotalCount(data.total || 0);
-        
-        // Auto-select first employee if none is selected
-        if (data.employees && data.employees.length > 0) {
-          selectEmployee(data.employees[0]);
-        } else {
-          setSelectedEmployee(null);
-        }
       }
     } catch (err) {
       console.error("Failed to load encoding queue:", err);
     } finally {
       setLoadingQueue(false);
     }
-  };
+  }, []);
 
-  // Debounced search trigger
+  // Debounced search trigger — refs ensure no stale closures
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchQueue(searchQuery);
     }, 300);
     return () => clearTimeout(timer);
-  }, [searchQuery, queueMode, officeFilter, employmentTypeFilter, employmentStatusFilter]);
+  }, [searchQuery, queueMode, officeFilter, employmentTypeFilter, employmentStatusFilter, fetchQueue]);
 
   useEffect(() => {
     setQueueSearchHighlightIndex(0);
@@ -415,10 +423,10 @@ export default function RapidEncoding({ currentUser, onSaveSuccess, customOption
     // Validate
     const cleanNeeds = needs.filter((n) => n.LearningNeed.trim() !== "");
 
-    // Check for duplicate learning needs
-    const uniqueNeeds = new Set(cleanNeeds.map((n) => n.LearningNeed.trim().toLowerCase()));
+    // Check for duplicate learning needs (same need + same quarter = true duplicate)
+    const uniqueNeeds = new Set(cleanNeeds.map((n) => `${n.LearningNeed.trim().toLowerCase()}|${(n.TargetSchedule || "").trim().toLowerCase()}`));
     if (uniqueNeeds.size !== cleanNeeds.length) {
-      setError("Duplicate learning needs detected. Please remove duplicates.");
+      setError("Duplicate learning needs for the same quarter detected. Please remove duplicates.");
       return;
     }
 

@@ -65,8 +65,8 @@ const mainMenuItems: NavItem[] = [
   { tab: "add", icon: UserPlus, label: "Add New Record", dataText: "Add New Record", color: "#8b5cf6", editLabel: "Modify Records" },
   { tab: "view", icon: Database, label: "View Records", dataText: "View Records", color: "#10b981" },
   { tab: "rapid", icon: Zap, label: "Rapid Encoding", dataText: "Rapid Encoding", color: "#f59e0b", iconClass: "fill-amber-500/10" },
-  { tab: "import", icon: Upload, label: "Import Data", dataText: "Import Data", color: "#ef4444" },
-  { tab: "auditlogs", icon: History, label: "Activity & Audit Logs", dataText: "Activity & Audit Logs", color: "#6366f1", adminOnly: true },
+  { tab: "import", icon: Upload, label: "Import Data", dataText: "Import Data", color: "#ef4444", devOnly: true },
+  { tab: "auditlogs", icon: History, label: "Activity & Audit Logs", dataText: "Activity & Audit Logs", color: "#6366f1", devOnly: true },
   { tab: "usermanagement", icon: Shield, label: "User Management", dataText: "User Management", color: "#a855f7", devOnly: true },
 ];
 

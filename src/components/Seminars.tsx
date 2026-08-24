@@ -37,11 +37,12 @@ interface SeminarsProps {
   currentUser: any;
   onSeminarChange?: () => void;
   onAddNewRecord?: () => void;
+  onToast?: (msg: string, type?: "success" | "error") => void;
 }
 
 
 
-export default function Seminars({ year, quarter, onSelectEmployee, currentUser, onSeminarChange, onAddNewRecord }: SeminarsProps) {
+export default function Seminars({ year, quarter, onSelectEmployee, currentUser, onSeminarChange, onAddNewRecord, onToast }: SeminarsProps) {
   const authHeaders: Record<string, string> = currentUser?.id ? { "x-user-id": String(currentUser.id) } : {};
   // Navigation State
   const [view, setView] = useState<"list" | "details" | "import">("list");
@@ -240,10 +241,10 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
             if (onSeminarChange) onSeminarChange();
           } else {
             const err = await res.json().catch(() => ({ error: "Delete failed" }));
-            alert("Delete failed: " + (err.error || res.statusText));
+            onToast?.("Delete failed: " + (err.error || res.statusText), "error");
           }
         } catch (err) {
-          alert("Network error during delete: " + (err instanceof Error ? err.message : err));
+          onToast?.("Network error during delete: " + (err instanceof Error ? err.message : err), "error");
         }
       }
     });
@@ -279,7 +280,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       confirmLabel: "Remove",
       variant: "danger",
       onConfirm: async () => {
-        setConfirmDialog({ isOpen: false });
+        setConfirmDialog((prev) => ({ ...prev, isOpen: false }));
         try {
           const res = await fetch(`/api/seminars/${selectedSeminar.id}/attachment?attId=${attId}`, {
             method: "DELETE",
@@ -332,12 +333,13 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         }));
       } else {
         const err = await res.json().catch(() => ({ error: "Unknown server error" }));
-        alert("Import preview failed: " + (err.error || res.statusText));
+        onToast?.("Import preview failed: " + (err.error || res.statusText), "error");
       }
     } catch (err: any) {
-      alert("Network error while uploading file: " + (err.message || err));
+      onToast?.("Network error while uploading file: " + (err.message || err), "error");
     } finally {
       setLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -371,10 +373,10 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         if (onSeminarChange) onSeminarChange();
       } else {
         const err = await res.json().catch(() => ({ error: "Unknown server error" }));
-        alert("Import failed: " + (err.error || res.statusText));
+        onToast?.("Import failed: " + (err.error || res.statusText), "error");
       }
     } catch (err: any) {
-      alert("Network error during import: " + (err.message || err));
+      onToast?.("Network error during import: " + (err.message || err), "error");
     } finally {
       setLoading(false);
     }
@@ -399,10 +401,10 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         setExpandedDiff(new Set());
       } else {
         const err = await res.json().catch(() => ({ error: "Unknown server error" }));
-        alert("Refresh matches failed: " + (err.error || res.statusText));
+        onToast?.("Refresh matches failed: " + (err.error || res.statusText), "error");
       }
     } catch (err: any) {
-      alert("Network error refreshing matches: " + (err.message || err));
+      onToast?.("Network error refreshing matches: " + (err.message || err), "error");
     } finally {
       setRematchLoading(false);
     }
@@ -601,7 +603,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
           searchName = parts[0] || searchName;
         }
         setManualMatchSearch(searchName);
-        handleManualMatchSearch(searchName);
+        setManualMatchQuery(searchName);
       } else {
         setManualMatchSearch("");
         setManualMatchResults([]);
@@ -687,7 +689,6 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   };
 
   const handleManualMatchSearch = async (query: string) => {
-    setManualMatchSearch(query);
     if (query.trim().length < 2) {
       setManualMatchResults([]);
       return;
@@ -704,6 +705,15 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     }
   };
 
+  // Debounced search — useEffect pattern matches RapidEncoding
+  const [manualMatchQuery, setManualMatchQuery] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      handleManualMatchSearch(manualMatchQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [manualMatchQuery]);
+
   const handleSelectManualMatch = async (employee: any) => {
     if (manualMatchKey && previewData) {
       const idx = findRawIdxByKey(manualMatchKey);
@@ -713,6 +723,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         
         setPreviewData({ ...previewData, rawEmployees: updatedRawEmployees });
         setManualMatchSearch("");
+        setManualMatchQuery("");
         setManualMatchResults([]);
 
         await handleRematch(updatedRawEmployees);
@@ -725,6 +736,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
     setIsManualMatchOpen(false);
     setManualMatchKey(null);
     setManualMatchSearch("");
+    setManualMatchQuery("");
     setManualMatchResults([]);
   };
 
@@ -768,7 +780,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
 
   const handleCreateEmployee = async () => {
     if (!ceFirstName.trim() || !ceLastName.trim() || !ceOffice.trim() || !cePosition.trim()) {
-      alert("First name, last name, office, and position are required.");
+      onToast?.("First name, last name, office, and position are required.", "error");
       return;
     }
     setIsCreating(true);
@@ -786,7 +798,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       });
       if (!res.ok) {
         const err = await res.json().catch(() => ({ message: "Failed to create employee" }));
-        alert("Error: " + (err.message || res.statusText));
+        onToast?.("Error: " + (err.message || res.statusText), "error");
         return;
       }
       const newEmployee = await res.json();
@@ -802,7 +814,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
       await handleRematch(updatedRawEmployees);
       autoAdvanceToNext(savedKey);
     } catch (err: any) {
-      alert("Network error: " + (err.message || err));
+      onToast?.("Network error: " + (err.message || err), "error");
     } finally {
       setIsCreating(false);
     }
@@ -921,6 +933,8 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   };
 
   const resetImport = () => {
+    setIsProcessing(false);
+    setPasteText("");
     setUploadFile(null);
     setPreviewData(null);
     setImportSummary(null);
@@ -947,7 +961,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
   // 1. Manual Create Seminar
   const handleCreateSeminar = async () => {
     if (!manualTitle) {
-      alert("Title is required.");
+      onToast?.("Title is required.", "error");
       return;
     }
     const effectiveYear = year || currentYear;
@@ -981,10 +995,10 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         setTimeout(() => setNewSeminarId(null), 3000);
       } else {
         const err = await res.json().catch(() => ({ error: "Failed to save seminar" }));
-        alert(err.error || "Failed to save seminar");
+        onToast?.(err.error || "Failed to save seminar", "error");
       }
     } catch (err: any) {
-      alert("Network error: " + (err.message || err));
+      onToast?.("Network error: " + (err.message || err), "error");
     } finally {
       setLoading(false);
     }
@@ -1029,10 +1043,10 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
         if (onSeminarChange) onSeminarChange();
       } else {
         const err = await res.json().catch(() => ({ error: "Failed to update seminar" }));
-        alert(err.error || "Failed to update seminar");
+        onToast?.(err.error || "Failed to update seminar", "error");
       }
     } catch (err: any) {
-      alert("Network error: " + (err.message || err));
+      onToast?.("Network error: " + (err.message || err), "error");
     } finally {
       setLoading(false);
     }
@@ -1185,7 +1199,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
               <span>New Seminar</span>
             </button>
             <button
-              onClick={() => setView("import")}
+              onClick={() => { setPasteText(""); setView("import"); }}
               className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 rounded-xl flex items-center gap-2 cursor-pointer font-bold transition hover:scale-102"
             >
               <Upload className="h-4 w-4" />
@@ -1233,11 +1247,11 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                           {sem.quarter}
                         </span>
                       </div>
-                      {(currentUser?.role === "Administrator" || currentUser?.role === "System developer") && (
+                      {(currentUser?.role === "Administrator" || currentUser?.role === "System developer" || currentUser?.role === "Encoder") && (
                         <button
                           onClick={(e) => handleDeleteSeminar(sem.id, sem.attendees?.length || 0, e)}
                           className="text-slate-400 hover:text-red-500 p-1.5 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800/60 transition cursor-pointer"
-                          title="Delete Seminar"
+                          title={currentUser?.role === "Encoder" ? "Request Deletion" : "Delete Seminar"}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -2143,12 +2157,12 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
 
                     {/* Review Acknowledgment */}
                     <div className="bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-slate-800 rounded-xl shadow-xs p-4">
-                      <label className="flex items-start gap-3 cursor-pointer select-none">
+                      <label className="flex items-center gap-3 cursor-pointer select-none">
                         <input
                           type="checkbox"
                           checked={reviewAcknowledged}
                           onChange={(e) => setReviewAcknowledged(e.target.checked)}
-                          className="h-4 w-4 mt-0.5 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          className="h-4 w-4 shrink-0 rounded border-slate-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                         />
                         <div className="space-y-0.5">
                           <span className="text-xs font-semibold text-slate-700 dark:text-slate-300">
@@ -2212,22 +2226,20 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
           {/* Manual Match Dialog */}
           {isEmployeeFormOpen && (
         <EmployeeForm
-          onClose={() => {
+          onCancel={() => {
             setIsEmployeeFormOpen(false);
             setEmployeeFormKey(null);
             setEmployeeFormInitialData(null);
           }}
-          onSuccess={() => {
+          onSave={(_employeeData, _needs) => {
             setIsEmployeeFormOpen(false);
             if (employeeFormKey) {
-              // Re-run match logic for this key by triggering handleOpenManualMatch which will then let them match it, or we could auto-match.
-              // Let's just auto match it!
               handleOpenManualMatch(employeeFormKey);
             }
             setEmployeeFormKey(null);
             setEmployeeFormInitialData(null);
           }}
-          initialData={employeeFormInitialData}
+          employee={null}
           currentUser={currentUser}
         />
       )}
@@ -2252,7 +2264,7 @@ export default function Seminars({ year, quarter, onSelectEmployee, currentUser,
                     type="text"
                     placeholder="Search by name or employee ID..."
                     value={manualMatchSearch}
-                    onChange={(e) => handleManualMatchSearch(e.target.value)}
+                    onChange={(e) => { setManualMatchSearch(e.target.value); setManualMatchQuery(e.target.value); }}
                     ref={searchInputRef}
                     autoFocus
                     className="w-full pl-9 pr-3 py-2.5 border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded-xl text-xs focus:outline-none focus:ring-2 focus:ring-blue-500"

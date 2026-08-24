@@ -60,6 +60,7 @@ interface RecordsTableProps {
   initialSearch?: string;
   onConsumeFilters?: () => void;
   currentUser?: any;
+  onToast?: (msg: string, type?: "success" | "error") => void;
 }
 
 export default function RecordsTable({ 
@@ -70,7 +71,8 @@ export default function RecordsTable({
   initialFilters,
   initialSearch,
   onConsumeFilters,
-  currentUser
+  currentUser,
+  onToast
 }: RecordsTableProps) {
   const [records, setJoinedRecords] = useState<JoinedRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -359,6 +361,31 @@ export default function RecordsTable({
 
   const executeDeleteEmployee = () => {
     if (!deleteEmployeeConfirmId) return;
+
+    if (currentUser?.role === "Encoder") {
+      const empName = records.find((r) => r.EmployeeID === deleteEmployeeConfirmId);
+      const displayName = empName ? formatEmployeeName(empName) : String(deleteEmployeeConfirmId);
+      fetch("/api/deletion-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-user-id": String(currentUser.id) },
+        body: JSON.stringify({
+          entityType: "employee",
+          entityId: String(deleteEmployeeConfirmId),
+          entityName: displayName,
+        }),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.id) {
+            setDeleteEmployeeConfirmId(null);
+            onToast?.("Deletion request submitted. An admin will review it shortly.");
+          } else {
+            onToast?.(data.error || "Failed to submit deletion request", "error");
+          }
+        })
+        .catch((err) => console.error("Error requesting deletion:", err));
+      return;
+    }
 
     fetch(`/api/employees/${deleteEmployeeConfirmId}`, { method: "DELETE" })
       .then((res) => res.json())
@@ -775,12 +802,12 @@ export default function RecordsTable({
                                 <Edit className="h-4 w-4" />
                               </button>
 
-                              {/* Delete Employee (admin only) */}
-                              {can(currentUser?.role, PERMISSIONS.EMPLOYEE_DELETE, currentUser?.permissions) && (
+                              {/* Delete Employee */}
+                              {(can(currentUser?.role, PERMISSIONS.EMPLOYEE_DELETE) || currentUser?.role === "Encoder") && (
                                 <button
                                   onClick={() => handleDeleteEmployee(rec.EmployeeID)}
                                   className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 p-2 rounded-full cursor-pointer hover:scale-105 active:scale-95 transition-all duration-100"
-                                  title="Delete Employee"
+                                  title={currentUser?.role === "Encoder" ? "Request Deletion" : "Delete Employee"}
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </button>
@@ -951,12 +978,18 @@ export default function RecordsTable({
         isOpen={!!deleteEmployeeConfirmId}
         onClose={() => setDeleteEmployeeConfirmId(null)}
         maxWidth="max-w-sm"
-        ariaLabel="Delete Employee"
-        title="Delete Employee?"
+        ariaLabel={currentUser?.role === "Encoder" ? "Request Deletion" : "Delete Employee"}
+        title={currentUser?.role === "Encoder" ? "Request Deletion?" : "Delete Employee?"}
       >
-        <p className="text-xs text-slate-500 dark:text-slate-400">
-          This will permanently delete this employee and all associated learning needs from the database. This action is irreversible.
-        </p>
+        {currentUser?.role === "Encoder" ? (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            This will submit a deletion request to an administrator for approval. The employee will not be deleted until approved.
+          </p>
+        ) : (
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            This will permanently delete this employee and all associated learning needs from the database. This action is irreversible.
+          </p>
+        )}
         <div className="mt-5 flex justify-end gap-3">
           <button
             onClick={() => setDeleteEmployeeConfirmId(null)}
@@ -968,7 +1001,7 @@ export default function RecordsTable({
             onClick={executeDeleteEmployee}
             className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-red-500/5"
           >
-            Confirm Delete
+            {currentUser?.role === "Encoder" ? "Submit Request" : "Confirm Delete"}
           </button>
         </div>
       </Modal>

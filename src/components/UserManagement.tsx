@@ -5,39 +5,43 @@ import { Shield, Plus, Pencil, Trash2, X, AlertTriangle, Key, CheckCircle, Ban }
 
 const VALID_ROLES = ["Encoder", "Administrator", "System developer"] as const;
 
-const PERMISSION_LABELS: Record<string, string> = {
-  "employee:view": "View Employees",
-  "employee:create": "Create Employees",
-  "employee:edit": "Edit Employees",
-  "employee:delete": "Delete Employees",
-  "seminar:view": "View Seminars",
-  "seminar:create": "Create Seminars",
-  "seminar:edit": "Edit Seminars",
-  "seminar:delete": "Delete Seminars",
-  "seminar:import": "Import Seminars",
-  "seminar:year:delete": "Delete Seminar Years",
-  "seminar:attendee:delete": "Delete Attendees",
-  "import:data": "Import Data",
-  "audit:view": "View Audit Logs",
-  "user:manage": "Manage Users",
-  "user:assign_role": "Assign Roles",
-  "user:delete": "Delete Users",
+const ROLE_PERMISSIONS: Record<string, { color: string; bgColor: string; borderColor: string; actions: string[] }> = {
+  Encoder: {
+    color: "text-slate-600 dark:text-slate-400",
+    bgColor: "bg-slate-50 dark:bg-slate-950/60",
+    borderColor: "border-slate-200 dark:border-slate-800",
+    actions: [
+      "View Employees",
+      "View Seminars",
+      "Create & Edit Seminars",
+      "Import Seminars",
+    ],
+  },
+  Administrator: {
+    color: "text-blue-600 dark:text-blue-400",
+    bgColor: "bg-blue-50 dark:bg-blue-950/60",
+    borderColor: "border-blue-200 dark:border-blue-800",
+    actions: [
+      "View Employees",
+      "Create, Edit & Delete Employees",
+      "View, Create & Edit Seminars",
+      "Delete Seminars, Years & Attendees",
+      "Import Seminars",
+    ],
+  },
+  "System developer": {
+    color: "text-purple-600 dark:text-purple-400",
+    bgColor: "bg-purple-50 dark:bg-purple-950/60",
+    borderColor: "border-purple-200 dark:border-purple-800",
+    actions: [
+      "All Administrator permissions",
+      "Import Data (XLSX)",
+      "View Audit Logs",
+      "Manage Users",
+      "Assign Roles & Delete Users",
+    ],
+  },
 };
-
-const PERMISSION_CATEGORIES: { label: string; perms: string[] }[] = [
-  {
-    label: "Employees",
-    perms: ["employee:view", "employee:create", "employee:edit", "employee:delete"],
-  },
-  {
-    label: "Seminars",
-    perms: ["seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import", "seminar:year:delete", "seminar:attendee:delete"],
-  },
-  {
-    label: "Data & System",
-    perms: ["import:data", "audit:view", "user:manage", "user:assign_role", "user:delete"],
-  },
-];
 
 interface EditableUser {
   id: number;
@@ -46,42 +50,52 @@ interface EditableUser {
   role: string;
   isActive: boolean;
   createdAt: string | null;
-  permissions?: string[];
 }
 
-function permToOps(perms: string[] | undefined): Record<string, boolean> {
-  const result: Record<string, boolean> = {};
-  const allPerms = Object.keys(PERMISSION_LABELS);
-  for (const p of allPerms) {
-    result[p] = true; // default to allowed
-  }
-  if (!perms) return result;
-  for (const p of perms) {
-    if (p.startsWith("+")) {
-      result[p.slice(1)] = true;
-    } else if (p.startsWith("-")) {
-      result[p.slice(1)] = false;
-    }
-  }
-  return result;
+function RoleSelector({ selected, onChange }: { selected: string; onChange: (role: string) => void }) {
+  return (
+    <div className="space-y-2">
+      {VALID_ROLES.map((r) => {
+        const info = ROLE_PERMISSIONS[r];
+        const isSelected = selected === r;
+        return (
+          <button
+            key={r}
+            type="button"
+            onClick={() => onChange(r)}
+            className={`w-full text-left p-3 rounded-xl border-2 transition-all duration-200 cursor-pointer ${
+              isSelected
+                ? `${info.bgColor} ${info.borderColor} shadow-sm`
+                : "bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700"
+            }`}
+          >
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center ${
+                isSelected ? `${info.borderColor} bg-white dark:bg-slate-900` : "border-slate-300 dark:border-slate-700"
+              }`}>
+                {isSelected && <div className={`w-2 h-2 rounded-full ${
+                  r === "Encoder" ? "bg-slate-500" : r === "Administrator" ? "bg-blue-500" : "bg-purple-500"
+                }`} />}
+              </div>
+              <span className={`text-xs font-bold ${isSelected ? info.color : "text-slate-700 dark:text-slate-300"}`}>{r}</span>
+            </div>
+            <div className="ml-6 flex flex-wrap gap-1">
+              {info.actions.map((action) => (
+                <span key={action} className={`text-[9px] font-medium px-1.5 py-0.5 rounded-md ${
+                  isSelected
+                    ? `${info.bgColor} ${info.color}`
+                    : "bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-400"
+                }`}>
+                  {action}
+                </span>
+              ))}
+            </div>
+          </button>
+        );
+      })}
+    </div>
+  );
 }
-
-function opsToPerms(ops: Record<string, boolean>, role: string): string[] {
-  const result: string[] = [];
-  for (const [perm, allowed] of Object.entries(ops)) {
-    const baseAllowed = PERMISSION_MAP_BY_ROLE[role]?.includes(perm) ?? true;
-    if (allowed && !baseAllowed) result.push("+" + perm);
-    if (!allowed && baseAllowed) result.push("-" + perm);
-  }
-  return result;
-}
-
-// Inline minimal copy of the server's role defaults for UI logic
-const PERMISSION_MAP_BY_ROLE: Record<string, string[]> = {
-  Encoder: ["employee:view", "seminar:view", "seminar:create", "seminar:edit", "seminar:import", "import:data"],
-  Administrator: ["employee:view", "employee:create", "employee:edit", "employee:delete", "seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import", "seminar:year:delete", "seminar:attendee:delete", "import:data", "audit:view", "user:manage", "user:assign_role"],
-  "System developer": Object.keys(PERMISSION_LABELS),
-};
 
 export default function UserManagement({ currentUser }: { currentUser: User }) {
   const [users, setUsers] = useState<EditableUser[]>([]);
@@ -89,18 +103,13 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
   const [error, setError] = useState<string | null>(null);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
 
-  // Modal states
   const [createOpen, setCreateOpen] = useState(false);
   const [editOpen, setEditOpen] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<EditableUser | null>(null);
   const [editUser, setEditUser] = useState<EditableUser | null>(null);
 
-  // Create form
   const [newUser, setNewUser] = useState({ username: "", password: "", name: "", role: "Encoder" });
-
-  // Edit form
   const [editForm, setEditForm] = useState({ name: "", role: "", password: "" });
-  const [editPerms, setEditPerms] = useState<Record<string, boolean> | null>(null);
 
   const fetchUsers = useCallback(async () => {
     setLoading(true);
@@ -109,10 +118,7 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
       const res = await fetch("/api/users", {
         headers: { "x-user-id": String(currentUser.id) },
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to load users");
-      }
+      if (!res.ok) throw new Error("Failed to load users");
       const data = await res.json();
       setUsers(data);
     } catch (err: any) {
@@ -122,16 +128,13 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
     }
   }, [currentUser.id]);
 
-  useEffect(() => {
-    fetchUsers();
-  }, [fetchUsers]);
+  useEffect(() => { fetchUsers(); }, [fetchUsers]);
 
   const showToast = (msg: string, type: "success" | "error" = "success") => {
     setToast({ msg, type });
     setTimeout(() => setToast(null), 4000);
   };
 
-  // ── Create user ──────────────────────────────────────────────────────────
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -140,11 +143,8 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
         headers: { "Content-Type": "application/json", "x-user-id": String(currentUser.id) },
         body: JSON.stringify(newUser),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to create user");
-      }
-      showToast(`User "${newUser.username}" created successfully`);
+      if (!res.ok) throw new Error((await res.json()).error || "Failed to create user");
+      showToast(`User "${newUser.username}" created`);
       setCreateOpen(false);
       setNewUser({ username: "", password: "", name: "", role: "Encoder" });
       fetchUsers();
@@ -153,44 +153,33 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
     }
   };
 
-  // ── Edit user ────────────────────────────────────────────────────────────
   const openEdit = (user: EditableUser) => {
     setEditUser(user);
     setEditForm({ name: user.name, role: user.role, password: "" });
-    setEditPerms(permToOps(user.permissions));
     setEditOpen(true);
   };
 
-  const handleEdit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleEdit = async () => {
     if (!editUser) return;
     try {
       const body: any = { name: editForm.name };
       if (editForm.password) body.password = editForm.password;
       if (editForm.role !== editUser.role) body.role = editForm.role;
-      if (editPerms && currentUser.role === "System developer") {
-        body.permissions = opsToPerms(editPerms, editForm.role);
-      }
-
       const res = await fetch(`/api/users/${editUser.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json", "x-user-id": String(currentUser.id) },
         body: JSON.stringify(body),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to update user");
-      }
-      showToast(`User "${editUser.username}" updated successfully`);
+      if (!res.ok) throw new Error((await res.json()).error || "Failed to update user");
+      showToast(`User "${editUser.username}" updated`);
+      await fetchUsers();
       setEditOpen(false);
       setEditUser(null);
-      fetchUsers();
     } catch (err: any) {
       showToast(err.message, "error");
     }
   };
 
-  // ── Toggle active ────────────────────────────────────────────────────────
   const toggleActive = async (user: EditableUser) => {
     try {
       const action = user.isActive ? "disabled" : "enabled";
@@ -199,29 +188,22 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
         headers: { "Content-Type": "application/json", "x-user-id": String(currentUser.id) },
         body: JSON.stringify({ isActive: !user.isActive }),
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to update user");
-      }
-      showToast(`User "${user.username}" ${action} successfully`);
+      if (!res.ok) throw new Error((await res.json()).error || "Failed to update user");
+      showToast(`User "${user.username}" ${action}`);
       fetchUsers();
     } catch (err: any) {
       showToast(err.message, "error");
     }
   };
 
-  // ── Delete user ──────────────────────────────────────────────────────────
   const handleDelete = async (user: EditableUser) => {
     try {
       const res = await fetch(`/api/users/${user.id}`, {
         method: "DELETE",
         headers: { "x-user-id": String(currentUser.id) },
       });
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.error || "Failed to delete user");
-      }
-      showToast(`User "${user.username}" deleted successfully`);
+      if (!res.ok) throw new Error((await res.json()).error || "Failed to delete user");
+      showToast(`User "${user.username}" deleted`);
       setDeleteConfirm(null);
       fetchUsers();
     } catch (err: any) {
@@ -232,7 +214,6 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
 
   return (
     <div className="space-y-6">
-      {/* Toast */}
       {toast && (
         <div className={`fixed bottom-6 right-6 z-50 p-4 rounded-xl border shadow-xl flex items-center gap-3 animate-in slide-in-from-bottom duration-300 ${
           toast.type === "success"
@@ -246,7 +227,6 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
         </div>
       )}
 
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <div className="p-2.5 bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 rounded-xl">
@@ -254,9 +234,7 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
           </div>
           <div>
             <h3 className="text-sm font-extrabold text-slate-900 dark:text-slate-100 font-display">User Management</h3>
-            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">
-              Manage user accounts, roles, and access permissions
-            </p>
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">Manage user accounts, roles, and access permissions</p>
           </div>
         </div>
         <button
@@ -268,7 +246,6 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
         </button>
       </div>
 
-      {/* Error */}
       {error && (
         <div className="bg-red-500/10 border border-red-200/40 dark:border-red-900/30 rounded-xl p-4 flex items-center gap-3">
           <AlertTriangle className="h-5 w-5 text-red-500 shrink-0" />
@@ -276,7 +253,6 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
         </div>
       )}
 
-      {/* User table */}
       <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-md border border-slate-200 dark:border-slate-800 overflow-hidden">
         {loading ? (
           <div className="p-8 text-center text-xs text-slate-500 dark:text-slate-400 font-medium">Loading users...</div>
@@ -324,29 +300,13 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => openEdit(user)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/60 transition cursor-pointer"
-                          title="Edit user"
-                        >
+                        <button onClick={() => openEdit(user)} className="p-1.5 rounded-lg text-slate-400 hover:text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-950/60 transition cursor-pointer" title="Edit user">
                           <Pencil className="h-3.5 w-3.5" />
                         </button>
-                        <button
-                          onClick={() => toggleActive(user)}
-                          className={`p-1.5 rounded-lg transition cursor-pointer ${
-                            user.isActive
-                              ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/60"
-                              : "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/60"
-                          }`}
-                          title={user.isActive ? "Disable account" : "Enable account"}
-                        >
+                        <button onClick={() => toggleActive(user)} className={`p-1.5 rounded-lg transition cursor-pointer ${user.isActive ? "text-slate-400 hover:text-amber-600 hover:bg-amber-50 dark:hover:bg-amber-950/60" : "text-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 dark:hover:bg-emerald-950/60"}`} title={user.isActive ? "Disable" : "Enable"}>
                           {user.isActive ? <Ban className="h-3.5 w-3.5" /> : <CheckCircle className="h-3.5 w-3.5" />}
                         </button>
-                        <button
-                          onClick={() => setDeleteConfirm(user)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/60 transition cursor-pointer"
-                          title="Delete user"
-                        >
+                        <button onClick={() => setDeleteConfirm(user)} className="p-1.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-950/60 transition cursor-pointer" title="Delete user">
                           <Trash2 className="h-3.5 w-3.5" />
                         </button>
                       </div>
@@ -360,176 +320,68 @@ export default function UserManagement({ currentUser }: { currentUser: User }) {
       </div>
 
       {/* Create User Modal */}
-      <Modal
-        isOpen={createOpen}
-        onClose={() => setCreateOpen(false)}
-        maxWidth="max-w-md"
-        ariaLabel="Create User"
-        title="Create New User"
-        bodyClassName="space-y-5"
+      <Modal isOpen={createOpen} onClose={() => setCreateOpen(false)} maxWidth="max-w-md" ariaLabel="Create User" title="Create New User" bodyClassName="space-y-5"
         footer={
           <div className="flex gap-2 justify-end">
             <button onClick={() => setCreateOpen(false)} className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl">Cancel</button>
             <button onClick={handleCreate} className="btn-glass bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-200/50 dark:border-purple-900/30 text-xs py-2 px-4 cursor-pointer font-bold rounded-xl shadow-md">Create User</button>
           </div>
-        }
-      >
+        }>
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Username *</label>
-            <input
-              value={newUser.username}
-              onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-slate-800 dark:text-white font-semibold"
-              placeholder="Enter username"
-              required
-            />
+            <input value={newUser.username} onChange={(e) => setNewUser({ ...newUser, username: e.target.value })} className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-slate-800 dark:text-white font-semibold" placeholder="Enter username" required />
           </div>
           <div>
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Password *</label>
-            <input
-              type="password"
-              value={newUser.password}
-              onChange={(e) => setNewUser({ ...newUser, password: e.target.value })}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-slate-800 dark:text-white font-semibold"
-              placeholder="Enter password"
-              required
-            />
+            <input type="password" value={newUser.password} onChange={(e) => setNewUser({ ...newUser, password: e.target.value })} className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-slate-800 dark:text-white font-semibold" placeholder="Enter password" required />
           </div>
           <div>
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Full Name</label>
-            <input
-              value={newUser.name}
-              onChange={(e) => setNewUser({ ...newUser, name: e.target.value })}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-slate-800 dark:text-white font-semibold"
-              placeholder="Display name (defaults to username)"
-            />
+            <input value={newUser.name} onChange={(e) => setNewUser({ ...newUser, name: e.target.value })} className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-slate-800 dark:text-white font-semibold" placeholder="Display name" />
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Role</label>
-            <select
-              value={newUser.role}
-              onChange={(e) => setNewUser({ ...newUser, role: e.target.value })}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-purple-500 text-xs text-slate-800 dark:text-white font-semibold"
-            >
-              {VALID_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-2">Role</label>
+            <RoleSelector selected={newUser.role} onChange={(role) => setNewUser({ ...newUser, role })} />
           </div>
         </div>
       </Modal>
 
       {/* Edit User Modal */}
-      <Modal
-        isOpen={editOpen}
-        onClose={() => setEditOpen(false)}
-        maxWidth="max-w-md"
-        ariaLabel="Edit User"
-        title={`Edit User — ${editUser?.username || ""}`}
-        bodyClassName="space-y-5"
+      <Modal isOpen={editOpen} onClose={() => setEditOpen(false)} maxWidth="max-w-md" ariaLabel="Edit User" title={`Edit User — ${editUser?.username || ""}`} bodyClassName="space-y-5"
         footer={
           <div className="flex gap-2 justify-end">
             <button onClick={() => setEditOpen(false)} className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl">Cancel</button>
             <button onClick={handleEdit} className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-200/50 dark:border-blue-900/30 text-xs py-2 px-4 cursor-pointer font-bold rounded-xl shadow-md">Save Changes</button>
           </div>
-        }
-      >
+        }>
         <div className="space-y-4">
           <div>
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Full Name</label>
-            <input
-              value={editForm.name}
-              onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
-            />
+            <input value={editForm.name} onChange={(e) => setEditForm({ ...editForm, name: e.target.value })} className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold" />
           </div>
           <div>
-            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">Role</label>
-            <select
-              value={editForm.role}
-              onChange={(e) => setEditForm({ ...editForm, role: e.target.value })}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
-            >
-              {VALID_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
-            </select>
+            <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-2">Role</label>
+            <RoleSelector selected={editForm.role} onChange={(role) => setEditForm({ ...editForm, role })} />
           </div>
           <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
             <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-1">
               <Key className="h-3.5 w-3.5 inline mr-1" />
               New Password <span className="font-normal text-slate-400">(leave blank to keep current)</span>
             </label>
-            <input
-              type="password"
-              value={editForm.password}
-              onChange={(e) => setEditForm({ ...editForm, password: e.target.value })}
-              className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold"
-              placeholder="New password (optional)"
-            />
+            <input type="password" value={editForm.password} onChange={(e) => setEditForm({ ...editForm, password: e.target.value })} className="block w-full px-3 py-2 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs text-slate-800 dark:text-white font-semibold" placeholder="New password (optional)" />
           </div>
-
-          {currentUser.role === "System developer" && editPerms && (
-            <div className="border-t border-slate-200 dark:border-slate-800 pt-4">
-              <label className="block text-[11px] font-bold text-slate-600 dark:text-slate-400 mb-3">
-                <Shield className="h-3.5 w-3.5 inline mr-1" />
-                Permission Overrides <span className="font-normal text-slate-400">(leave unchecked = role default)</span>
-              </label>
-              <div className="space-y-3 max-h-64 overflow-y-auto pr-1">
-                {PERMISSION_CATEGORIES.map((cat) => (
-                  <div key={cat.label}>
-                    <p className="text-[10px] font-bold text-slate-500 dark:text-slate-500 uppercase tracking-wider mb-1.5">{cat.label}</p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {cat.perms.map((perm) => {
-                        const defaultValue = PERMISSION_MAP_BY_ROLE[editForm.role]?.includes(perm) ?? true;
-                        const isOverridden = editPerms[perm] !== defaultValue;
-                        return (
-                          <label
-                            key={perm}
-                            className={`flex items-center gap-2 px-2 py-1.5 rounded-lg border cursor-pointer transition text-[11px] ${
-                              isOverridden
-                                ? editPerms[perm]
-                                  ? "bg-emerald-50 dark:bg-emerald-950/40 border-emerald-200 dark:border-emerald-800 text-emerald-700 dark:text-emerald-300"
-                                  : "bg-red-50 dark:bg-red-950/40 border-red-200 dark:border-red-800 text-red-700 dark:text-red-300"
-                                : "bg-slate-50 dark:bg-slate-950/40 border-slate-200 dark:border-slate-800 text-slate-600 dark:text-slate-400"
-                            }`}
-                          >
-                            <input
-                              type="checkbox"
-                              checked={editPerms[perm]}
-                              onChange={() => setEditPerms({ ...editPerms, [perm]: !editPerms[perm] })}
-                              className="rounded cursor-pointer"
-                            />
-                            <span className="font-semibold">{PERMISSION_LABELS[perm] || perm}</span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </Modal>
 
       {/* Delete Confirmation Modal */}
-      <Modal
-        isOpen={deleteConfirm !== null}
-        onClose={() => setDeleteConfirm(null)}
-        maxWidth="max-w-sm"
-        ariaLabel="Delete User"
-        title="Delete User?"
-        bodyClassName="space-y-4"
+      <Modal isOpen={deleteConfirm !== null} onClose={() => setDeleteConfirm(null)} maxWidth="max-w-sm" ariaLabel="Delete User" title="Delete User?" bodyClassName="space-y-4"
         footer={
           <div className="flex gap-2 justify-end">
             <button onClick={() => setDeleteConfirm(null)} className="btn-glass text-xs py-2 px-4 cursor-pointer font-bold rounded-xl">Cancel</button>
-            <button
-              onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
-              className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold rounded-xl shadow-md"
-            >
-              Delete User
-            </button>
+            <button onClick={() => deleteConfirm && handleDelete(deleteConfirm)} className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border border-red-200/50 dark:border-red-900/30 text-xs py-2 px-4 cursor-pointer font-bold rounded-xl shadow-md">Delete User</button>
           </div>
-        }
-      >
+        }>
         {deleteConfirm && (
           <div className="flex gap-3 items-start p-3 bg-red-500/10 border border-red-200/40 dark:border-red-900/30 rounded-xl">
             <AlertTriangle className="h-5 w-5 text-red-500 shrink-0 mt-0.5" />

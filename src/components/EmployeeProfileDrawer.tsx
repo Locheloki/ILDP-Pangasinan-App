@@ -22,7 +22,7 @@ export default function EmployeeProfileDrawer({ isOpen, employee, needs, seminar
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      maxWidth="max-w-lg"
+      maxWidth="max-w-2xl"
       ariaLabel={`Profile: ${formatEmployeeName(employee)}`}
       header={
         <div className="flex items-center gap-3 px-6 pt-5 pb-3 shrink-0 border-b border-slate-100 dark:border-slate-800">
@@ -53,7 +53,7 @@ export default function EmployeeProfileDrawer({ isOpen, employee, needs, seminar
     >
       <div className="space-y-6">
         {/* Profile Overview */}
-        <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pb-6">
+        <div className="flex items-center gap-4 border-b border-slate-100 dark:border-slate-800 pt-6 pb-6">
           <div>
             <div className="flex items-center gap-2 flex-wrap">
               <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100 leading-snug">
@@ -126,25 +126,18 @@ export default function EmployeeProfileDrawer({ isOpen, employee, needs, seminar
             ) : (
               <div className="space-y-3">
                 {needs.map((need, idx) => (
-                  <div key={idx} className="p-4 bg-slate-50/30 dark:bg-slate-950/20 rounded-xl border border-slate-200/40 dark:border-slate-800 space-y-2">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex-1">
-                        <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Plan Opportunity #{idx + 1}</span>
-                        <p className="text-xs font-bold text-slate-800 dark:text-slate-100 mt-0.5 leading-snug">{need.LearningNeed}</p>
-                      </div>
-                      <span className="text-[9.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30">
+                  <div key={idx} className="p-4 bg-slate-50/30 dark:bg-slate-950/20 rounded-xl border border-slate-200/40 dark:border-slate-800">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[9px] font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">#{idx + 1}</span>
+                      <span className="text-[9.5px] font-bold bg-blue-500/10 text-blue-600 dark:text-blue-400 px-2 py-0.5 rounded-full border border-blue-200/40 dark:border-blue-900/30 ml-auto whitespace-nowrap">
                         {need.TargetSchedule}
                       </span>
                     </div>
-                    <div className="grid grid-cols-2 gap-4 pt-2 border-t border-slate-100/40 dark:border-slate-800/40">
-                      <div>
-                        <span className="text-[8px] font-bold uppercase tracking-wider text-slate-400 block">Basis</span>
-                        <p className="text-[10.5px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium mt-0.5">{need.Basis}</p>
-                      </div>
-                      <div>
-                        <span className="text-[8px] font-bold uppercase tracking-wider text-slate-500 block">Methodology</span>
-                        <p className="text-[10.5px] text-slate-600 dark:text-slate-300 leading-relaxed font-medium mt-0.5">{need.Methodology}</p>
-                      </div>
+                    <p className="text-xs font-bold text-slate-800 dark:text-slate-100 leading-snug mb-2">{need.LearningNeed}</p>
+                    <div className="flex items-center gap-4 text-[10px] text-slate-500 dark:text-slate-400">
+                      <span><span className="font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Basis:</span> {need.Basis}</span>
+                      <span className="text-slate-200 dark:text-slate-700">|</span>
+                      <span><span className="font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">Methodology:</span> {need.Methodology}</span>
                     </div>
                   </div>
                 ))}
