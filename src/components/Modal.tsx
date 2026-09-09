@@ -21,6 +21,10 @@ interface ModalProps {
   ariaLabel?: string;
   /** Additional class for the scrollable body area */
   bodyClassName?: string;
+  /** Additional class for the card container */
+  cardClassName?: string;
+  /** Hide header border-bottom and footer border-top */
+  hideBorders?: boolean;
 }
 
 export default function Modal({
@@ -35,6 +39,8 @@ export default function Modal({
   hideCloseButton = false,
   ariaLabel,
   bodyClassName = "",
+  cardClassName = "",
+  hideBorders = false,
 }: ModalProps) {
   const cardRef = useRef<HTMLDivElement>(null);
 
@@ -61,7 +67,7 @@ export default function Modal({
     >
       <div
         ref={cardRef}
-        className={`bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl ${maxWidth} w-full shadow-2xl flex flex-col max-h-[90vh] animate-zoom-in transition-colors duration-200`}
+        className={`bg-white dark:bg-slate-900 border border-slate-200/60 dark:border-white/10 rounded-2xl ${maxWidth} w-full shadow-2xl flex flex-col max-h-[90vh] animate-zoom-in transition-all duration-300 ${cardClassName}`}
       >
         {/* Header */}
         {header ? (
@@ -84,13 +90,13 @@ export default function Modal({
         ) : null}
 
         {/* Scrollable body */}
-        <div className={`px-6 pb-5 overflow-y-auto flex-1 min-h-0 ${bodyClassName}`}>
+        <div className={`px-5 pb-3 overflow-y-auto flex-1 min-h-0 ${bodyClassName}`}>
           {children}
         </div>
 
         {/* Footer */}
         {footer && (
-          <div className="flex justify-end gap-2.5 px-6 py-4 border-t border-slate-100 dark:border-slate-800 shrink-0">
+          <div className={`flex justify-end gap-2 px-4 py-1.5 shrink-0 ${hideBorders ? "" : "border-t border-slate-100 dark:border-slate-800"}`}>
             {footer}
           </div>
         )}

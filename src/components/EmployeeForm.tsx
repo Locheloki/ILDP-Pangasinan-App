@@ -292,6 +292,10 @@ export default function EmployeeForm({
     setTimeout(() => setActiveSuggestionField(null), 200);
   };
 
+  const handleMiddleNameBlur = () => {
+    setMiddleName(formatName(middleName));
+  };
+
   const handleMiddleInitialBlur = () => {
     let val = middleInitial.trim().toUpperCase();
     if (val) {
@@ -733,7 +737,7 @@ export default function EmployeeForm({
                 setMiddleInitial(trimmed ? trimmed.charAt(0).toUpperCase() + "." : "");
               }}
               onKeyDown={(e) => handleKeyDown(e, "mi")}
-              onBlur={handleMiddleInitialBlur}
+              onBlur={() => { handleMiddleNameBlur(); handleMiddleInitialBlur(); }}
               className="block w-full px-3.5 py-2.5 border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-slate-800 dark:text-slate-100 text-sm shadow-sm transition-colors duration-200"
               placeholder="e.g. Sarzaba"
             />
@@ -842,24 +846,39 @@ export default function EmployeeForm({
             <SearchableSelect
               value={employmentStatus}
               onChange={setEmploymentStatus}
-              options={["Undefined (Pending Review)", "Newly Hired", "Re-employed", "Casual", "Permanent", "Co-Terminous", "Elective Official", "Job Order", "Consultant"]}
+              options={["Undefined (Pending Review)", "Casual", "Permanent", "Co-Terminous", "Elective Official", "Job Order", "Consultant"]}
               placeholder="Select employment status..."
               allowCustom={false}
             />
           </div>
 
-          {/* Newly Hired / Reemployed Entry */}
+          {/* Employee Entry */}
           <div className="md:col-span-6">
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
-              Employee Entry
+              New Employee?
             </label>
-            <SearchableSelect
-              value={newlyHired}
-              onChange={setNewlyHired}
-              options={["N/A", "Newly Hired", "Reemployed"]}
-              placeholder="Select employee entry..."
-              allowCustom={false}
-            />
+            <button
+              type="button"
+              onClick={() => setNewlyHired(newlyHired === "N/A" ? "Newly Hired" : "N/A")}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 border rounded-lg text-xs font-medium transition-colors duration-200 ${
+                newlyHired !== "N/A"
+                  ? "border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+                  : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-400 dark:text-slate-500"
+              }`}
+            >
+              <div className={`w-3.5 h-3.5 rounded border flex items-center justify-center transition-colors ${
+                newlyHired !== "N/A"
+                  ? "border-blue-500 bg-blue-500"
+                  : "border-slate-300 dark:border-slate-600"
+              }`}>
+                {newlyHired !== "N/A" && (
+                  <svg className="w-2 h-2 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                  </svg>
+                )}
+              </div>
+              {newlyHired !== "N/A" ? "Yes" : "No"}
+            </button>
           </div>
 
           {/* Gender */}
@@ -867,13 +886,31 @@ export default function EmployeeForm({
             <label className="block text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5">
               Gender <span className="text-red-500">*</span>
             </label>
-            <SearchableSelect
-              value={gender}
-              onChange={setGender}
-              options={["Undefined (Pending Review)", "Female", "Male"]}
-              placeholder="Select gender..."
-              allowCustom={false}
-            />
+            <div className="flex gap-1.5">
+              {["Female", "Male"].map((opt) => (
+                <button
+                  key={opt}
+                  type="button"
+                  onClick={() => setGender(gender === opt ? "Undefined (Pending Review)" : opt)}
+                  className={`inline-flex items-center gap-1.5 px-2.5 py-1.5 border rounded-lg text-xs font-medium transition-colors duration-200 ${
+                    gender === opt
+                      ? "border-blue-500 bg-blue-50 dark:bg-blue-950 text-blue-700 dark:text-blue-300"
+                      : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-400 dark:text-slate-500"
+                  }`}
+                >
+                  <div className={`w-3.5 h-3.5 rounded-full border flex items-center justify-center transition-colors ${
+                    gender === opt
+                      ? "border-blue-500 bg-blue-500"
+                      : "border-slate-300 dark:border-slate-600"
+                  }`}>
+                    {gender === opt && (
+                      <div className="w-1.5 h-1.5 rounded-full bg-white" />
+                    )}
+                  </div>
+                  {opt}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Date of Assumption */}

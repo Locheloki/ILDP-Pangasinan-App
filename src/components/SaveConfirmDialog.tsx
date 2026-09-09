@@ -34,7 +34,7 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
           <button
             type="button"
             onClick={onCancel}
-            className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer"
+            className="btn-glass bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-400 border-red-200/50 dark:border-red-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer focus:outline-none focus:ring-0"
           >
             Cancel <span className="text-[10px] text-red-400 dark:text-red-300 font-normal ml-1">Esc</span>
           </button>
@@ -42,7 +42,7 @@ export default function SaveConfirmDialog({ isOpen, onConfirm, onCancel }: SaveC
             type="button"
             ref={confirmButtonRef}
             onClick={() => onConfirm(dontAskAgain)}
-            className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-blue-500/5"
+            className="btn-glass bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border-blue-200/50 dark:border-blue-900/30 hover:scale-[1.02] active:scale-[0.98] text-xs py-2 px-4 cursor-pointer font-bold shadow-md shadow-blue-500/5 focus:outline-none focus:ring-0"
           >
             <CheckCircle className="h-4 w-4" />
             <span>Save Record</span>

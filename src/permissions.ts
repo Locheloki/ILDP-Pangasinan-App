@@ -17,13 +17,14 @@ export const PERMISSIONS = {
   USER_MANAGE: "user:manage",
   USER_ASSIGN_ROLE: "user:assign_role",
   USER_DELETE: "user:delete",
+  USER_ACTIVITY_VIEW: "user:activity:view",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
 
 const ROLE_DEFAULTS: Record<string, Permission[]> = {
   Encoder: ["employee:view", "seminar:view", "seminar:create", "seminar:edit", "seminar:import"],
-  Administrator: ["employee:view", "employee:create", "employee:edit", "employee:delete", "seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import", "seminar:year:delete", "seminar:attendee:delete"],
+  Administrator: ["employee:view", "employee:create", "employee:edit", "employee:delete", "seminar:view", "seminar:create", "seminar:edit", "seminar:delete", "seminar:import", "seminar:year:delete", "seminar:attendee:delete", "user:activity:view"],
   "System developer": Object.values(PERMISSIONS),
 };
 

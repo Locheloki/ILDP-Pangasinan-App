@@ -164,8 +164,8 @@ export default function SearchableSelect({
         onKeyDown={handleTriggerKeyDown}
         className={`flex items-center justify-between w-full px-3.5 py-2 border rounded-xl shadow-sm text-xs cursor-pointer transition outline-none transition-colors duration-200 ${
           isOpen 
-            ? "border-blue-500 ring-2 ring-blue-500 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100" 
-            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
+            ? "border-blue-500 ring-1 ring-blue-500 bg-white dark:bg-slate-950 text-slate-800 dark:text-slate-100" 
+            : "border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-950 text-slate-700 dark:text-slate-300 hover:border-slate-300 dark:hover:border-slate-700 focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
         }`}
       >
         <span className={

@@ -16,6 +16,7 @@ import {
   ChevronDown,
   History,
   Shield,
+  BarChart3,
 } from "lucide-react";
 import { User } from "../types";
 
@@ -68,6 +69,7 @@ const mainMenuItems: NavItem[] = [
   { tab: "import", icon: Upload, label: "Import Data", dataText: "Import Data", color: "#ef4444", devOnly: true },
   { tab: "auditlogs", icon: History, label: "Activity & Audit Logs", dataText: "Activity & Audit Logs", color: "#6366f1", devOnly: true },
   { tab: "usermanagement", icon: Shield, label: "User Management", dataText: "User Management", color: "#a855f7", devOnly: true },
+  { tab: "useractivity", icon: BarChart3, label: "User Activity", dataText: "User Activity", color: "#06b6d4", adminOnly: true },
 ];
 
 export default function Sidebar({

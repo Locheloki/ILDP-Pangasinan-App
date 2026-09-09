@@ -38,6 +38,7 @@ import Modal from "./components/Modal";
 import ErrorBoundary from "./components/ErrorBoundary";
 import AuditLogs from "./components/AuditLogs";
 import UserManagement from "./components/UserManagement";
+import UserActivity from "./components/UserActivity";
 import Notifications from "./components/Notifications";
 import { useNavigation } from "./NavigationContext";
 
@@ -479,6 +480,7 @@ function AppContent() {
       }
 
       showToast("Records saved and synchronized successfully!", "success");
+      const wasEditFromView = !!editingEmployee;
       setEditingEmployee(null);
       setPendingEmployee(null);
       setPendingNeeds(null);
@@ -491,7 +493,7 @@ function AppContent() {
         const targetTab = returnContext.returnTab;
         setReturnContext(null);
         changeTab(targetTab);
-      } else if (isEdit) {
+      } else if (wasEditFromView) {
         changeTab("view");
       } else {
         // Keep user on Add New page and reset the form for convenience
@@ -715,6 +717,7 @@ function AppContent() {
                 {activeTab === "seminars" && `Seminar Attendances Directory — ${selectedSeminarYear}`}
                 {activeTab === "auditlogs" && "Activity & Audit Logs"}
                 {activeTab === "usermanagement" && "User Management"}
+                {activeTab === "useractivity" && "User Activity"}
               </h2>
               <p className="text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                 {formatHeaderDate()}
@@ -1400,6 +1403,11 @@ function AppContent() {
             {/* Render Page 8: User Management (System Developer only) */}
             <div className={`tab-pane-animate ${activeTab === "usermanagement" ? "" : "hidden"}`}>
               <UserManagement currentUser={currentUser} />
+            </div>
+
+            {/* Render Page 9: User Activity (Admin only) */}
+            <div className={`tab-pane-animate ${activeTab === "useractivity" ? "" : "hidden"}`}>
+              <UserActivity currentUser={currentUser} />
             </div>
 
           </div>
